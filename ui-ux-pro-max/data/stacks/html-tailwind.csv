@@ -1,0 +1,6 @@
+No,Category,Guideline,Description,Do,Don't,Code Good,Code Bad,Severity,Docs URL
+1,Layout,Use flex and grid,Modern layout with Tailwind utilities,Use flex grid gap utilities,Use floats or manual margins,"class=""flex gap-4""","class=""float-left margin-right: 16px""",High,https://tailwindcss.com/docs/flex
+2,Responsive,Mobile-first approach,Start with mobile then add breakpoints,Use sm: md: lg: prefixes,Design desktop-first,"class=""w-full md:w-1/2""","class=""w-1/2 max-md:w-full""",High,https://tailwindcss.com/docs/responsive-design
+3,Spacing,Consistent spacing scale,Use Tailwind spacing scale,Use p-4 m-2 gap-6 etc,Use arbitrary values,"class=""p-4 m-2""","class=""p-[17px]""",Medium,https://tailwindcss.com/docs/padding
+4,Colors,Use theme colors,Reference theme colors not hex,Use bg-primary text-secondary,Hardcode hex values,"class=""bg-primary""","class=""bg-[#2563eb]""",Medium,https://tailwindcss.com/docs/customizing-colors
+5,Typography,Consistent text sizes,Use text utilities for sizing,Use text-sm text-lg text-xl,Use arbitrary font sizes,"class=""text-lg font-medium""","class=""text-[17px]""",Medium,https://tailwindcss.com/docs/font-size

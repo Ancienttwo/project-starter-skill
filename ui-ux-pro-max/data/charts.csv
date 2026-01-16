@@ -1,0 +1,9 @@
+No,Data Type,Keywords,Best Chart Type,Secondary Options,Color Guidance,Accessibility Notes,Library Recommendation,Interactive Level
+1,Trend over time,"time, trend, timeline",Line Chart,Area Chart,Use sequential colors for multiple series,Add data labels for screen readers,Recharts or Chart.js,Medium
+2,Part of whole,"percentage, composition, share",Pie Chart,Donut Chart,Use distinct colors max 6 segments,Provide legend and percentages,Recharts,Low
+3,Comparison,"compare, versus, ranking",Bar Chart,Column Chart,Use consistent color highlight differences,Ensure sufficient contrast,Chart.js,Medium
+4,Distribution,"spread, frequency, histogram",Histogram,Box Plot,Use gradient or sequential colors,Add statistical annotations,D3.js,Low
+5,Correlation,"relationship, scatter, xy",Scatter Plot,Bubble Chart,Use distinct colors for categories,Provide data table alternative,D3.js,High
+6,Flow/Process,"flow, process, funnel",Funnel Chart,Sankey Diagram,Use decreasing saturation for stages,Label each stage clearly,Custom SVG,Medium
+7,Geographic,"map, location, geo",Choropleth Map,Bubble Map,Use colorblind-safe palette,Provide data table alternative,Mapbox or Leaflet,High
+8,Hierarchical,"hierarchy, tree, nested",Treemap,Sunburst,Use parent-child color relationships,Ensure text readability,D3.js,Medium

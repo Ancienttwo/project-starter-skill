@@ -1,0 +1,6 @@
+No,Category,Guideline,Description,Do,Don't,Code Good,Code Bad,Severity,Docs URL
+1,Images,Use next/image,Optimize images with Next.js Image,Use Image component with sizes,Use regular img tag,"<Image src={} alt={} width={} height={} />","<img src={} />",High,https://nextjs.org/docs/app/api-reference/components/image
+2,Links,Use next/link,Client-side navigation with Link,Use Link component for internal,Use anchor for internal links,"<Link href=""/about"">About</Link>","<a href=""/about"">About</a>",High,https://nextjs.org/docs/app/api-reference/components/link
+3,Fonts,Use next/font,Optimize fonts with next/font,Use next/font for Google or local,Load fonts via CSS import,"import { Inter } from 'next/font/google'","@import url('fonts.googleapis.com')",Medium,https://nextjs.org/docs/app/building-your-application/optimizing/fonts
+4,Components,Server vs Client,Choose appropriate component type,Use Server Components by default,Make everything client,"// No 'use client' needed","'use client' everywhere",High,https://nextjs.org/docs/app/building-your-application/rendering/server-components
+5,Data,Fetch in Server,Fetch data in Server Components,Fetch in page.tsx or layout.tsx,Fetch in client useEffect,"async function Page() { const data = await fetch() }","useEffect(() => fetch())",High,https://nextjs.org/docs/app/building-your-application/data-fetching

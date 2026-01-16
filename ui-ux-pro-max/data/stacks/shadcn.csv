@@ -1,0 +1,6 @@
+No,Category,Guideline,Description,Do,Don't,Code Good,Code Bad,Severity,Docs URL
+1,Installation,Use CLI,Install components via CLI,Use npx shadcn@latest add,Copy paste from docs,"npx shadcn@latest add button","copy paste component code",Medium,https://ui.shadcn.com/docs/cli
+2,Theming,Use CSS variables,Theme with CSS custom properties,Use bg-primary text-primary-foreground,Hardcode colors,"className=""bg-primary""","className=""bg-blue-500""",High,https://ui.shadcn.com/docs/theming
+3,Composition,Compose components,Build complex UI from primitives,Combine Dialog + Form + Button,Create monolithic components,"<Dialog><Form><Button /></Form></Dialog>","<ComplexModalWithEverything />",Medium,https://ui.shadcn.com/docs/components
+4,Forms,Use react-hook-form,Form handling with validation,Use Form component with zod,Manual form state,"<Form><FormField control={} /></Form>","<input onChange={} value={} />",High,https://ui.shadcn.com/docs/components/form
+5,Variants,Use cva variants,Style variants with class-variance-authority,Define variants in component,Conditional classnames,"variants: { size: { sm: '', lg: '' } }","className={size === 'sm' ? '' : ''}",Medium,https://ui.shadcn.com/docs/components/button

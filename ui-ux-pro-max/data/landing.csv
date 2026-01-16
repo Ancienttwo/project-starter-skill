@@ -1,0 +1,7 @@
+No,Pattern Name,Keywords,Section Order,Primary CTA Placement,Color Strategy,Conversion Optimization
+1,Hero-Centric Design,"hero, landing, product",Hero > Features > Social Proof > CTA,Above fold in hero,Brand primary for CTA contrast background,Large hero image compelling headline single CTA
+2,Conversion-Optimized,"form, signup, lead",Hero with Form > Benefits > Trust > CTA,Inline with hero content,High contrast CTA urgency colors,Minimal distractions single form focus
+3,Feature-Rich Showcase,"features, product, demo",Hero > Feature Grid > Demo > Testimonials > Pricing,After each feature section,Feature icons with brand colors,Progressive disclosure of features
+4,Social Proof-Focused,"testimonials, reviews, trust",Hero > Logos > Testimonials > Features > CTA,After social proof section,Trust colors for testimonials,Prominent customer logos and quotes
+5,Storytelling-Driven,"story, narrative, brand",Hero > Problem > Solution > Journey > CTA,End of story arc,Emotional colors matching narrative,Emotional connection through story
+6,Minimal & Direct,"simple, clean, fast",Hero > Single Benefit > CTA,Immediately visible,Monochrome with single accent,Fast loading direct messaging

@@ -1,0 +1,11 @@
+No,Category,Issue,Platform,Description,Do,Don't,Code Example Good,Code Example Bad,Severity
+1,Icons,Emoji as UI icons,All,Using emoji characters as functional UI icons,Use SVG icons from Heroicons Lucide or Simple Icons,Use emoji like 🎨 🚀 ⚙️ as UI icons,"<svg class=""w-6 h-6"">...</svg>","<span>🚀</span>",High
+2,Hover,Layout shift on hover,All,Hover states that cause elements to shift position,Use color/opacity transitions on hover,Use scale transforms that shift layout,"hover:bg-blue-600","hover:scale-110",Medium
+3,Icons,Inconsistent icon sizing,All,Mixing different icon sizes randomly,Use fixed viewBox (24x24) with consistent sizing,Mix different icon sizes randomly,"class=""w-6 h-6""","class=""w-4 h-8""",Medium
+4,Cursor,Missing cursor pointer,All,Interactive elements without cursor feedback,Add cursor-pointer to all clickable elements,Leave default cursor on interactive elements,"class=""cursor-pointer""",Missing cursor class,High
+5,Transitions,Instant state changes,All,No transition on state changes,Use transition-colors duration-200,Instant state changes or too slow (>500ms),"transition-colors duration-200",No transition,Medium
+6,Light Mode,Low contrast text,Light,Text with insufficient contrast in light mode,Use slate-900 for body text slate-600 for muted,Use gray-400 or lighter for body text,"text-slate-900","text-gray-400",High
+7,Light Mode,Invisible glass cards,Light,Glass effects too transparent in light mode,Use bg-white/80 or higher opacity,Use bg-white/10 (too transparent),"bg-white/80","bg-white/10",High
+8,Light Mode,Invisible borders,Light,Borders not visible in light mode,Use border-gray-200 in light mode,Use border-white/10 (invisible),"border-gray-200","border-white/10",Medium
+9,Layout,Content behind navbar,All,Content hidden behind fixed navigation,Account for fixed navbar height with padding,Let content hide behind fixed elements,"pt-20 for fixed navbar",No padding for fixed nav,High
+10,Accessibility,Missing alt text,All,Images without descriptive alt text,Add meaningful alt text to all images,Leave alt empty or use filename,"alt=""Product screenshot""","alt=""""",High

@@ -1,0 +1,6 @@
+No,Category,Guideline,Description,Do,Don't,Code Good,Code Bad,Severity,Docs URL
+1,State,Use appropriate state,Choose right state management,Use useState for local useContext for shared,Prop drill through many levels,"const [state, setState] = useState()","passing props 5+ levels deep",High,https://react.dev/learn/managing-state
+2,Effects,Cleanup effects,Always cleanup subscriptions and timers,Return cleanup function from useEffect,Leave subscriptions open,"useEffect(() => { return () => cleanup() }, [])","useEffect without cleanup",High,https://react.dev/reference/react/useEffect
+3,Keys,Stable unique keys,Use stable IDs not array index,Use unique ID from data,Use array index as key,"key={item.id}","key={index}",High,https://react.dev/learn/rendering-lists
+4,Performance,Memoize expensive,Memoize expensive calculations and components,Use useMemo useCallback React.memo,Recalculate on every render,"useMemo(() => expensive(), [deps])","const result = expensive()",Medium,https://react.dev/reference/react/useMemo
+5,Components,Single responsibility,Each component does one thing well,Split large components,Create god components,"<UserAvatar /> <UserName />","<UserEverything />",Medium,https://react.dev/learn/thinking-in-react
