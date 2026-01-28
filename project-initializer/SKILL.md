@@ -287,13 +287,48 @@ D) Custom Hooks
 After collecting all answers, generate:
 
 ### 1. CLAUDE.md
-Use template from `assets/CLAUDE.template.md` with substitutions:
-- `{{USER_NAME}}` → Developer's name/nickname (from Q0)
-- `{{PROJECT_NAME}}` → User's project name
-- `{{SERVICE_TARGET}}` → Based on interaction style
-- `{{TECH_STACK_TABLE}}` → From tech stack selection
-- `{{PROHIBITIONS}}` → Merged default + custom
-- `{{PROJECT_STRUCTURE}}` → From selected plan template
+
+**Architecture**: Composable partials with runtime assembly.
+
+**Partial Files** (in `assets/partials/`):
+```
+01-header.partial.md        # Project title + metadata
+02-iron-rules.partial.md    # Iron Rules 1-6
+03-philosophy.partial.md    # Core philosophy (DO NOT SPLIT)
+04-project-structure.partial.md  # Project structure + file management
+05-workflow.partial.md      # Progress tracking, versioning, git strategy
+06-cloudflare.partial.md    # Cloudflare deployment (conditional)
+07-footer.partial.md        # AI workflows, documentation index, philosophy reminder
+```
+
+**Assembly Process**:
+1. Concatenate partials in order (see `assets/partials/_assembly-order.md`)
+2. Apply conditional logic (`{{#IF CLOUDFLARE_NATIVE}}...{{/IF}}`)
+3. Substitute variables with user-provided values
+4. Output final CLAUDE.md
+
+**Assembly Script**:
+```bash
+bun scripts/assemble-template.ts --plan C --name "MyProject" --var USER_NAME=Dev
+```
+
+**Variable Substitutions**:
+- `{{USER_NAME}}` - Developer's name/nickname (from Q0)
+- `{{PROJECT_NAME}}` - User's project name
+- `{{SERVICE_TARGET}}` - Based on interaction style
+- `{{TECH_STACK_TABLE}}` - From tech stack selection
+- `{{PROHIBITIONS}}` - Merged default + custom
+- `{{PROJECT_STRUCTURE}}` - From selected plan template
+
+**Conditional Sections**:
+- `06-cloudflare.partial.md` included only for: Plan A, C, C+, D, G (partial), H (partial)
+- Excluded for: Plan B, F, J
+
+**Version Variables** (from `assets/versions.json`):
+- `{{VERSION_VITE}}` - Vite version (6.x)
+- `{{VERSION_REACT}}` - React version (19)
+- `{{VERSION_TYPESCRIPT}}` - TypeScript version (5.x)
+- And more... see `assets/versions.json` for full list
 
 ### 2. docs/brief.md (产品简介 + MVP)
 
