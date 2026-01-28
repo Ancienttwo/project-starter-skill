@@ -33,6 +33,53 @@ For guided setup, just run `/project-init` and follow the questions.
 
 ---
 
+## Quick Mode (`--quick`)
+
+For rapid project initialization with minimal questions (5 questions only):
+
+```
+/project-init --quick
+```
+
+### Quick Mode Questions
+
+| # | Question | Purpose |
+|---|----------|---------|
+| Q1 | Project Name | Used for CLAUDE.md header and directory |
+| Q2 | Project Type | Determines tech stack (Plan A-K) |
+| Q3 | Package Manager | bun / pnpm / npm |
+| Q4 | Developer Name | Personalization in CLAUDE.md |
+| Q5 | Brief Description | One-line product summary |
+
+### Quick Mode Defaults
+
+When using `--quick`, the following defaults apply:
+
+| Setting | Default Value |
+|---------|---------------|
+| Service Target | "User" |
+| Interaction Style | "Technical, concise" |
+| Cloudflare Native | Auto-detected from Plan Type |
+| Team Size | Solo (1 person) |
+| MVP Scope | Skipped (can add later) |
+
+### Quick vs Full Mode
+
+| Feature | Quick Mode | Full Mode |
+|---------|------------|-----------|
+| Questions | 5 | 15+ |
+| MVP Definition | Skipped | Detailed |
+| Architecture Decisions | Defaults | Guided |
+| Tech Stack Customization | Plan defaults | Full options |
+| Output Structure | **Same** | **Same** |
+| Core Philosophy | **Same** | **Same** |
+
+**Important**: Both modes generate identical CLAUDE.md structure with the complete core philosophy (IMMUTABLE/MUTABLE layers). Quick mode just uses sensible defaults for optional questions.
+
+---
+
+## Full Mode (Default)
+
 ## Guided Initialization Flow
 
 ### Phase 1: Project Basics
@@ -421,21 +468,136 @@ Use this template for future decisions:
 Create directories:
 
 ```bash
+# ===== IMMUTABLE LAYER (资产层) =====
+# Specs - 功能规格
+mkdir -p specs/modules
+
+# Contracts - 接口契约
+mkdir -p contracts/modules
+
+# Tests - 测试是真理
+mkdir -p tests/unit
+mkdir -p tests/integration
+mkdir -p tests/e2e
+
+# ===== MUTABLE LAYER (厕纸层) =====
+# Source - 实现代码（可随时重写）
+mkdir -p src/modules
+
+# ===== SUPPORTING (支撑层) =====
+# Documentation
 mkdir -p docs/architecture
 mkdir -p docs/api
 mkdir -p docs/guides
 mkdir -p docs/archives
+
+# Scripts - 自动化脚本
+mkdir -p scripts
+
+# Operations (DO NOT commit)
 mkdir -p ops/database
-mkdir -p ops/scripts
-mkdir -p ops/docker
 mkdir -p ops/secrets
+
+# Artifacts (DO NOT commit)
 mkdir -p artifacts
+
+# ===== Initial Files =====
+# Documentation files
 touch docs/PROGRESS.md
 touch docs/CHANGELOG.md
 touch docs/TODO.md
 touch docs/brief.md
 touch docs/tech-stack.md
 touch docs/decisions.md
+
+# Specs overview
+cat > specs/overview.md << 'EOF'
+# Project Specifications
+
+> **Spec is the Source of Truth. 规格是唯一真理的来源。**
+
+## How to Use
+
+1. Write spec first, then implement
+2. Changing spec = rewrite downstream
+3. No implementation without spec
+
+## Modules
+
+- Add module specs in `modules/` directory
+- Format: `{module-name}.spec.md`
+EOF
+
+# Contracts types
+cat > contracts/types.ts << 'EOF'
+/**
+ * Shared Type Definitions
+ *
+ * IMMUTABLE: Changes here require downstream rewrites
+ */
+
+// Add shared types here
+export {}
+EOF
+
+# Test README
+cat > tests/README.md << 'EOF'
+# Test Directory Structure
+
+> **Test is the new Spec. 测试是唯一的真理。**
+
+## Asset Hierarchy
+
+Tests are IMMUTABLE ASSETS. Implementation is DISPOSABLE.
+
+## Rules
+
+- Test code quantity ≥ Implementation code quantity
+- Test failure = Delete module and rewrite
+- Never modify tests to make buggy code pass
+
+## Running Tests
+
+```bash
+bun test              # Run all tests
+bun test --coverage   # With coverage
+bun test --watch      # Watch mode
+```
+EOF
+
+# Regenerate script - 一键删除重写模块
+cat > scripts/regenerate.sh << 'EOF'
+#!/bin/bash
+# Regenerate a module: delete implementation, keep spec/contract/tests
+# Usage: ./scripts/regenerate.sh <module-name>
+
+MODULE=$1
+
+if [ -z "$MODULE" ]; then
+  echo "Usage: ./scripts/regenerate.sh <module-name>"
+  echo "Example: ./scripts/regenerate.sh auth"
+  exit 1
+fi
+
+# Check if module exists
+if [ ! -d "src/modules/$MODULE" ]; then
+  echo "Module src/modules/$MODULE not found"
+  exit 1
+fi
+
+echo "🗑️  Deleting implementation: src/modules/$MODULE"
+rm -rf "src/modules/$MODULE"
+mkdir -p "src/modules/$MODULE"
+
+echo "✅ Module $MODULE cleared. Ready for rewrite."
+echo ""
+echo "Preserved assets:"
+echo "  - specs/modules/$MODULE.spec.md"
+echo "  - contracts/modules/$MODULE.contract.ts"
+echo "  - tests/unit/$MODULE/"
+echo "  - tests/integration/$MODULE/"
+EOF
+chmod +x scripts/regenerate.sh
 ```
 
 ### 6. .gitignore Generation
@@ -515,13 +677,66 @@ Run `scripts/setup-plugins.sh` to:
 - Configure hooks in `~/.claude/settings.json`
 
 ### 9. Hook Configuration (if selected in Q8)
-Update `~/.claude/settings.json` with selected hooks:
+
+Create `.claude/hooks/` directory with development protocol hooks:
+
+```bash
+mkdir -p .claude/hooks
+```
+
+**pre-code-change.sh** - Warn when modifying asset layer files:
+```bash
+#!/bin/bash
+TOOL_INPUT="$1"
+if echo "$TOOL_INPUT" | grep -qE "(\.contract\.|\.spec\.md|/tests/)"; then
+  echo "⚠️  警告: 正在修改「资产层」文件"
+  echo "   根据开发协议，修改这些文件意味着下游实现需要重写。"
+fi
+```
+
+**post-bash.sh** - Remind to rewrite when tests fail:
+```bash
+#!/bin/bash
+TOOL_OUTPUT="$1"
+EXIT_CODE="$2"
+if [ "$EXIT_CODE" != "0" ]; then
+  if echo "$TOOL_OUTPUT" | grep -qEi "(FAIL|failed|error.*test)"; then
+    echo "🔴 测试失败 - 提醒：失败 = 重写模块，而非打补丁"
+  fi
+fi
+```
+
+**prompt-guard.sh** - Detect bug fix requests:
+```bash
+#!/bin/bash
+PROMPT="$1"
+if echo "$PROMPT" | grep -qEi "(fix|修|patch|bug)"; then
+  echo "📋 检测到修复请求 - 提醒：先写测试，再删模块重写"
+fi
+```
+
+Update `.claude/settings.local.json`:
 ```json
 {
   "hooks": {
-    "UserPromptSubmit": [{ "command": "echo '🛡️ Quality guard active...'" }],
-    "PreToolCall": [{ "matcher": "Edit|Write", "command": "echo '📝 Code modification'" }],
-    "PostToolCall": [{ "matcher": "Bash\\(.*test.*\\)", "command": "echo '✅ Tests done'" }]
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/pre-code-change.sh \"$TOOL_INPUT\"" }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/post-bash.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\"" }]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/prompt-guard.sh \"$PROMPT\"" }]
+      }
+    ]
   }
 }
 ```
