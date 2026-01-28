@@ -1,8 +1,8 @@
-<!-- 
-  Partial: 01-header
-  Purpose: Project title and metadata variables
-  Lines from original: 1-9
-  Variables: {{PROJECT_NAME}}, {{USER_NAME}}, {{SERVICE_TARGET}}, {{INTERACTION_STYLE}}
--->
+# {{PROJECT_NAME}} Development Guide
 
-<!-- Content will be migrated in Task 6 -->
+> **Developer**: {{USER_NAME}}
+> **Service Target**: {{SERVICE_TARGET}}
+> **Interaction Style**: {{INTERACTION_STYLE}}
+> **Thinking Mode**: ultrathink - Three-layer traversal (Phenomenon -> Essence -> Philosophy -> Output)
+
+---
