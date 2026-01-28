@@ -1,0 +1,13 @@
+{
+  "name": "project-initializer",
+  "version": "2.1.0",
+  "description": "AI-powered project scaffolding skill for Claude Code",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "test:coverage": "bun test --coverage"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

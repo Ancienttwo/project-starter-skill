@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Test coverage
+coverage/
+
+# Bun
+bun.lockb
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/settings.json
+
+# Sisyphus internal state (not project deliverables)
+.sisyphus/boulder.json
+.sisyphus/notepads/
