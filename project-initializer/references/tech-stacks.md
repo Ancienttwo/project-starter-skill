@@ -54,13 +54,14 @@ Vite + Remix 2.x + React 19
 
 **Init Commands:**
 ```bash
-npx create-remix@latest my-remix-app
+bunx create-remix@latest my-remix-app
 cd my-remix-app
-npx shadcn@latest init
-npm install @supabase/supabase-js @supabase/ssr zustand
-npm install react-hook-form @hookform/resolvers zod
-npm install clsx tailwind-merge class-variance-authority
-npm install lucide-react date-fns nanoid
+bunx shadcn@latest init
+bun add @supabase/supabase-js @supabase/ssr zustand
+bun add react-hook-form @hookform/resolvers zod
+bun add clsx tailwind-merge class-variance-authority
+bun add lucide-react date-fns nanoid
+bun add -d vitest @testing-library/react @testing-library/jest-dom jsdom
 ```
 
 ---
@@ -86,9 +87,10 @@ UmiJS 4.x + Ant Design 5.x
 npm create umi
 # Select: Ant Design Pro template
 cd my-ant-pro-app
-npm install
-npm install @supabase/supabase-js
-npm install date-fns lodash-es
+bun install
+bun add @supabase/supabase-js
+bun add date-fns lodash-es
+bun add -d vitest @testing-library/react @testing-library/jest-dom jsdom
 ```
 
 ---
@@ -113,17 +115,18 @@ Vite 6.x + React 19
 
 **Init Commands:**
 ```bash
-npm create vite@latest my-vite-app -- --template react-ts
+bun create vite@latest my-vite-app -- --template react-ts
 cd my-vite-app
-npm install @tanstack/react-router
-npm install -D @tanstack/router-devtools @tanstack/router-plugin
-npm install @tanstack/react-query
-npm install -D @tanstack/react-query-devtools
-npx shadcn@latest init
-npx shadcn@latest add button input table form dialog select card tabs
-npm install @supabase/supabase-js zustand
-npm install react-hook-form @hookform/resolvers zod
-npm install clsx tailwind-merge lucide-react date-fns
+bun add @tanstack/react-router
+bun add -d @tanstack/router-devtools @tanstack/router-plugin
+bun add @tanstack/react-query
+bun add -d @tanstack/react-query-devtools
+bunx shadcn@latest init
+bunx shadcn@latest add button input table form dialog select card tabs
+bun add @supabase/supabase-js zustand
+bun add react-hook-form @hookform/resolvers zod
+bun add clsx tailwind-merge lucide-react date-fns
+bun add -d vitest @testing-library/react @testing-library/jest-dom jsdom
 ```
 
 ---
@@ -145,9 +148,9 @@ npm install clsx tailwind-merge lucide-react date-fns
 
 **Additional Commands:**
 ```bash
-npm install @ant-design/x antd@6
-npm install @ant-design/x-markdown
-npm install @anthropic-ai/claude-agent-sdk
+bun add @ant-design/x antd@6
+bun add @ant-design/x-markdown
+bun add @anthropic-ai/claude-agent-sdk
 ```
 
 ---
@@ -176,6 +179,7 @@ bunx create-turbo@latest
 # Select: bun as package manager
 cd my-monorepo
 bun install
+bun add -d vitest
 ```
 
 **Project Structure:**
@@ -200,24 +204,33 @@ my-monorepo/
 ### E1: Remix (Recommended)
 Same as Plan A, optimized for SEO with built-in SSR.
 
-### E2: Astro + React (Content Sites)
+### E2: Astro + Starwind UI (Landing Pages) ⭐
+
+**Stack:**
 ```
-Astro 4.x + React 19
-+ File routing
-+ MDX (Markdown + React)
-+ Tailwind CSS
-+ Partial Hydration
+Astro 5.x
++ Starwind UI (Astro 原生组件, shadcn 式 CLI)
++ Tailwind CSS v4
++ Content Collections (type-safe content)
++ MDX (optional, for blog/docs)
++ TypeScript
 ```
 
 **Best For:**
-- Blogs, documentation sites
-- Zero JS by default
-- Ultimate performance
+- Landing Pages / Marketing Sites
+- 公司官网 / 产品介绍页
+- 文档站 (配合 Starlight)
+- Zero JS by default — 零 React runtime 开销
+
+> **不用于**: Dashboard、Mobile、复杂交互应用。Dashboard 用 Plan C (Vite + React)。
 
 **Init Commands:**
 ```bash
-npm create astro@latest my-astro-site
-npx astro add react tailwind
+bunx create-astro@latest my-landing -- --template basics
+cd my-landing
+bunx astro add tailwind
+bunx starwind add button card input navigation-menu separator
+bun add -d vitest @playwright/test
 ```
 
 ---
@@ -228,7 +241,7 @@ npx astro add react tailwind
 
 **Stack:**
 ```
-React Native 0.73+ + Expo
+React Native 0.84+ + Expo SDK 55
 + NativeWind (Tailwind for RN)
 + TanStack Query (data management)
 + Supabase (backend)
@@ -242,24 +255,42 @@ React Native 0.73+ + Expo
 **Init Commands:**
 ```bash
 npx create-expo-app my-mobile-app -t expo-template-blank-typescript
+# Or: bunx create-expo-app my-mobile-app -t expo-template-blank-typescript
 cd my-mobile-app
-npm install nativewind
-npm install --save-dev tailwindcss
-npx tailwindcss init
-npm install @tanstack/react-query @supabase/supabase-js zustand
+bun add nativewind
+bun add -d tailwindcss
+bunx tailwindcss init
+bun add @tanstack/react-query @supabase/supabase-js zustand
+bun add -d vitest @testing-library/react-native jest-expo
 ```
 
-### F2: Expo + Tamagui (High Performance)
+### F2: Expo + HeroUI Native (Rich Components)
 
 **Stack:**
 ```
-React Native + Expo + Tamagui
+React Native 0.84+ + Expo SDK 55
++ HeroUI Native (formerly NextUI for RN)
++ TanStack Query (data management)
++ Supabase (backend)
++ Zustand (state management)
 ```
 
 **Best For:**
-- Cross-platform consistency
-- Compile-time optimization
-- Built-in theming
+- Feature-rich mobile apps needing polished UI components
+- Teams familiar with HeroUI/NextUI ecosystem
+- Apps requiring consistent design system across web + mobile
+
+**Init Commands:**
+```bash
+npx create-expo-app my-mobile-app -t expo-template-blank-typescript
+# Or: bunx create-expo-app my-mobile-app -t expo-template-blank-typescript
+cd my-mobile-app
+bun add heroui-native
+bun add @tanstack/react-query @supabase/supabase-js zustand
+bun add -d vitest @testing-library/react-native jest-expo
+```
+
+> **Note:** HeroUI Native is in beta (1.0.0-beta). Evaluate component coverage for your needs before committing.
 
 ---
 
@@ -973,13 +1004,43 @@ export const verification = sqliteTable("verification", {
 | Library | Style | Components | Customization | AI Friendly |
 |---------|-------|------------|---------------|-------------|
 | shadcn/ui | Modern | ~40 | ⭐⭐⭐⭐⭐ (source code) | ⭐⭐⭐⭐⭐ |
+| HeroUI v3 | Modern | 60+ | ⭐⭐⭐⭐ (theme builder) | ⭐⭐⭐⭐ |
 | Ant Design | Enterprise | 100+ | ⭐⭐⭐ (theme config) | ⭐⭐⭐⭐ |
 | Ant Design X | AI-focused | AI components | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
 **Selection Guide:**
 - 🎨 Modern SaaS → shadcn/ui
+- 🎯 Polished UI + Theme Builder → HeroUI v3 (beta, approaching stable)
 - 🏢 Enterprise CRM/ERP → Ant Design Pro
 - 🤖 AI Apps → Ant Design X
+- 📱 Mobile + Web consistency → HeroUI v3 (web) + HeroUI Native (mobile)
+- 🌐 Astro Landing Page → Starwind UI (Astro 原生, 零 React)
+
+## Enhancement Libraries (按需选用)
+
+> 参考自 Codex CLI、shadcn/ui 等主流产品的技术选型。按需引入，不要全装。
+
+| 类别 | 推荐 | 用途 | 场景 |
+|---|---|---|---|
+| **富文本编辑** | `lexical` | Meta 的富文本引擎 | CMS、评论、文档编辑 |
+| **代码高亮** | `shikijs` | VS Code 级语法高亮 | 文档站、代码展示、AI Chat |
+| **拖拽** | `@dnd-kit/core` | 现代拖拽库 | Kanban、排序、Dashboard 布局 |
+| **动效** | `framer-motion` | 声明式动画 | 页面过渡、微交互、手势 |
+| **复杂可视化** | `d3` | 底层可视化引擎 | 自定义图表、网络图、金融图 |
+| **简单图表** | `recharts` | React 图表库 (基于 d3) | Dashboard 标准图表 |
+| **国际化** | `react-intl` | FormatJS 国际化 | 多语言应用 |
+| **监控** | `@opentelemetry/*` | 分布式追踪标准 | 生产环境可观测性 |
+
+```bash
+# 按需安装示例
+bun add lexical @lexical/react              # 富文本
+bun add shiki                               # 代码高亮
+bun add @dnd-kit/core @dnd-kit/sortable     # 拖拽
+bun add framer-motion                       # 动效
+bun add d3                                  # 可视化
+bun add recharts                            # 图表
+bun add react-intl                          # 国际化
+```
 
 ---
 
@@ -1434,22 +1495,23 @@ Vite 6.x + React 19 + TypeScript
 
 **Frontend Init Commands:**
 ```bash
-npm create vite@latest quant-frontend -- --template react-ts
+bun create vite@latest quant-frontend -- --template react-ts
 cd quant-frontend
 
 # Core dependencies
-npm install @tanstack/react-router @tanstack/react-query
-npm install -D @tanstack/router-devtools @tanstack/router-plugin @tanstack/react-query-devtools
+bun add @tanstack/react-router @tanstack/react-query
+bun add -d @tanstack/router-devtools @tanstack/router-plugin @tanstack/react-query-devtools
 
 # UI
-npx shadcn@latest init
-npx shadcn@latest add button input table form dialog select card tabs chart
-npm install recharts lucide-react
+bunx shadcn@latest init
+bunx shadcn@latest add button input table form dialog select card tabs chart
+bun add recharts lucide-react
 
 # Trading-specific
-npm install lightweight-charts @monaco-editor/react
-npm install zustand socket.io-client
-npm install date-fns decimal.js
+bun add lightweight-charts @monaco-editor/react
+bun add zustand socket.io-client
+bun add date-fns decimal.js
+bun add -d vitest @testing-library/react @testing-library/jest-dom jsdom
 ```
 
 **Python Backend Stack:**
@@ -1648,10 +1710,10 @@ CREATE TABLE backtest_results (
 **Landing Page (Independent Remix):**
 ```bash
 # Separate Remix project for marketing/SEO
-npx create-remix@latest quant-landing
+bunx create-remix@latest quant-landing
 cd quant-landing
-npx shadcn@latest init
-npm install framer-motion
+bunx shadcn@latest init
+bun add framer-motion
 ```
 
 **Recommended Stack Summary (Open Source + Cloudflare Native):**
@@ -1742,24 +1804,27 @@ Vite 6.x + React 19 + TypeScript
 
 **Frontend Init Commands:**
 ```bash
-npm create vite@latest trading-frontend -- --template react-ts
+bun create vite@latest trading-frontend -- --template react-ts
 cd trading-frontend
 
 # Core
-npm install @tanstack/react-router @tanstack/react-query
-npm install -D @tanstack/router-devtools @tanstack/router-plugin @tanstack/react-query-devtools
+bun add @tanstack/react-router @tanstack/react-query
+bun add -d @tanstack/router-devtools @tanstack/router-plugin @tanstack/react-query-devtools
 
 # UI
-npx shadcn@latest init
-npx shadcn@latest add button input table form dialog select card tabs badge
+bunx shadcn@latest init
+bunx shadcn@latest add button input table form dialog select card tabs badge
 
 # Trading-specific
-npm install ag-grid-react ag-grid-enterprise  # License required for enterprise
-npm install socket.io-client
-npm install zustand decimal.js date-fns
+bun add ag-grid-react ag-grid-enterprise  # License required for enterprise
+bun add socket.io-client
+bun add zustand decimal.js date-fns
 
 # Charts (optional)
-npm install lightweight-charts recharts
+bun add lightweight-charts recharts
+
+# Testing
+bun add -d vitest @testing-library/react @testing-library/jest-dom jsdom
 ```
 
 **AG-Grid Trading Blotter Example:**
@@ -1798,10 +1863,10 @@ export function TradingBlotter({ orders }: { orders: Order[] }) {
 **REST API Backend (Node.js + Hono):**
 ```bash
 # For RFQ and low-latency-insensitive operations
-npm install hono @hono/node-server
-npm install drizzle-orm postgres
-npm install ioredis socket.io
-npm install zod
+bun add hono @hono/node-server
+bun add drizzle-orm postgres
+bun add ioredis socket.io
+bun add zod
 ```
 
 ```typescript
@@ -2226,10 +2291,10 @@ trading-platform/
 
 ```bash
 # Marketing site with SEO
-npx create-remix@latest trading-landing
+bunx create-remix@latest trading-landing
 cd trading-landing
-npx shadcn@latest init
-npm install framer-motion @radix-ui/react-icons
+bunx shadcn@latest init
+bun add framer-motion @radix-ui/react-icons
 ```
 
 **Recommended Stack Summary (Institutional + Cloudflare Native):**
@@ -2255,6 +2320,117 @@ npm install framer-motion @radix-ui/react-icons
 - Broker/dealer order management systems
 - Market making platforms
 - OTC trading (RFQ workflows)
+
+---
+
+## Plan I: Web3 DApp (EVM Chains) ⭐
+
+**Architecture Overview:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Landing Page (Astro + Starwind UI)                          │
+│  ├─ Hero / Features / Tokenomics                             │
+│  └─ Wallet Connect CTA → redirect to App                    │
+├─────────────────────────────────────────────────────────────┤
+│  DApp Frontend (Vite + React)                                │
+│  ├─ Wagmi v2 + viem (wallet + contract interaction)          │
+│  ├─ ConnectKit / RainbowKit (wallet UI)                      │
+│  ├─ TanStack Router (SPA routing)                            │
+│  ├─ TanStack Query (data fetching + chain query cache)       │
+│  ├─ shadcn/ui + Tailwind CSS v4 (UI)                         │
+│  └─ Zustand (global state: wallet, tx status)                │
+├─────────────────────────────────────────────────────────────┤
+│  Smart Contracts (Solidity)                                   │
+│  ├─ Hardhat (dev/test/deploy)                                │
+│  ├─ OpenZeppelin (ERC standards base)                        │
+│  └─ Custom contracts (NFT/DeFi/Agent/DAO)                    │
+├─────────────────────────────────────────────────────────────┤
+│  Backend API (Cloudflare Workers + Hono)                      │
+│  ├─ Chain indexing / event caching                           │
+│  ├─ D1 (metadata storage)                                    │
+│  └─ External API integrations                                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### I1: Landing Page (Astro)
+
+Same as Plan E2 — Astro + Starwind UI for zero-JS marketing pages.
+
+### I2: DApp Frontend (Vite + React + Wagmi)
+
+**Stack:**
+```
+Vite 6.x + React 19
++ Wagmi v2 + viem (EVM chain interaction)
++ ConnectKit (wallet connection UI)
++ TanStack Router + TanStack Query
++ shadcn/ui + Tailwind CSS v4
++ Zustand (wallet/tx state)
++ TypeScript
+```
+
+**Init Commands:**
+```bash
+bun create vite my-dapp --template react-ts
+cd my-dapp
+bun add wagmi viem @tanstack/react-query connectkit
+bun add @tanstack/react-router @tanstack/react-router-devtools
+bun add zustand
+bunx shadcn@latest init
+bunx shadcn@latest add button input card dialog table tabs toast
+bun add -d vitest @testing-library/react @testing-library/jest-dom jsdom @playwright/test
+```
+
+### I3: Smart Contracts (Hardhat + Solidity)
+
+**Stack:**
+```
+Solidity ^0.8.20
++ Hardhat (compile/test/deploy)
++ OpenZeppelin Contracts (ERC20/721/1155 base)
++ Hardhat Ignition (deployment)
++ TypeScript (config + scripts)
+```
+
+**Init Commands:**
+```bash
+mkdir contracts && cd contracts
+bunx hardhat init
+bun add -d @openzeppelin/contracts @nomicfoundation/hardhat-toolbox
+```
+
+**Supported Chains:**
+- BNB Chain (BEP20, NFA)
+- Ethereum / Base / Arbitrum / Optimism
+- Any EVM-compatible chain
+
+**Project Structure:**
+```
+my-dapp/
+├── landing/              # Astro + Starwind UI (Plan E2)
+├── app/                  # Vite + React + Wagmi (DApp)
+│   ├── src/
+│   │   ├── routes/       # TanStack Router
+│   │   ├── hooks/        # useContract, useWallet hooks
+│   │   ├── components/   # UI components
+│   │   └── lib/
+│   │       ├── contracts/ # ABI + contract addresses
+│   │       └── chains.ts  # Chain config
+│   └── package.json
+├── contracts/            # Hardhat + Solidity
+│   ├── contracts/        # .sol files
+│   ├── test/             # Contract tests
+│   ├── ignition/         # Deployment modules
+│   └── hardhat.config.ts
+└── package.json          # Workspace root (bun workspace)
+```
+
+**Best For:**
+- NFT Marketplace / Gallery
+- DeFi protocols (swap, lending, staking)
+- DAO governance platforms
+- Agent marketplaces (NFA, ERC-8004)
+- Token-gated applications
 
 ---
 
@@ -2333,7 +2509,7 @@ bun add openai
 
 # CLI utilities
 bun add commander zod chalk
-bun add -d typescript @types/node
+bun add -d typescript @types/node vitest
 ```
 
 **Alternative: Ink (Simpler React-based TUI):**

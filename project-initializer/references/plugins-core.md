@@ -198,6 +198,70 @@ From [claude-plugins-official/external_plugins](https://github.com/anthropics/cl
 
 ---
 
+## Knowledge Work Plugins (Agent Role Plugins)
+
+From [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) — Anthropic 官方知识工作插件，将 Claude 变成特定角色的专家 Agent。
+
+**Install:**
+```bash
+# Add the marketplace
+claude plugin marketplace add anthropics/knowledge-work-plugins
+
+# Install specific plugin
+claude plugin install <plugin-name>@knowledge-work-plugins
+```
+
+### Plugin Catalog
+
+| Plugin | Description | Connectors | Commands | Skills |
+|--------|-------------|------------|----------|--------|
+| **productivity** | 任务管理、日历、日常工作流、个人上下文记忆 | Slack, Notion, Asana, Linear, Jira, Monday, ClickUp, Microsoft 365 | `start`, `update` | task-management, memory-management |
+| **sales** | 客户研究、通话准备、pipeline管理、外联邮件 | Slack, HubSpot, Close, Clay, ZoomInfo, Notion, Jira, Fireflies, Microsoft 365 | `call-summary`, `forecast`, `pipeline-review` | account-research, call-prep, competitive-intelligence, draft-outreach, daily-briefing |
+| **customer-support** | 工单分流、回复起草、升级管理、知识库 | Slack, Intercom, HubSpot, Guru, Jira, Notion, Microsoft 365 | `draft-response`, `escalate`, `kb-article`, `research`, `triage` | ticket-triage, response-drafting, escalation, knowledge-management, customer-research |
+| **product-management** | 写 spec、规划路线图、综合用户研究 | Slack, Linear, Asana, Monday, ClickUp, Jira, Notion, Figma, Amplitude, Pendo, Intercom, Fireflies | `write-spec`, `roadmap-update`, `synthesize-research`, `competitive-brief`, `metrics-review`, `stakeholder-update` | feature-spec, roadmap-management, user-research-synthesis, competitive-analysis, metrics-tracking, stakeholder-comms |
+| **marketing** | 内容创作、活动策划、品牌声音、竞品分析 | Slack, Canva, Figma, HubSpot, Amplitude, Notion, Ahrefs, SimilarWeb, Klaviyo | `draft-content`, `campaign-plan`, `brand-review`, `competitive-brief`, `email-sequence`, `performance-report`, `seo-audit` | content-creation, campaign-planning, brand-voice, competitive-analysis, performance-analytics |
+| **legal** | 合同审查、NDA 分流、合规、风险评估 | Slack, Box, Egnyte, Jira, Microsoft 365 | `review-contract`, `triage-nda`, `brief`, `respond`, `vendor-check` | contract-review, nda-triage, compliance, legal-risk-assessment, meeting-briefing, canned-responses |
+| **finance** | 日记账、对账、财务报表、差异分析、审计 | Snowflake, Databricks, BigQuery, Slack, Microsoft 365 | `journal-entry`, `reconciliation`, `income-statement`, `variance-analysis`, `sox-testing` | journal-entry-prep, reconciliation, financial-statements, variance-analysis, close-management, audit-support |
+| **data** | SQL查询、数据探索、可视化、仪表板 | Snowflake, Databricks, BigQuery, Hex, Amplitude, Jira | `write-query`, `explore-data`, `analyze`, `create-viz`, `build-dashboard`, `validate` | sql-queries, data-exploration, data-visualization, statistical-analysis, data-validation, interactive-dashboard-builder, data-context-extractor |
+| **enterprise-search** | 跨工具搜索 — email、chat、docs、wikis | Slack, Notion, Guru, Jira, Asana, Microsoft 365 | `search`, `digest` | search-strategy, knowledge-synthesis, source-management |
+| **bio-research** | 生命科学 R&D — 文献搜索、基因组分析 | PubMed, BioRender, bioRxiv, ClinicalTrials.gov, ChEMBL, Synapse, Wiley, Owkin, Open Targets, Benchling | `start` | scientific-problem-selection, single-cell-rna-qc, scvi-tools, nextflow-development, instrument-data-to-allotrope |
+| **cowork-plugin-management** | 创建和自定义新插件 | — | — | cowork-plugin-customizer |
+
+### Agent 场景推荐
+
+根据你正在构建的 Agent 类型，推荐安装对应的知识工作插件：
+
+| Agent 场景 | 推荐 Plugins | 理由 |
+|-----------|-------------|------|
+| **客服 Agent** | `customer-support`, `enterprise-search` | 工单自动分流 + 跨知识库搜索 |
+| **销售 Agent** | `sales`, `productivity` | 客户研究 + 日常工作流管理 |
+| **PM Agent** | `product-management`, `data` | 写 spec + 数据分析 |
+| **营销 Agent** | `marketing`, `data` | 内容创作 + 效果分析 |
+| **法务 Agent** | `legal`, `enterprise-search` | 合同审查 + 内部搜索 |
+| **财务 Agent** | `finance`, `data` | 对账报表 + SQL 查询 |
+| **数据分析 Agent** | `data`, `enterprise-search` | 全栈数据分析 |
+| **科研 Agent** | `bio-research` | 生命科学研发 |
+| **全能助手 Agent** | `productivity`, `enterprise-search` | 基础生产力 + 搜索 |
+
+### Plugin 结构说明
+
+每个 plugin 遵循统一结构：
+```
+plugin-name/
+├── .claude-plugin/plugin.json   # 清单文件
+├── .mcp.json                    # MCP 工具连接配置
+├── commands/                    # 用户显式触发的斜杠命令
+└── skills/                      # Claude 自动调用的领域知识
+```
+
+- **Skills**: 编码领域专业知识，Claude 在相关场景自动调用
+- **Commands**: 显式操作（如 `/finance:reconciliation`, `/data:write-query`）
+- **Connectors**: 通过 MCP 连接外部工具（CRM、项目管理、数据仓库等）
+
+所有组件都是纯文件 — markdown + JSON，无需代码、无需基础设施。
+
+---
+
 ## Community Plugins
 
 ### ast-grep Skill
@@ -426,6 +490,28 @@ cp -r "$CLAUDE_DIR/ast-grep-skill"/*.md "$SKILLS_DIR/ast-grep/" 2>/dev/null || \
 - `obsidian-markdown`
 - `obsidian-bases`
 - `json-canvas`
+
+### Agent Projects (构建 AI Agent)
+
+When the project involves building an AI Agent for a specific domain, recommend the corresponding knowledge-work plugin:
+
+| Agent Domain | Recommended Plugin | Install Command |
+|-------------|-------------------|-----------------|
+| Customer Support Agent | `customer-support` + `enterprise-search` | `claude plugin install customer-support@knowledge-work-plugins` |
+| Sales Agent | `sales` + `productivity` | `claude plugin install sales@knowledge-work-plugins` |
+| PM Agent | `product-management` + `data` | `claude plugin install product-management@knowledge-work-plugins` |
+| Marketing Agent | `marketing` + `data` | `claude plugin install marketing@knowledge-work-plugins` |
+| Legal Agent | `legal` + `enterprise-search` | `claude plugin install legal@knowledge-work-plugins` |
+| Finance Agent | `finance` + `data` | `claude plugin install finance@knowledge-work-plugins` |
+| Data Analysis Agent | `data` + `enterprise-search` | `claude plugin install data@knowledge-work-plugins` |
+| Bio Research Agent | `bio-research` | `claude plugin install bio-research@knowledge-work-plugins` |
+| General Productivity Agent | `productivity` + `enterprise-search` | `claude plugin install productivity@knowledge-work-plugins` |
+
+**Why use these for Agent development:**
+- Each plugin contains production-ready **skills** (domain workflows) and **commands** (explicit actions) that serve as reference implementations
+- The `.mcp.json` configs show how to wire external tools (CRM, project trackers, data warehouses) via MCP
+- Skill files encode domain best practices that can be adapted for your Agent's behavior
+- Pure markdown + JSON, no code — easy to read, customize, and integrate
 
 ---
 

@@ -12,17 +12,32 @@
 ### 方案一：React Native + Expo (推荐给Web团队)
 
 **架构组合:**
-```
-React Native 0.76+ (New Architecture)
-├── Expo SDK 52+ (Managed Workflow推荐)
+
+```text
+React Native 0.83+ (New Architecture Only)
+├── Expo SDK 55+ (Managed Workflow推荐)
+├── React 19.2+
 ├── Expo Router v4 (文件系统路由)
+├── Expo UI (@expo/ui) - SwiftUI/Jetpack Compose 风格组件
 ├── TanStack Query (服务端状态)
 ├── Zustand/Jotai (客户端状态)
 ├── NativeWind v4 (Tailwind样式)
 └── React Native Reanimated 3 (动画)
 ```
 
+**SDK 55 新特性 (2026.01):**
+
+- Legacy Architecture 已移除，只支持 New Architecture
+- `newArchEnabled` flag 已从 app.json 移除
+- Expo UI 接近 1.0 稳定版，API 更贴近 SwiftUI/Jetpack Compose
+- Hermes v1 可选启用
+- MCP Server 支持 CLI actions
+- expo-widgets (iOS) alpha 版
+- expo-blur Android 稳定版
+- "Brownfield" 支持：将 Expo 添加到现有原生项目
+
 **关键优势:**
+
 - [Expo Managed Workflow](https://docs.expo.dev/bare/overview/) 已支持绝大多数原生功能
 - CNG (Continuous Native Generation) 无需管理 ios/android 文件夹
 - 热重载、丰富的npm生态
@@ -30,9 +45,22 @@ React Native 0.76+ (New Architecture)
 
 **LSP插件:** `typescript-lsp`
 
+**推荐 Skills:**
+- `building-native-ui` - Expo 原生 UI 开发最佳实践
+- `tailwind-setup` - NativeWind + Tailwind 配置
+- `data-fetching` - TanStack Query 数据获取
+- `api-routes` - Expo API Routes 开发
+
+**安装方式:**
+```bash
+bunx skills add expo/skills -s building-native-ui -y
+```
+
 **参考资源:**
-- [Expo 2026 Guide](https://metadesignsolutions.com/expo-2026-the-best-way-to-build-cross-platform-apps/)
-- [React Native New Architecture](https://reactnative.dev/docs/new-architecture-intro)
+
+- [Expo SDK 55 Beta Changelog](https://expo.dev/changelog/sdk-55-beta)
+- [React Native 0.83 Release](https://reactnative.dev/blog/2025/12/10/react-native-0.83)
+- [Expo Documentation](https://docs.expo.dev/versions/latest/)
 
 ### 方案二：Flutter (推荐给UI密集型应用)
 

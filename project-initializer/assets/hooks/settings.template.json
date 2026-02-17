@@ -1,0 +1,31 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/tdd-guard-hook.sh" },
+          { "type": "command", "command": "bash .claude/hooks/pre-code-change.sh \"$TOOL_INPUT\"" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/anti-simplification.sh" },
+          { "type": "command", "command": "bash .claude/hooks/doc-drift-guard.sh" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/post-bash.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\"" }]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/prompt-guard.sh \"$PROMPT\"" }]
+      }
+    ]
+  }
+}

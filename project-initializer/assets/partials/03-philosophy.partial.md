@@ -26,11 +26,31 @@
 NEW_FEATURE_FLOW:
   trigger: When user says "new feature" or "new function"
   steps:
-    1. Output Spec first (functionality description, boundary conditions, exception handling)
-    2. STOP and wait for confirmation
-    3. Output Interface Contract (types, function signatures)
-    4. STOP and wait for confirmation
-    5. Output Implementation + Tests together
+    # BDD Layer — Define WHAT (Human + LLM collaborate)
+    1. Define acceptance criteria in Given-When-Then format:
+       - Minimum 3 scenarios (happy path, edge case, error path)
+       - Format: |
+           Feature: [Name]
+             Scenario: [Happy path]
+               Given [precondition]
+               When [action]
+               Then [expected outcome]
+             Scenario: [Edge case]
+               Given [precondition]
+               When [boundary action]
+               Then [expected handling]
+             Scenario: [Error path]
+               Given [precondition]
+               When [invalid action]
+               Then [error response]
+    2. Output Spec first (functionality description, boundary conditions, exception handling)
+    3. STOP and wait for confirmation
+    4. Output Interface Contract (types, function signatures)
+    5. STOP and wait for confirmation
+    # TDD Layer — Define HOW (LLM generates, Human reviews)
+    6. Write failing tests from acceptance scenarios (Red)
+    7. Write minimal implementation to pass tests (Green)
+    8. Refactor only after all tests pass (Refactor)
   rule: Test code quantity >= Implementation quantity
 
 MODIFICATION_FLOW:
@@ -44,9 +64,11 @@ BUG_FIX_FLOW:
   trigger: When user says "bug"
   steps:
     1. Write a test that reproduces the bug FIRST
-    2. Delete the affected module entirely
-    3. Rewrite from scratch (never patch)
-    4. Verify all tests pass
+    2. Verify the test FAILS (confirms bug exists)
+    3. Delete the affected module entirely
+    4. Rewrite from scratch (never patch)
+    5. Verify all tests pass
+    6. FORBIDDEN: "I think it's fixed" without test proof
 ```
 
 #### Module Boundary (Deletion Scope Definition)
@@ -78,6 +100,67 @@ ESCALATION_RULE:
   Contract changes -> All modules depending on that Contract must be rewritten
 ```
 
+#### TDD vs BDD Selection Guide
+
+```yaml
+# 按模块性质选择测试策略，不是按前后端划分
+
+TDD_TARGETS:  # 输入输出明确，纯逻辑
+  - API endpoints (request → response)
+  - Business logic / algorithms / utils
+  - React Hooks / state logic (useXxx → returns data)
+  - Smart Contracts (mint() → balanceOf === 1)
+  - Data transformations / parsers
+  - Database queries / ORM operations
+  tool: Vitest (unit) + Hardhat (contracts)
+  pattern: Red → Green → Refactor
+
+BDD_TARGETS:  # 用户行为驱动，场景级
+  - User flows / acceptance criteria
+  - UI component interactions (click → see result)
+  - E2E tests (full page scenarios)
+  - Feature acceptance (Given-When-Then)
+  - Cross-module integration from user perspective
+  tool: Playwright (E2E) + Testing Library (component)
+  pattern: Given → When → Then
+
+HYBRID_EXAMPLE:
+  # React component with business logic
+  AgentCard:
+    BDD: "renders agent skills and hire button"           # 行为
+    TDD: "calculates reputation score from history data"  # 逻辑
+
+  # API + User flow
+  MintNFA:
+    TDD: "contract mints token with correct URI"          # 合约逻辑
+    BDD: "user uploads config, clicks mint, sees success" # 用户流程
+```
+
+#### Test Quality Standards
+
+```yaml
+TEST_STANDARDS:
+  NAMING: should_[expected]_when_[condition]
+  STRUCTURE: Arrange-Act-Assert (AAA)
+  ISOLATION: Each test independent, no shared mutable state
+  DETERMINISM: No Math.random(), no Date.now(), no network calls in unit tests
+  COVERAGE_TARGET: 80%+ for business logic, 100% for algorithms
+  PREFERENCE: Property-based tests over example-based for algorithms
+
+  FORBIDDEN_PATTERNS:
+    - Tests that only check implementation details (spy counts, call order)
+    - Tests that duplicate source code logic
+    - Tests with no assertions
+    - Tests that always pass regardless of implementation
+    - Writing implementation before its test exists
+
+  EXCEPTIONS (skip TDD for):
+    - Config files, type definitions, constants
+    - CSS/style-only changes
+    - Documentation-only changes
+    - Prototype/spike exploration (must be marked as such)
+```
+
 #### Forbidden Actions (Development Protocol)
 
 - No patching code to fix bugs (must rewrite)
@@ -85,5 +168,6 @@ ESCALATION_RULE:
 - No writing code without corresponding tests
 - No modifying tests to make buggy code pass
 - No deleting code beyond the scope of failing tests
+- No implementing features not covered by acceptance criteria
 
 ---

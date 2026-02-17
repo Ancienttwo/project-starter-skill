@@ -3,17 +3,18 @@
 > **Developer**: {{USER_NAME}}
 > **Service Target**: {{SERVICE_TARGET}}
 > **Interaction Style**: {{INTERACTION_STYLE}}
-> **Thinking Mode**: ultrathink — Three-layer traversal (Phenomenon → Essence → Philosophy → Output)
+> **Thinking Mode**: ultrathink - Three-layer traversal (Phenomenon -> Essence -> Philosophy -> Output)
 
 ---
+
 
 ## Iron Rules
 
 ### 1. Good Taste
 - Eliminate special cases instead of adding if/else
-- More than 3 branches → Stop, refactor data structure
-- More than 3 levels of nesting → Design error, must refactor
-- More than 20 lines per function → Ask if you're doing it wrong
+- More than 3 branches -> Stop, refactor data structure
+- More than 3 levels of nesting -> Design error, must refactor
+- More than 20 lines per function -> Ask if you're doing it wrong
 
 ### 2. Pragmatism
 - Solve real problems, not hypothetical threats
@@ -22,9 +23,9 @@
 ### 3. Stand on Giants' Shoulders
 
 **New feature development flow:**
-1. **Search for mature solutions** — Use Context7 / GitHub / npm for best practices
-2. **Analyze project constraints** — Evaluate against existing codebase and tech stack
-3. **Propose integration plan** — Don't reinvent wheels, but don't blindly copy either
+1. **Search for mature solutions** - Use Context7 / GitHub / npm for best practices
+2. **Analyze project constraints** - Evaluate against existing codebase and tech stack
+3. **Propose integration plan** - Don't reinvent wheels, but don't blindly copy either
 
 ### 4. Zero Compatibility Debt
 
@@ -49,17 +50,191 @@ REQUIRED:
 
 | Metric | Limit |
 |--------|-------|
-| File lines | ≤ 800 |
-| Files per folder | ≤ 8 (create subdirectories if more) |
-| Function lines | ≤ 20 |
-| Nesting levels | ≤ 3 |
-| Branch count | ≤ 3 |
+| File lines | <= 800 |
+| Files per folder | <= 8 (create subdirectories if more) |
+| Function lines | <= 20 |
+| Nesting levels | <= 3 |
+| Branch count | <= 3 |
 
 ### 6. Prohibitions
 
 {{PROHIBITIONS}}
 
+
+### 7. Development Protocol (Multi-Agent Philosophy)
+
+> **Core Philosophy**: Token unlimited = Manpower unlimited = Code is toilet paper = Rewrite over patch
+
+#### The Layered Truth
+
+```
++-----------------------------------------------------+
+|                 IMMUTABLE LAYER (Assets)            |
+|  +-----------+  +-----------+  +-----------+        |
+|  |   Spec    |  | Contract  |  |   Tests   |        |
+|  |  (What)   |  |(Interface)|  |  (Truth)  |        |
+|  +-----------+  +-----------+  +-----------+        |
+|----------------------------------------------------|
+|                 MUTABLE LAYER (Toilet Paper)        |
+|  +-------------------------------------------+      |
+|  |              Implementation               |      |
+|  |        (Code that can be deleted anytime) |      |
+|  +-------------------------------------------+      |
++-----------------------------------------------------+
+```
+
+#### Response Protocol
+
+```yaml
+NEW_FEATURE_FLOW:
+  trigger: When user says "new feature" or "new function"
+  steps:
+    # BDD Layer — Define WHAT (Human + LLM collaborate)
+    1. Define acceptance criteria in Given-When-Then format:
+       - Minimum 3 scenarios (happy path, edge case, error path)
+       - Format: |
+           Feature: [Name]
+             Scenario: [Happy path]
+               Given [precondition]
+               When [action]
+               Then [expected outcome]
+             Scenario: [Edge case]
+               Given [precondition]
+               When [boundary action]
+               Then [expected handling]
+             Scenario: [Error path]
+               Given [precondition]
+               When [invalid action]
+               Then [error response]
+    2. Output Spec first (functionality description, boundary conditions, exception handling)
+    3. STOP and wait for confirmation
+    4. Output Interface Contract (types, function signatures)
+    5. STOP and wait for confirmation
+    # TDD Layer — Define HOW (LLM generates, Human reviews)
+    6. Write failing tests from acceptance scenarios (Red)
+    7. Write minimal implementation to pass tests (Green)
+    8. Refactor only after all tests pass (Refactor)
+  rule: Test code quantity >= Implementation quantity
+
+MODIFICATION_FLOW:
+  trigger: When user says "change" or "modify"
+  steps:
+    1. Ask: "Change Spec or just Implementation?"
+    2. If Spec changes -> Regenerate everything from Spec
+    3. If only Impl changes -> Delete and rewrite module, keep interface
+
+BUG_FIX_FLOW:
+  trigger: When user says "bug"
+  steps:
+    1. Write a test that reproduces the bug FIRST
+    2. Verify the test FAILS (confirms bug exists)
+    3. Delete the affected module entirely
+    4. Rewrite from scratch (never patch)
+    5. Verify all tests pass
+    6. FORBIDDEN: "I think it's fixed" without test proof
+```
+
+#### Module Boundary (Deletion Scope Definition)
+
+```yaml
+MODULE_DEFINITION:
+  # Minimum unit: one test file corresponds to one module
+  UNIT: Single function/class -> Delete that function/class file
+  INTEGRATION: Multiple functions collaborating -> Delete entire src/modules/{name}/ directory
+  E2E: Cross-module flow -> Only delete modules involved in failed path
+
+DELETION_SCOPE:
+  # Determine deletion scope based on test type
+  tests/unit/auth.test.ts fails:
+    -> Only delete src/modules/auth/
+    -> Keep contracts/modules/auth.contract.ts
+
+  tests/integration/checkout.test.ts fails:
+    -> Delete src/modules/checkout/
+    -> If contract itself has issues -> First change spec, then delete all downstream
+
+  tests/e2e/user-flow.test.ts fails:
+    -> Locate the specific failing module (check stack trace)
+    -> Only delete that module, not the entire chain
+
+ESCALATION_RULE:
+  # When to change upstream
+  Multiple modules rewritten but still failing -> Problem is in Contract -> Go back to Spec layer
+  Contract changes -> All modules depending on that Contract must be rewritten
+```
+
+#### TDD vs BDD Selection Guide
+
+```yaml
+# 按模块性质选择测试策略，不是按前后端划分
+
+TDD_TARGETS:  # 输入输出明确，纯逻辑
+  - API endpoints (request → response)
+  - Business logic / algorithms / utils
+  - React Hooks / state logic (useXxx → returns data)
+  - Smart Contracts (mint() → balanceOf === 1)
+  - Data transformations / parsers
+  - Database queries / ORM operations
+  tool: Vitest (unit) + Hardhat (contracts)
+  pattern: Red → Green → Refactor
+
+BDD_TARGETS:  # 用户行为驱动，场景级
+  - User flows / acceptance criteria
+  - UI component interactions (click → see result)
+  - E2E tests (full page scenarios)
+  - Feature acceptance (Given-When-Then)
+  - Cross-module integration from user perspective
+  tool: Playwright (E2E) + Testing Library (component)
+  pattern: Given → When → Then
+
+HYBRID_EXAMPLE:
+  # React component with business logic
+  AgentCard:
+    BDD: "renders agent skills and hire button"           # 行为
+    TDD: "calculates reputation score from history data"  # 逻辑
+
+  # API + User flow
+  MintNFA:
+    TDD: "contract mints token with correct URI"          # 合约逻辑
+    BDD: "user uploads config, clicks mint, sees success" # 用户流程
+```
+
+#### Test Quality Standards
+
+```yaml
+TEST_STANDARDS:
+  NAMING: should_[expected]_when_[condition]
+  STRUCTURE: Arrange-Act-Assert (AAA)
+  ISOLATION: Each test independent, no shared mutable state
+  DETERMINISM: No Math.random(), no Date.now(), no network calls in unit tests
+  COVERAGE_TARGET: 80%+ for business logic, 100% for algorithms
+  PREFERENCE: Property-based tests over example-based for algorithms
+
+  FORBIDDEN_PATTERNS:
+    - Tests that only check implementation details (spy counts, call order)
+    - Tests that duplicate source code logic
+    - Tests with no assertions
+    - Tests that always pass regardless of implementation
+    - Writing implementation before its test exists
+
+  EXCEPTIONS (skip TDD for):
+    - Config files, type definitions, constants
+    - CSS/style-only changes
+    - Documentation-only changes
+    - Prototype/spike exploration (must be marked as such)
+```
+
+#### Forbidden Actions (Development Protocol)
+
+- No patching code to fix bugs (must rewrite)
+- No changing interface without Spec update
+- No writing code without corresponding tests
+- No modifying tests to make buggy code pass
+- No deleting code beyond the scope of failing tests
+- No implementing features not covered by acceptance criteria
+
 ---
+
 
 ## Project Structure
 
@@ -87,9 +262,47 @@ MODIFY FIRST PRINCIPLE:
   4. Delete temporary files immediately after use
 
 DIRECTORY STRUCTURE:
+  # ===== IMMUTABLE LAYER (Asset Layer - Core Assets) =====
+  /specs/:
+    PURPOSE: Feature specifications (IMMUTABLE)
+    INCLUDES:
+      - overview.md       # Overall requirements overview
+      - modules/          # Module-specific feature specs
+    RULES:
+      - Modifying Spec = Rewrite all downstream
+      - Write Spec first, then code
+
+  /contracts/:
+    PURPOSE: Interface contracts (IMMUTABLE)
+    INCLUDES:
+      - types.ts          # Shared type definitions
+      - modules/          # Module-specific interface contracts
+    RULES:
+      - Changing interface must first change Spec
+      - Interface is the only basis for implementation
+
+  /tests/:
+    PURPOSE: Tests are the truth (IMMUTABLE)
+    INCLUDES:
+      - unit/             # Unit tests
+      - integration/      # Integration tests
+      - e2e/              # End-to-end tests
+    RULES:
+      - Test code quantity >= Implementation code quantity
+      - Test failure = Delete module and rewrite
+
+  # ===== MUTABLE LAYER (Toilet Paper Layer - Can Rewrite Anytime) =====
+  /src/:
+    PURPOSE: Implementation (MUTABLE - Toilet Paper Zone)
+    INCLUDES:
+      - modules/          # Module-organized implementation code
+    RULES:
+      - Can be deleted and rewritten anytime
+      - Don't patch, rewrite
+
+  # ===== SUPPORTING (Support Layer) =====
   /docs/:
     PURPOSE: Technical documentation (commit to Git)
-    ORGANIZE_BY: Feature / Module
     INCLUDES:
       - architecture/     # System design docs
       - api/              # API documentation
@@ -99,14 +312,16 @@ DIRECTORY STRUCTURE:
       - TODO.md           # Pending tasks
       - CHANGELOG.md      # Version history
 
+  /scripts/:
+    PURPOSE: Automation scripts
+    INCLUDES:
+      - regenerate.sh     # One-click delete and rewrite a module
+
   /ops/:
     PURPOSE: Operations & sensitive configs (DO NOT commit to Git)
     INCLUDES:
       - .env.local        # Local environment variables
-      - .env.production   # Production env (encrypted or reference)
-      - database/         # DB migrations, seeds, backups
-      - scripts/          # Deployment & maintenance scripts
-      - docker/           # Docker compose, configs
+      - database/         # DB migrations, seeds
       - secrets/          # API keys, certificates
 
   /artifacts/:
@@ -114,8 +329,8 @@ DIRECTORY STRUCTURE:
     INCLUDES:
       - dist/             # Production builds
       - coverage/         # Test coverage reports
-      - reports/          # Generated reports
 ```
+
 
 ### Progress Tracking
 
@@ -237,26 +452,26 @@ GIT_BRANCH_STRATEGY:
   feature/*:
     NAMING: feature/{ticket-id}-{short-description}
     EXAMPLE: feature/PROJ-123-add-user-auth
-    LIFECYCLE: Branch from develop → PR to develop → Delete after merge
+    LIFECYCLE: Branch from develop -> PR to develop -> Delete after merge
 
   hotfix/*:
     NAMING: hotfix/{ticket-id}-{description}
     EXAMPLE: hotfix/PROJ-456-fix-login-crash
-    LIFECYCLE: Branch from main → PR to main + develop → Delete after merge
+    LIFECYCLE: Branch from main -> PR to main + develop -> Delete after merge
     TRIGGERS: PATCH version bump
 
 COMMIT_MESSAGE_FORMAT:
   PATTERN: "{type}({scope}): {description}"
   TYPES:
-    - feat     # New feature → MINOR bump
-    - fix      # Bug fix → PATCH bump
+    - feat     # New feature -> MINOR bump
+    - fix      # Bug fix -> PATCH bump
     - docs     # Documentation only
     - style    # Formatting, no code change
     - refactor # Code restructure, no behavior change
-    - perf     # Performance improvement → MINOR bump
+    - perf     # Performance improvement -> MINOR bump
     - test     # Adding tests
     - chore    # Build, CI, dependencies
-    - breaking # Breaking change → MAJOR bump (use with feat/fix)
+    - breaking # Breaking change -> MAJOR bump (use with feat/fix)
 
   EXAMPLES:
     - "feat(auth): add OAuth2 login support"
@@ -269,15 +484,15 @@ AI_CHANGELOG_GENERATION:
   COMMAND: "Generate CHANGELOG from commits since last tag"
   PROCESS:
     1. AI scans commits since last version tag
-    2. Groups by type (feat → Added, fix → Fixed, etc.)
+    2. Groups by type (feat -> Added, fix -> Fixed, etc.)
     3. Extracts scope for categorization
     4. Generates human-readable descriptions
     5. Suggests version bump based on commit types
 
   AUTO_VERSION_RULES:
-    - Has "breaking" or "BREAKING CHANGE" → MAJOR
-    - Has "feat" → MINOR
-    - Only "fix", "docs", "chore" → PATCH
+    - Has "breaking" or "BREAKING CHANGE" -> MAJOR
+    - Has "feat" -> MINOR
+    - Only "fix", "docs", "chore" -> PATCH
 ```
 
 **AI-Assisted Release Workflow:**
@@ -359,6 +574,7 @@ DEPLOYMENT_TRIGGERS:
       - Post preview URL to PR
 ```
 
+
 **Cloudflare Deployment Options (Recommended):**
 
 ```yaml
@@ -399,23 +615,23 @@ CLOUDFLARE_DEPLOYMENT:
   # ===== Recommended Architecture =====
   STACK_RECOMMENDATIONS:
     FRONTEND_ONLY:
-      → Pages (auto-deploy from Git)
+      -> Pages (auto-deploy from Git)
 
     FRONTEND_PLUS_API:
-      → Pages (frontend) + Workers (API)
-      → Or Pages with /functions directory
+      -> Pages (frontend) + Workers (API)
+      -> Or Pages with /functions directory
 
     FULL_STACK_EDGE:
-      → Pages + Workers + D1 + R2
+      -> Pages + Workers + D1 + R2
 
     AI_APPLICATION:
-      → Pages + Workers + Workers AI + Vectorize
+      -> Pages + Workers + Workers AI + Vectorize
 
     PYTHON_BACKEND:
-      → Pages (frontend) + Containers (FastAPI/Flask)
+      -> Pages (frontend) + Containers (FastAPI/Flask)
 
     MONOREPO:
-      → Turborepo + Pages (apps/web) + Workers (apps/api)
+      -> Turborepo + Pages (apps/web) + Workers (apps/api)
 ```
 
 **CI/CD Integration:**
@@ -467,90 +683,90 @@ VERSION_IN_CODE:
 
 ```yaml
 CLOUDFLARE_AI_STACK:
-  # ===== Workers AI (替代 Dify 的 LLM 调用) =====
+  # ===== Workers AI (LLM Calls) =====
   WORKERS_AI:
     MODELS:
-      - Llama 3.1 8B/70B (对话)
-      - Mistral 7B (快速推理)
+      - Llama 3.1 8B/70B (conversation)
+      - Mistral 7B (fast inference)
       - BGE Base (Embedding)
-      - Whisper (语音转文字)
-      - Flux Schnell (图像生成)
-    PRICING: $0.011/1k neurons (比 OpenAI 便宜 10x+)
-    ADVANTAGE: 边缘推理，数据不出境
+      - Whisper (speech-to-text)
+      - Flux Schnell (image generation)
+    PRICING: $0.011/1k neurons (10x+ cheaper than OpenAI)
+    ADVANTAGE: Edge inference, data stays in region
 
-  # ===== AI Gateway (替代 Dify 的 API 管理) =====
+  # ===== AI Gateway (API Management) =====
   AI_GATEWAY:
     FEATURES:
-      - 统一调用 OpenAI/Claude/Gemini
-      - 请求缓存 (节省 50%+ 成本)
-      - 限流保护预算
-      - 自动 Fallback
-      - 完整日志审计
+      - Unified calls to OpenAI/Claude/Gemini
+      - Request caching (save 50%+ cost)
+      - Rate limiting for budget protection
+      - Auto fallback
+      - Complete audit logs
     USE_CASE: |
-      # 通过 Gateway 调用任意 LLM
+      # Call any LLM through Gateway
       fetch("https://gateway.ai.cloudflare.com/v1/{account}/my-gateway/openai/...")
 
-  # ===== AutoRAG (替代 Dify 的知识库) =====
+  # ===== AutoRAG (Knowledge Base) =====
   AUTORAG:
     FEATURES:
-      - 上传文档自动索引
-      - 自动分块 + Embedding
-      - 向量搜索 + 答案生成
-    USE_CASE: 企业知识库、客服机器人
+      - Upload documents, auto-index
+      - Automatic chunking + Embedding
+      - Vector search + answer generation
+    USE_CASE: Enterprise knowledge base, customer service bots
 
-  # ===== Vectorize (替代 Dify 的向量存储) =====
+  # ===== Vectorize (Vector Storage) =====
   VECTORIZE:
     FEATURES:
-      - 免费 5M 向量
-      - 与 Workers AI Embedding 无缝集成
-      - 毫秒级查询
-    USE_CASE: RAG、语义搜索
+      - Free 5M vectors
+      - Seamless integration with Workers AI Embedding
+      - Millisecond-level queries
+    USE_CASE: RAG, semantic search
 
-  # ===== vs Dify 对比 =====
+  # ===== vs Dify Comparison =====
   COMPARISON:
-    | 功能 | Dify | Cloudflare |
-    |------|------|------------|
-    | LLM 调用 | ✅ 多模型 | ✅ Workers AI + AI Gateway |
-    | 知识库 | ✅ 内置 | ✅ AutoRAG + Vectorize |
-    | 工作流 | ✅ 可视化 | ⚠️ 代码 (Workflows) |
-    | 部署 | ⚠️ 需服务器 | ✅ Serverless 边缘 |
-    | 成本 | $$$ | $ (免费层充足) |
-    | 延迟 | 中心化 | 边缘 (全球 <50ms) |
-    | 数据隐私 | 需自托管 | 边缘处理不出境 |
+    | Feature | Dify | Cloudflare |
+    |---------|------|------------|
+    | LLM calls | Multi-model | Workers AI + AI Gateway |
+    | Knowledge base | Built-in | AutoRAG + Vectorize |
+    | Workflow | Visual | Code (Workflows) |
+    | Deployment | Needs server | Serverless edge |
+    | Cost | $$$ | $ (generous free tier) |
+    | Latency | Centralized | Edge (global <50ms) |
+    | Data privacy | Self-host needed | Edge processing, data stays local |
 
-  # ===== 推荐策略 =====
+  # ===== Recommended Strategy =====
   STRATEGY:
-    简单 AI 应用:
-      → Workers AI (免费层足够)
+    Simple AI apps:
+      -> Workers AI (free tier sufficient)
 
-    生产级 AI:
-      → AI Gateway → Claude/GPT + Workers AI fallback
+    Production AI:
+      -> AI Gateway -> Claude/GPT + Workers AI fallback
 
-    RAG 应用:
-      → Vectorize + Workers AI Embedding + AutoRAG
+    RAG apps:
+      -> Vectorize + Workers AI Embedding + AutoRAG
 
-    复杂工作流:
-      → Cloudflare Workflows + Workers AI
-      → 或保留 Dify 做编排，调用 Workers AI
+    Complex workflows:
+      -> Cloudflare Workflows + Workers AI
+      -> Or keep Dify for orchestration, call Workers AI
 ```
 
-**Durable Objects (状态管理解决方案):**
+**Durable Objects (State Management Solution):**
 
 ```yaml
 DURABLE_OBJECTS:
-  # ===== 核心能力 =====
+  # ===== Core Capabilities =====
   FEATURES:
-    - 全局唯一单例 (每个 ID 只有一个实例)
-    - 强一致性状态 (无需分布式锁)
-    - 内置持久化存储 (Key-Value + SQL)
-    - WebSocket 连接管理
-    - 自动休眠/唤醒 (按使用付费)
+    - Globally unique singleton (only one instance per ID)
+    - Strong consistency state (no distributed locks needed)
+    - Built-in persistent storage (Key-Value + SQL)
+    - WebSocket connection management
+    - Auto hibernate/wake (pay per use)
 
-  # ===== 典型用例 =====
+  # ===== Typical Use Cases =====
   USE_CASES:
-    实时协作:
-      SCENARIO: 多人文档编辑 (如 Notion/Figma)
-      HOW: 每个文档一个 DO，管理所有编辑者 WebSocket
+    Real-time collaboration:
+      SCENARIO: Multi-user document editing (like Notion/Figma)
+      HOW: One DO per document, manages all editors' WebSockets
       EXAMPLE: |
         export class Document {
           connections = new Set<WebSocket>()
@@ -559,7 +775,7 @@ DURABLE_OBJECTS:
             this.connections.add(server)
             server.accept()
             server.addEventListener('message', (msg) => {
-              // 广播给其他编辑者
+              // Broadcast to other editors
               for (const conn of this.connections) {
                 if (conn !== server) conn.send(msg.data)
               }
@@ -568,29 +784,29 @@ DURABLE_OBJECTS:
           }
         }
 
-    游戏房间:
-      SCENARIO: 多人游戏匹配/房间状态
-      HOW: 每个房间一个 DO，管理玩家状态和游戏逻辑
-      ADVANTAGE: 全球低延迟 (就近路由)
+    Game rooms:
+      SCENARIO: Multiplayer game matching/room state
+      HOW: One DO per room, manages player state and game logic
+      ADVANTAGE: Global low latency (geo-routed)
 
-    限流计数器:
+    Rate limiting:
       SCENARIO: API Rate Limiting
-      HOW: 每个用户/API Key 一个 DO
-      ADVANTAGE: 强一致性计数，无需 Redis
+      HOW: One DO per user/API Key
+      ADVANTAGE: Strong consistency counting, no Redis needed
 
-    购物车/会话:
-      SCENARIO: 电商购物车、用户会话
-      HOW: 每个用户一个 DO，持久化购物车状态
-      ADVANTAGE: 无需外部数据库，自动持久化
+    Shopping cart/Sessions:
+      SCENARIO: E-commerce cart, user sessions
+      HOW: One DO per user, persists cart state
+      ADVANTAGE: No external database, auto-persistence
 
-    分布式锁:
-      SCENARIO: 防止重复操作 (如支付)
-      HOW: 操作 ID 对应一个 DO
-      ADVANTAGE: 全局单例保证原子性
+    Distributed locks:
+      SCENARIO: Prevent duplicate operations (like payments)
+      HOW: Operation ID corresponds to one DO
+      ADVANTAGE: Global singleton guarantees atomicity
 
-    实时计数:
-      SCENARIO: 点赞数、在线人数、库存
-      HOW: 资源 ID 对应一个 DO
+    Real-time counters:
+      SCENARIO: Likes, online users, inventory
+      HOW: Resource ID corresponds to one DO
       EXAMPLE: |
         export class Counter {
           value = 0
@@ -600,45 +816,45 @@ DURABLE_OBJECTS:
           }
         }
 
-  # ===== 存储选项 =====
+  # ===== Storage Options =====
   STORAGE:
     KEY_VALUE:
       API: this.state.storage.get/put/delete
       LIMIT: 128KB per value
-      USE_CASE: 简单状态、配置
+      USE_CASE: Simple state, config
 
     SQL (SQLite):
       API: this.state.storage.sql
       LIMIT: 10GB per DO
-      USE_CASE: 复杂查询、关系数据
+      USE_CASE: Complex queries, relational data
       EXAMPLE: |
         const result = await this.state.storage.sql
           .exec("SELECT * FROM messages WHERE room_id = ?", [roomId])
 
-  # ===== 定价 =====
+  # ===== Pricing =====
   PRICING:
-    请求: $0.15/百万请求
-    持续时间: $12.50/百万 GB-s
-    存储: $0.20/GB/月
-    免费层: 每日 10万请求 + 1GB 存储
+    Requests: $0.15/million requests
+    Duration: $12.50/million GB-s
+    Storage: $0.20/GB/month
+    Free tier: 100k requests/day + 1GB storage
 
-  # ===== vs 传统方案 =====
+  # ===== vs Traditional Solutions =====
   COMPARISON:
-    | 场景 | 传统方案 | Durable Objects |
-    |------|----------|-----------------|
-    | 实时协作 | Redis Pub/Sub + 外部 DB | 单一 DO (代码更简单) |
-    | 分布式锁 | Redis SETNX / 数据库锁 | DO 单例 (天然原子) |
-    | 会话状态 | Redis / Memcached | DO 存储 (持久化内置) |
-    | WebSocket | 需要专门服务器 | DO 内置支持 |
-    | 一致性 | 最终一致 | 强一致 |
+    | Scenario | Traditional | Durable Objects |
+    |----------|------------|-----------------|
+    | Real-time collab | Redis Pub/Sub + external DB | Single DO (simpler code) |
+    | Distributed lock | Redis SETNX / DB locks | DO singleton (natural atomicity) |
+    | Session state | Redis / Memcached | DO storage (built-in persistence) |
+    | WebSocket | Needs dedicated server | DO built-in support |
+    | Consistency | Eventually consistent | Strongly consistent |
 
-  # ===== 最佳实践 =====
+  # ===== Best Practices =====
   BEST_PRACTICES:
-    - 一个 DO 只管理一个"实体" (用户/文档/房间)
-    - 避免 DO 之间频繁通信 (设计时减少依赖)
-    - 利用 Hibernation API 减少空闲成本
-    - 大数据考虑 SQLite 而非 KV
-    - 配合 Queues 处理异步任务
+    - One DO only manages one "entity" (user/document/room)
+    - Avoid frequent communication between DOs (reduce dependencies in design)
+    - Use Hibernation API to reduce idle costs
+    - Consider SQLite for large data instead of KV
+    - Use Queues for async task processing
 ```
 
 **Quick Commands:**
@@ -659,6 +875,7 @@ git revert HEAD
 npm version patch -m "chore(release): rollback v%s"
 git push origin main --tags
 ```
+
 
 ### AI-Assisted Development Workflows
 
@@ -782,9 +999,9 @@ SESSION_HANDOFF:
     4. Resume from last checkpoint
 
   CONTEXT_PRESERVATION:
-    - Key decisions → docs/architecture/decisions/
-    - Technical debt → docs/TODO.md (Backlog)
-    - Learnings → docs/PROGRESS.md (Notes section)
+    - Key decisions -> docs/architecture/decisions/
+    - Technical debt -> docs/TODO.md (Backlog)
+    - Learnings -> docs/PROGRESS.md (Notes section)
 ```
 
 **AI Pair Programming Modes:**
@@ -852,8 +1069,8 @@ MODES:
 
 ```text
 UI = f(State)
-∴ State Count ∝ Bug Count
-∴ Minimize State, Maximize Derivation
+Therefore: State Count is proportional to Bug Count
+Therefore: Minimize State, Maximize Derivation
 ```
 
 ### Two Corollaries
@@ -881,7 +1098,7 @@ Before writing code, ask:
    else { node.prev.next = node.next }
 
 // GOOD: Design structure that eliminates special cases
-   node.prev.next = node.next  // Sentinel nodes → no special cases
+   node.prev.next = node.next  // Sentinel nodes -> no special cases
 ```
 
 ```typescript
@@ -901,17 +1118,17 @@ const displayedUsers = useMemo(() => users.filter(applyFilter), [users, filter])
 
 ```text
 Three-layer traversal:
-  Phenomenon → Collect symptoms, quick fixes
-  Essence → Root cause analysis, system diagnosis
-  Philosophy → Design principles, architectural aesthetics
+  Phenomenon -> Collect symptoms, quick fixes
+  Essence -> Root cause analysis, system diagnosis
+  Philosophy -> Design principles, architectural aesthetics
 
 Ultimate goal:
-  From "How to fix" → "Why it breaks" → "How to design it right"
+  From "How to fix" -> "Why it breaks" -> "How to design it right"
 
 Good taste example:
-  ❌ if (node == head) {...} else if (node == tail) {...} else {...}
-  ✅ node->prev->next = node->next; node->next->prev = node->prev;
-  → Through sentinel node design, special cases naturally disappear
+  BAD: if (node == head) {...} else if (node == tail) {...} else {...}
+  GOOD: node->prev->next = node->next; node->next->prev = node->prev;
+  -> Through sentinel node design, special cases naturally disappear
 
 Remember:
   Simplification is the highest form of complexity
@@ -924,3 +1141,4 @@ Remember:
 *Template Version: 2.0.0*
 
 *Generated by project-initializer skill*
+

@@ -1,5 +1,78 @@
 # Best Practices Reference
 
+## 8. Development Protocol (Multi-Agent Philosophy)
+
+> **核心哲学**: Token 无限 = 人力无限 = 代码即厕纸 = 重写优于修补
+
+### The Layered Truth
+
+```
+┌─────────────────────────────────────────────────────┐
+│                 IMMUTABLE LAYER (资产)               │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐       │
+│  │   Spec    │  │ Contract  │  │   Tests   │       │
+│  │ (What)    │  │ (Interface)│  │ (Truth)   │       │
+│  └───────────┘  └───────────┘  └───────────┘       │
+├─────────────────────────────────────────────────────┤
+│                 MUTABLE LAYER (厕纸)                 │
+│  ┌───────────────────────────────────────────┐     │
+│  │              Implementation               │     │
+│  │        (可随时删掉重写的代码)               │     │
+│  └───────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────┘
+```
+
+### Response Protocol
+
+```yaml
+NEW_FEATURE_FLOW:
+  trigger: When user says "new feature" or "新功能"
+  steps:
+    1. Output Spec first (功能描述、边界条件、异常处理)
+    2. STOP and wait for confirmation
+    3. Output Interface Contract (types, function signatures)
+    4. STOP and wait for confirmation
+    5. Output Implementation + Tests together
+  rule: Test code quantity ≥ Implementation quantity
+
+MODIFICATION_FLOW:
+  trigger: When user says "改" or "modify"
+  steps:
+    1. Ask: "Change Spec or just Implementation?"
+    2. If Spec changes → Regenerate everything from Spec
+    3. If only Impl changes → Delete and rewrite module, keep interface
+
+BUG_FIX_FLOW:
+  trigger: When user says "bug"
+  steps:
+    1. Write a test that reproduces the bug FIRST
+    2. Delete the affected module entirely
+    3. Rewrite from scratch (never patch)
+    4. Verify all tests pass
+```
+
+### Forbidden Actions
+
+- ❌ Patching code to fix bugs (must rewrite)
+- ❌ Changing interface without Spec update
+- ❌ Writing code without corresponding tests
+- ❌ Modifying tests to make buggy code pass
+
+### Test Structure
+
+```
+project/
+├── tests/               # Cross-package tests
+│   ├── e2e/             # End-to-end tests
+│   └── integration/     # Integration tests
+├── packages/
+│   └── {package}/
+│       └── tests/       # Package-specific tests
+└── vitest.config.ts     # Root test config
+```
+
+---
+
 ## 9. Observability
 
 **Principle**: Never deploy without monitoring. Use open-source/free tiers for complete observability.
@@ -35,10 +108,15 @@
 ### Tool Recommendations
 
 ```bash
-# Testing setup
-npm install -D vitest @testing-library/react @testing-library/jest-dom
-npm install -D @playwright/test
+# Unit + Integration testing
+bun add -d vitest @testing-library/react @testing-library/jest-dom jsdom
+
+# E2E testing (Playwright npm package — for project tests)
+bun add -d @playwright/test
+bunx playwright install
 ```
+
+> **agent-browser vs Playwright**: `agent-browser` (npm i -g agent-browser) is for **Claude automation** — browsing, scraping, interacting with web UIs during development. `@playwright/test` is for **project E2E tests** — automated test suites that run in CI/CD. Both use Chromium, different purposes.
 
 ### AI Collaboration Prompt
 > "Write Vitest test cases for this Hook covering Happy Path and Edge Cases"

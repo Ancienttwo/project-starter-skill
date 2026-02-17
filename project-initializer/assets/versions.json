@@ -22,7 +22,9 @@
     "ant-design-x": "2.0",
     "ant-design-pro": "6.x",
     "tailwindcss": "4.x",
-    "nativewind": "4.x"
+    "nativewind": "4.x",
+    "heroui-native": "1.0.0-beta",
+    "heroui": "3.x-beta"
   },
   
   "state": {
@@ -37,16 +39,36 @@
   },
   
   "mobile": {
-    "react-native": "0.73+",
-    "expo": "51"
+    "react-native": "0.84+",
+    "expo": "55"
   },
-  
+
   "frameworks": {
     "umijs": "4.x",
-    "astro": "4.x",
+    "astro": "5.x",
     "turborepo": "2.x"
   },
   
+  "web3": {
+    "wagmi": "2.x",
+    "viem": "2.x",
+    "connectkit": "2.x",
+    "hardhat": "2.x",
+    "openzeppelin": "5.x"
+  },
+
+  "astro-ui": {
+    "starwind-ui": "1.x"
+  },
+
+  "enhancement": {
+    "shikijs": "3.x",
+    "dnd-kit": "6.x",
+    "framer-motion": "12.x",
+    "lexical": "0.x",
+    "d3": "7.x"
+  },
+
   "tools": {
     "biome": "1.x",
     "vitest": "2.x",
