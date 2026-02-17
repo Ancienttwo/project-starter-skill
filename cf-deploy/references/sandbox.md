@@ -145,7 +145,7 @@ const result = await sandbox.exec('python3 script.py', {
 
 ## Claude Agent SDK Integration
 
-### The 6 Critical Pitfalls
+### The 7 Critical Pitfalls
 
 | # | Problem | Solution |
 |---|---------|----------|
@@ -155,6 +155,57 @@ const result = await sandbox.exec('python3 script.py', {
 | 4 | Error messages lost | Capture both stdout AND stderr |
 | 5 | Permission prompts | `permissionMode: bypassPermissions` + `allowDangerouslySkipPermissions: true` |
 | 6 | Missing Seat ID | Include in system prompt |
+| 7 | MCP auth token signed but not verified | Add auth middleware to `/mcp` endpoint (see below) |
+
+### Pitfall #7: MCP Auth - The Silent Killer
+
+**Symptom**: Sandbox calls MCP, gets 401 or empty response. SDK shows `duration_ms: 0` (never called Claude API).
+
+**Root Cause**: You sign a JWT token in Worker, pass it to Sandbox, inject it into MCP headers... but the `/mcp` endpoint has NO middleware to verify the token!
+
+```
+Worker signs token ✓ → Sandbox receives token ✓ → MCP headers set ✓ → /mcp has no auth middleware ✗
+```
+
+**The Fix**: Add auth middleware BEFORE the MCP handler:
+
+```javascript
+import { verifySeatToken } from '../auth/mcp_auth.js'
+
+// MUST be registered BEFORE app.all('/mcp', mcpHandler)
+app.use('/mcp', async (c, next) => {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return c.json({ 
+      jsonrpc: '2.0', 
+      error: { code: -32001, message: 'Missing Authorization header' }, 
+      id: null 
+    }, 401)
+  }
+  const token = authHeader.slice(7)
+  try {
+    const payload = await verifySeatToken(token, env.MCP_AUTH_SECRET)
+    c.set('mcpAuth', payload)
+    await next()
+  } catch {
+    return c.json({ 
+      jsonrpc: '2.0', 
+      error: { code: -32001, message: 'Invalid or expired token' }, 
+      id: null 
+    }, 401)
+  }
+})
+
+app.all('/mcp', mcpHandler)  // Handler comes AFTER middleware
+```
+
+**Checklist**:
+- [ ] `MCP_AUTH_SECRET` set in both Worker AND Container env
+- [ ] `signSeatToken()` called in Worker before Sandbox exec
+- [ ] Token passed to Sandbox config as `mcpAuthToken`
+- [ ] `runner.mjs` injects token into MCP server headers
+- [ ] `/mcp` route has auth middleware that calls `verifySeatToken()`
+- [ ] Error response uses JSON-RPC format (not plain JSON)
 
 ### Worker Handler
 
@@ -321,29 +372,131 @@ sandbox:
 
 ### MCP AuthN/AuthZ (Production)
 
-```javascript
-// Sign MCP requests from Sandbox
-import jwt from 'jsonwebtoken'
+**Full auth flow - all 4 components must be implemented:**
 
-function signMcpRequest(seatId, secret) {
-  return jwt.sign(
-    { seat_id: seatId, iat: Date.now() },
-    secret,
-    { expiresIn: '5m' }
-  )
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  MCP Auth Flow (Sandbox → Container)                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  1. Worker signs token                                                  │
+│     ┌─────────────────────────────────────────────────────────────┐    │
+│     │  const token = await signSeatToken({ seat_id }, secret)     │    │
+│     │  config.mcpAuthToken = token                                │    │
+│     └─────────────────────────────────────────────────────────────┘    │
+│                              │                                          │
+│                              ▼                                          │
+│  2. Sandbox runner injects token into MCP headers                      │
+│     ┌─────────────────────────────────────────────────────────────┐    │
+│     │  if (config.mcpAuthToken) {                                 │    │
+│     │    server.headers = {                                       │    │
+│     │      Authorization: `Bearer ${config.mcpAuthToken}`         │    │
+│     │    }                                                        │    │
+│     │  }                                                          │    │
+│     └─────────────────────────────────────────────────────────────┘    │
+│                              │                                          │
+│                              ▼                                          │
+│  3. Container /mcp middleware verifies token  ← OFTEN FORGOTTEN!       │
+│     ┌─────────────────────────────────────────────────────────────┐    │
+│     │  app.use('/mcp', authMiddleware)  // BEFORE handler         │    │
+│     │  app.all('/mcp', mcpHandler)                                │    │
+│     └─────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**1. Worker: Sign token (using jose for Edge compatibility)**
+
+```javascript
+// src/auth/mcp_auth.js
+import { SignJWT, jwtVerify } from 'jose'
+
+export async function signSeatToken(payload, secret) {
+  const secretKey = new TextEncoder().encode(secret)
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .setIssuer('my-worker')
+    .setAudience('mcp')
+    .sign(secretKey)
 }
 
-// MCP server validates
+export async function verifySeatToken(token, secret) {
+  const secretKey = new TextEncoder().encode(secret)
+  const { payload } = await jwtVerify(token, secretKey, {
+    issuer: 'my-worker',
+    audience: 'mcp',
+  })
+  return payload
+}
+```
+
+**2. Worker handler: Pass token to Sandbox config**
+
+```javascript
+// In sandbox_handlers.js
+const mcpAuthToken = await signSeatToken({ seat_id: seatId }, env.MCP_AUTH_SECRET)
+const config = {
+  // ... other config
+  mcpAuthToken,  // Pass to Sandbox
+}
+await sandbox.writeFile('/workspace/agent-config.json', JSON.stringify(config))
+```
+
+**3. Sandbox runner: Inject token into MCP headers**
+
+```javascript
+// In runner.mjs
+if (config.mcpServers && config.mcpAuthToken) {
+  for (const serverName of Object.keys(options.mcpServers)) {
+    const server = options.mcpServers[serverName]
+    if (server.type === 'http') {
+      server.headers = {
+        ...server.headers,
+        Authorization: `Bearer ${config.mcpAuthToken}`,
+      }
+    }
+  }
+}
+```
+
+**4. Container: Auth middleware on /mcp (THE PART EVERYONE FORGETS)**
+
+```javascript
+// In create_app.js - MUST be BEFORE mcpHandler
+import { verifySeatToken } from '../auth/mcp_auth.js'
+
 app.use('/mcp', async (c, next) => {
-  const token = c.req.header('Authorization')?.replace('Bearer ', '')
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return c.json({ 
+      jsonrpc: '2.0', 
+      error: { code: -32001, message: 'Missing Authorization header' }, 
+      id: null 
+    }, 401)
+  }
   try {
-    const decoded = jwt.verify(token, MCP_SECRET)
-    c.set('seatId', decoded.seat_id)
+    const payload = await verifySeatToken(authHeader.slice(7), env.MCP_AUTH_SECRET)
+    c.set('mcpAuth', payload)
     await next()
   } catch {
-    return c.json({ error: 'Unauthorized' }, 401)
+    return c.json({ 
+      jsonrpc: '2.0', 
+      error: { code: -32001, message: 'Invalid or expired token' }, 
+      id: null 
+    }, 401)
   }
 })
+
+app.all('/mcp', mcpHandler)  // Handler AFTER middleware
+```
+
+**Required env vars** (must be identical in Worker AND Container):
+```toml
+# wrangler.toml
+[vars]
+MCP_AUTH_SECRET = "your-secret-key-min-32-chars"
 ```
 
 ## Dockerfile.sandbox Template

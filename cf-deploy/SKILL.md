@@ -155,3 +155,8 @@ export default {
 - **Container deployment**: See [references/containers.md](references/containers.md)
 - **Sandbox SDK setup**: See [references/sandbox.md](references/sandbox.md)
 - **Troubleshooting**: See [references/pitfalls.md](references/pitfalls.md)
+
+## Related Skills
+
+- [agent-ui](~/.claude/skills/agent-ui/SKILL.md) - Build agent UI (Web Agent mode uses this + cf-deploy)
+- [claude-code-best-practices](~/.claude/skills/claude-code-best-practices/SKILL.md) - Project configuration

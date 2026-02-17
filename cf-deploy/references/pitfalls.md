@@ -10,6 +10,8 @@ Common issues and solutions when deploying to Cloudflare Workers, Containers, an
 4. [Sandbox Errors](#sandbox-errors)
 5. [Docker/Build Errors](#dockerbuild-errors)
 6. [Claude Agent SDK Errors](#claude-agent-sdk-errors)
+7. [Database Connection Errors](#database-connection-errors)
+8. [Frontend Auth Integration Errors](#frontend-auth-integration-errors)
 
 ## Quick Diagnosis Checklist
 
@@ -23,6 +25,7 @@ Deploy not working? Check in order:
 | 4 | Python installed? | `sandbox.exec('python3 --version')` |
 | 5 | Logs show errors? | `wrangler tail <worker-name>` |
 | 6 | CPU limit set? | Confirm `cpu_ms = 300000` in wrangler.toml |
+| 7 | MCP auth working? | `curl -X POST /mcp` should return 401, not tool list |
 
 ## Worker Errors
 
@@ -376,6 +379,72 @@ const mcpConfig = rewriteMcpUrls(
 
 ---
 
+### MCP Auth Token Signed But Not Verified (401 Errors)
+
+**Symptom:** 
+- MCP calls from Sandbox return 401 Unauthorized
+- SDK stream shows `duration_ms: 0` and `mcp_servers: [{"status":"failed"}]`
+- Direct curl to `/mcp` without token works OR returns 401
+
+**Cause:** You implemented token signing in Worker, passed it to Sandbox, injected it into MCP headers... but forgot to add auth middleware to the `/mcp` endpoint!
+
+```
+Worker signs ✓ → Sandbox receives ✓ → Headers injected ✓ → /mcp has NO middleware ✗
+```
+
+**Diagnosis:**
+```bash
+# Test without auth - should return 401
+curl -X POST 'https://app.example.com/mcp' \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+
+# If this returns tool list instead of 401, auth middleware is missing!
+```
+
+**Fix:**
+```javascript
+// create_app.js - MUST add middleware BEFORE handler
+import { verifySeatToken } from '../auth/mcp_auth.js'
+
+// Auth middleware - register FIRST
+app.use('/mcp', async (c, next) => {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return c.json({ 
+      jsonrpc: '2.0', 
+      error: { code: -32001, message: 'Missing Authorization header' }, 
+      id: null 
+    }, 401)
+  }
+  try {
+    const payload = await verifySeatToken(authHeader.slice(7), env.MCP_AUTH_SECRET)
+    c.set('mcpAuth', payload)
+    await next()
+  } catch {
+    return c.json({ 
+      jsonrpc: '2.0', 
+      error: { code: -32001, message: 'Invalid or expired token' }, 
+      id: null 
+    }, 401)
+  }
+})
+
+// Handler - register AFTER middleware
+app.all('/mcp', mcpHandler)
+```
+
+**Checklist:**
+- [ ] `MCP_AUTH_SECRET` set in Worker env (for signing)
+- [ ] `MCP_AUTH_SECRET` set in Container env (for verifying) - same value!
+- [ ] `signSeatToken()` called before `sandbox.exec()`
+- [ ] Token passed in config as `mcpAuthToken`
+- [ ] `runner.mjs` injects token into `Authorization: Bearer` header
+- [ ] `/mcp` route has `app.use('/mcp', authMiddleware)` BEFORE `app.all('/mcp', handler)`
+- [ ] Error responses use JSON-RPC format: `{ jsonrpc: '2.0', error: {...}, id: null }`
+
+---
+
 ### Seat ID Required
 
 **Symptom:**
@@ -417,6 +486,93 @@ const result = await sandbox.exec('node runner.mjs', {
 console.log('stdout:', result.stdout)
 console.log('stderr:', result.stderr)
 ```
+
+## Database Connection Errors
+
+### PostgreSQL/Drizzle Connection Failed
+
+**Symptom:**
+```
+Error: Can't resolve 'net'
+Error: TCP connections not supported in Workers
+```
+
+**Cause:** Cloudflare Workers don't support TCP connections. Libraries like `postgres-js`, `pg`, or Drizzle ORM with direct PostgreSQL connections will fail.
+
+**Fix:** Use HTTP-based database clients:
+
+```javascript
+// ❌ Wrong - Direct PostgreSQL (uses TCP)
+import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/postgres-js'
+
+const sql = postgres(DATABASE_URL)
+const db = drizzle(sql)
+
+// ✅ Correct - Supabase REST API (uses HTTP)
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false }
+})
+
+// Query via REST
+const { data, error } = await supabase.from('users').select('*')
+```
+
+**Alternatives:**
+- Supabase REST API (recommended)
+- Neon Serverless Driver (`@neondatabase/serverless`)
+- PlanetScale Serverless (`@planetscale/database`)
+- D1 (Cloudflare's native SQLite)
+
+---
+
+## Frontend Auth Integration Errors
+
+### Privy Session Token Race Condition
+
+**Symptom:**
+After successful Privy login, user is immediately logged out or asked to login again. Session tokens are cleared unexpectedly.
+
+**Cause:** React useEffect that watches `privyUser` object triggers on every data update (not just user changes). Privy hydrates user data progressively, causing multiple updates.
+
+```javascript
+// ❌ Wrong - Fires on every privyUser update
+useEffect(() => {
+  if (authenticated && privyUser && !syncedRef.current) {
+    if (currentToken) {
+      clearTokens()  // Destroys valid session!
+      signOut()
+    }
+  }
+}, [authenticated, privyUser])  // privyUser object changes frequently
+```
+
+**Fix:** Track Privy user ID specifically, only clear tokens when user ID actually changes:
+
+```javascript
+// ✅ Correct - Only fires when user ID changes
+const prevPrivyUserIdRef = useRef<string | null>(null)
+
+useEffect(() => {
+  const currentPrivyUserId = privyUser?.id ?? null
+  const prevPrivyUserId = prevPrivyUserIdRef.current
+
+  // Only clear if user ID actually changed (different user logged in)
+  if (authenticated && currentPrivyUserId && prevPrivyUserId && currentPrivyUserId !== prevPrivyUserId) {
+    syncedRef.current = false
+    clearTokens()
+    signOut()
+  }
+
+  prevPrivyUserIdRef.current = currentPrivyUserId
+}, [authenticated, privyUser?.id])  // Watch ID, not object
+```
+
+**Key insight:** `privyUser` object updates frequently as Privy hydrates wallet, email, linked accounts, etc. Only watch `privyUser?.id` to detect actual user changes.
+
+---
 
 ## Emergency Rollback
 
