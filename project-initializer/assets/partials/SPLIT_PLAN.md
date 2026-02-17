@@ -39,23 +39,28 @@
 ---
 
 ### 03-philosophy.partial.md ⭐ DO NOT SPLIT
-- **Lines**: 62-151
-- **Content**: Development Protocol (Multi-Agent Philosophy)
-  - Core Philosophy statement ("Token 无限 = 人力无限 = 代码即厕纸")
+- **Lines**: 62-170 (expanded)
+- **Content**: Development Protocol (Multi-Agent Philosophy) + TDD/BDD
+  - Core Philosophy statement ("Token unlimited = Code is toilet paper")
   - IMMUTABLE LAYER / MUTABLE LAYER diagram
-  - Response Protocol (NEW_FEATURE_FLOW, MODIFICATION_FLOW, BUG_FIX_FLOW)
+  - Response Protocol with BDD+TDD integration:
+    - NEW_FEATURE_FLOW (includes Given-When-Then acceptance criteria + Red-Green-Refactor)
+    - MODIFICATION_FLOW
+    - BUG_FIX_FLOW (enhanced with test verification steps)
   - Module Boundary definitions
-  - Forbidden Actions
+  - **Test Quality Standards** (NEW: naming, AAA, isolation, forbidden patterns)
+  - Forbidden Actions (expanded)
 - **Conditional**: No
 - **Variables**: None
 
 **⚠️ CRITICAL**: This section MUST remain as ONE UNIT. It contains the core philosophy from `_ref/archi.md` that defines the entire development approach. Splitting would destroy conceptual integrity.
 
 **Key Elements (all must be preserved):**
-- `IMMUTABLE LAYER (资产)` diagram
-- `MUTABLE LAYER (厕纸)` diagram
-- `NEW_FEATURE_FLOW` / `MODIFICATION_FLOW` / `BUG_FIX_FLOW`
-- "代码即厕纸" principle
+- `IMMUTABLE LAYER (Assets)` diagram
+- `MUTABLE LAYER (Toilet Paper)` diagram
+- `NEW_FEATURE_FLOW` with BDD Given-When-Then + TDD Red-Green-Refactor
+- `MODIFICATION_FLOW` / `BUG_FIX_FLOW`
+- Test Quality Standards (TEST_STANDARDS)
 - Module deletion scope definitions
 
 ---
@@ -74,13 +79,21 @@
 ---
 
 ### 05-workflow.partial.md
-- **Lines**: 247-488
+- **Lines**: 247-530 (expanded)
 - **Content**: Workflow Rules
+  - **Plan Annotation Protocol** (NEW: Boris-style iterative annotation loop)
   - Progress Tracking (PROGRESS.md, TODO.md rules)
   - Changelog & Versioning (Semantic Versioning)
   - AI-Driven Version Control Strategy (Git branches, commit format)
 - **Conditional**: No
 - **Variables**: None
+
+**Plan Annotation Protocol** teaches the iterative plan refinement workflow:
+1. AI writes `docs/plan.md`
+2. User annotates inline in editor
+3. AI reads annotations and updates plan (no implementation)
+4. Repeat 1-6 rounds until plan is project-specific
+5. User says "implement it all"
 
 ---
 
@@ -144,12 +157,12 @@
 |---------|-------|------------|
 | 01-header | 9 | 0.9% |
 | 02-iron-rules | 52 | 4.9% |
-| 03-philosophy ⭐ | 90 | 8.5% |
+| 03-philosophy ⭐ | 120 | 10.9% |
 | 04-project-structure | 95 | 9.0% |
-| 05-workflow | 242 | 23.0% |
+| 05-workflow | 290 | 25.8% |
 | 06-cloudflare (conditional) | 300 | 28.5% |
 | 07-footer | 265 | 25.2% |
-| **Total** | **1053** | **100%** |
+| **Total** | **1101** | **100%** |
 
 ---
 

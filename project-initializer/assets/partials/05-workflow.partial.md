@@ -1,3 +1,56 @@
+### Plan Annotation Protocol
+
+> **Origin**: Inspired by Boris Tane's Research → Plan → Annotate → Implement → Feedback workflow.
+
+The plan file (`docs/plan.md`) is **shared mutable state** between you and the AI. Both read and write it. This enables iterative refinement that binary approve/reject cannot achieve.
+
+```
+┌─────────────────────────────────────────────────┐
+│  1. AI writes docs/plan.md                       │
+│  2. You open docs/plan.md in your editor         │
+│  3. You add inline annotations:                  │
+│     - "not optional" (2 words)                   │
+│     - A paragraph explaining business context    │
+│     - Paste a code snippet as reference          │
+│     - Delete an entire section                   │
+│     - "visibility goes on list, not item"        │
+│  4. You tell AI:                                 │
+│     "read annotations in docs/plan.md,           │
+│      update accordingly.                         │
+│      DON'T IMPLEMENT YET."                       │
+│  5. AI reads file → interprets → rewrites plan   │
+│  6. → Back to step 2 (repeat 1-6 times)         │
+│  7. When satisfied: "implement it all"           │
+└─────────────────────────────────────────────────┘
+```
+
+```yaml
+ANNOTATION_RULES:
+  FILE: docs/plan.md
+  PERSISTENCE: Survives context compression — AI re-reads file each round
+  GUARD: AI must NOT implement until user explicitly says "implement"
+  TYPICAL_ROUNDS: 1-6 (3 rounds makes a generic plan project-specific)
+
+  AI_BEHAVIOR:
+    ON_ANNOTATED_PLAN:
+      1. Read docs/plan.md in full
+      2. Identify all user annotations (new text, deletions, inline comments)
+      3. Rewrite plan incorporating all annotations
+      4. Preserve sections user did not touch
+      5. Ask clarifying questions if annotations are ambiguous
+      6. Do NOT start implementation
+
+    ON_IMPLEMENT_COMMAND:
+      1. Read final docs/plan.md
+      2. Create TodoWrite checklist from plan sections
+      3. Execute in batched phases
+      4. Update docs/plan.md with completion status
+```
+
+**When to use**: For any non-trivial feature (3+ files, architectural decisions, or unclear scope). Skip for single-file fixes.
+
+---
+
 ### Progress Tracking
 
 ```yaml

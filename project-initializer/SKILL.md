@@ -53,8 +53,6 @@ For rapid project initialization with minimal questions (5 questions only):
 
 ### Quick Mode Defaults
 
-When using `--quick`, the following defaults apply:
-
 | Setting | Default Value |
 |---------|---------------|
 | Service Target | "User" |
@@ -141,22 +139,25 @@ When using `--quick`, the following defaults apply:
 ```
 A) B2B SaaS / Internal Tools     → Plan C: Vite + TanStack Router
 B) Traditional Enterprise        → Plan B: UmiJS + Ant Design Pro
-C) C-Side with SEO              → Plan A: Remix
+C) C-Side with SEO (Dynamic)    → Plan A: Remix
 D) AI Chat / Assistant App      → Plan C + Ant Design X
-E) Mobile App                   → Plan F: Expo + NativeWind
-F) Monorepo (Multi-project)     → Plan D: Bun + Turborepo
-G) AI Quantitative Trading      → Plan G: FastAPI + Vite Frontend
-H) Financial Trading (FIX/RFQ)  → Plan H: FIX/Rust + Hono + Vite
-J) AI Coding Agent / TUI Tool   → Plan J: OpenTUI + TypeScript ⭐
-K) Custom Configuration         → Manual selection
+E) Landing Page / Marketing      → Plan E2: Astro + Starwind UI ⭐
+F) Mobile App                   → Plan F: Expo + NativeWind
+G) Monorepo (Multi-project)     → Plan D: Bun + Turborepo
+H) AI Quantitative Trading      → Plan G: FastAPI + Vite Frontend
+I) Financial Trading (FIX/RFQ)  → Plan H: FIX/Rust + Hono + Vite
+J) Web3 DApp (NFT/DeFi/Agent)  → Plan I: Astro Landing + Vite + Wagmi ⭐
+K) AI Coding Agent / TUI Tool   → Plan J: OpenTUI + TypeScript ⭐
+L) Custom Configuration         → Manual selection
 ```
 
 **Q3: Package Manager**
 ```
-A) bun (Fastest, recommended for new projects)
-B) pnpm (Stable, great for monorepos)
-C) npm (Maximum compatibility)
+A) bun (Fastest, default for all new projects) ⭐
+B) pnpm (Stable alternative, great for monorepos)
+C) npm (Last resort — only when bun/pnpm incompatible, too slow)
 ```
+> **Priority: bun > pnpm > npm**. Use bun unless the framework explicitly requires npm/pnpm.
 
 ### Phase 2: Tech Stack Details
 
@@ -172,8 +173,15 @@ Based on project type, ask additional questions:
 - Streaming support needed? (Yes/No)
 
 **For Mobile:**
-- Styling: NativeWind (default) or Tamagui?
+- Styling: NativeWind (default) or HeroUI Native?
 - Navigation: Expo Router (default) or React Navigation?
+
+**For Web3 DApp (Plan I):**
+- Target Chain: BNB Chain (default), Ethereum, Base, or Other EVM?
+- Wallet UI: ConnectKit (default) or RainbowKit?
+- Contract Framework: Hardhat (default) or Foundry?
+- Need Landing Page? Yes (Astro + Starwind UI) or No (App only)?
+- DApp Type: NFT/Marketplace, DeFi, DAO, Agent/NFA, or Custom?
 
 **For AI Quantitative Trading (Plan G):**
 - Market Data Provider: Polygon.io, Alpaca, Binance, or Custom?
@@ -227,58 +235,69 @@ Confirm or customize the default rules:
 **Q6: Additional Prohibitions**
 Add project-specific prohibitions beyond defaults:
 - Default: No `any`, no `console.log` in production
+- Default: ALWAYS present 2-3 options with trade-offs at ambiguous decision points — never silently choose
+- Default: ALWAYS push back on requests that violate CLAUDE.md rules, even if explicitly asked
 - Add: (user input)
 
 ### Phase 4: Claude Code Plugins & Hooks
 
 **Q7: Install Recommended Plugins**
-```
-Essential Plugins (strongly recommended):
-  ✓ feature-dev        - Guided feature development with architecture focus
-  ✓ frontend-design    - Production-grade UI creation with high design quality
-  ✓ code-simplifier    - Code simplification and maintainability
-  ✓ code-review        - Code quality review for bugs, security issues
-  ✓ ast-grep           - AST-based code search (requires CLI: brew install ast-grep)
-  ✓ hookify            - ⭐智能Hook管理器，在hooks中自动激活其他skills
 
-Automation Plugins:
-  [ ] ralph-loop        - Iterative auto-loop until task complete (TDD workflow)
+Auto-selection rules:
 
-Optional Plugins:
-  [ ] commit-commands   - Git commit utilities
-  [ ] pr-review-toolkit - Pull request review
-  [ ] security-guidance - Security best practices
-  [ ] agent-sdk-dev     - Agent SDK development tools
+| Condition | Auto-selected Plugins |
+|-----------|----------------------|
+| All projects | feature-dev, frontend-design, code-simplifier, code-review, ast-grep, hookify, agent-browser |
+| Cloudflare-native (Plan A/C/D/G/H) | cf-agents-sdk |
+| Mobile (Plan F) | expo-app-design, expo-deployment |
+| React/TS (Plan A/C/D/J) | typescript-lsp |
+| Python (Plan G) | pyright-lsp |
+| Rust (Plan H) | rust-analyzer-lsp |
+| Java (Plan B) | jdtls-lsp |
 
-LSP Plugins (auto-selected based on Q2 Project Type):
-  Plan A/C/D/J (React/TS)  → typescript-lsp
-  Plan G (Python)          → pyright-lsp
-  Plan H (Rust)            → rust-analyzer-lsp
-  Plan B (Java)            → jdtls-lsp
-  Plan F (Mobile/Expo)     → typescript-lsp
-
-Obsidian Skills (for documentation):
-  [ ] obsidian-markdown - Wikilinks, embeds, callouts
-  [ ] obsidian-bases    - Structured data syntax
-  [ ] json-canvas       - Visual note organization
-```
+Full plugin catalog with descriptions and installation: See `references/plugins-core.md`
 
 **Q8: Configure Hooks**
 ```
-A) Standard Hooks (recommended)
-   → UserPromptSubmit: Quality guard notification
-   → PreToolCall: Code modification alerts (Edit/Write)
-   → PostToolCall: Test completion notification
+A) Standard Hooks + TDD Guard + Doc Drift + Context Pressure (recommended)
+   → UserPromptSubmit: Quality guard + TDD/BDD context injection
+   → PreToolUse (Edit|Write): TDD guard — checks test file exists before src modification
+   → PostToolUse (Edit|Write): Anti-simplification check + Doc drift guard
+   → PostToolUse (*): Performance monitoring + Context pressure tracking
 
-B) Minimal Hooks
+B) Standard Hooks + TDD Guard + Doc Drift (no context pressure)
+   → Same as A without PostToolUse(*) context counter
+
+C) Standard Hooks (no TDD guard)
+   → UserPromptSubmit: Quality guard notification
+   → PostToolUse (Edit|Write): Anti-simplification check + Doc drift guard
+
+D) Minimal Hooks
    → UserPromptSubmit only
 
-C) No Hooks
+E) No Hooks
    → Skip hook configuration
 
-D) Custom Hooks
+F) Custom Hooks
    → Specify custom hook configuration
 ```
+
+**Hook files** — Copy from `assets/hooks/` into project's `.claude/hooks/`:
+
+| Asset File | Target | Trigger |
+|-----------|--------|---------|
+| `assets/hooks/tdd-guard-hook.sh` | `.claude/hooks/tdd-guard-hook.sh` | PreToolUse (Edit\|Write) |
+| `assets/hooks/pre-code-change.sh` | `.claude/hooks/pre-code-change.sh` | PreToolUse (Edit\|Write) |
+| `assets/hooks/post-bash.sh` | `.claude/hooks/post-bash.sh` | PostToolUse (Bash) |
+| `assets/hooks/prompt-guard.sh` | `.claude/hooks/prompt-guard.sh` | UserPromptSubmit (TDD/BDD + plan annotation detection) |
+| `assets/hooks/doc-drift-guard.sh` | `.claude/hooks/doc-drift-guard.sh` | PostToolUse (Edit\|Write) |
+| `assets/hooks/context-pressure-hook.sh` | `.claude/hooks/context-pressure-hook.sh` | PostToolUse (*) |
+| `assets/hooks/settings.template.json` | `.claude/settings.local.json` | — (config) |
+
+Customization notes for doc-drift-guard.sh:
+- For non-monorepo projects (Plans A/B/C/E/F without packages/), remove triggers #1 and #2
+- For non-Expo projects, remove the Metro config trigger (#4)
+- For non-Turborepo projects, remove trigger #5
 
 ---
 
@@ -298,7 +317,7 @@ After collecting all answers, generate:
 04-project-structure.partial.md  # Project structure + file management
 05-workflow.partial.md      # Progress tracking, versioning, git strategy
 06-cloudflare.partial.md    # Cloudflare deployment (conditional)
-07-footer.partial.md        # AI workflows, documentation index, philosophy reminder
+07-footer.partial.md        # AI workflows, Deep Docs index table, philosophy reminder
 ```
 
 **Assembly Process**:
@@ -319,10 +338,13 @@ bun scripts/assemble-template.ts --plan C --name "MyProject" --var USER_NAME=Dev
 - `{{TECH_STACK_TABLE}}` - From tech stack selection
 - `{{PROHIBITIONS}}` - Merged default + custom
 - `{{PROJECT_STRUCTURE}}` - From selected plan template
+- `{{DEEP_DOCS_TABLE}}` - Documentation index table linking to generated docs
+- `{{CALVER_VERSION}}` - CalVer version string (e.g., `v2026.02.0`)
 
 **Conditional Sections**:
 - `06-cloudflare.partial.md` included only for: Plan A, C, C+, D, G (partial), H (partial)
-- Excluded for: Plan B, F, J
+- `cf-agents-sdk` skill auto-recommended for: Plan A, C, C+, D, G, H (Cloudflare-native)
+- Excluded for: Plan B, E, F, J
 
 **Version Variables** (from `assets/versions.json`):
 - `{{VERSION_VITE}}` - Vite version (6.x)
@@ -330,451 +352,111 @@ bun scripts/assemble-template.ts --plan C --name "MyProject" --var USER_NAME=Dev
 - `{{VERSION_TYPESCRIPT}}` - TypeScript version (5.x)
 - And more... see `assets/versions.json` for full list
 
-### 2. docs/brief.md (产品简介 + MVP)
+### 2-7. Documentation Files
 
-Generate from Q1.5 and Q1.6 user input:
+Generate from templates in `assets/templates/`:
 
-```markdown
-# {{PROJECT_NAME}} - 产品简介
+| Output File | Template Source | Generated From |
+|-------------|---------------|----------------|
+| `docs/brief.md` | `assets/templates/brief.template.md` | Q1.5 + Q1.6 input |
+| `docs/tech-stack.md` | `assets/templates/tech-stack.template.md` | Q2 tech stack selection |
+| `docs/decisions.md` | `assets/templates/decisions.template.md` | Q2 + Q1.7 choices |
+| `docs/architecture.md` | `assets/templates/architecture.template.md` | Scan actual project tree |
+| `docs/packages.md` | `assets/templates/packages.template.md` | Monorepo only (Plan D) |
+| `docs/PROGRESS.md` | `assets/templates/progress.template.md` | Q1.6 MVP + iteration plan |
 
-## 产品定位
+**Conditional guides** (only generate for matching plan):
 
-{{PRODUCT_BRIEF}}
+| Output File | Template Source | Condition |
+|-------------|---------------|-----------|
+| `docs/guides/metro-esm-gotchas.md` | `assets/templates/guides/metro-esm-gotchas.template.md` | Plan F (Mobile/Expo) |
+| `docs/guides/jotai-agent-patterns.md` | — (generate inline) | Plan D + Jotai |
+| `docs/guides/cf-deployment.md` | — (generate inline) | Cloudflare-native plans |
 
-## 目标用户
+Generation instructions per template are in `<!-- comments -->` at the top of each template file.
 
-{{TARGET_USERS}}
+### 8. Project Structure
 
-## 核心功能
+Run `scripts/create-project-dirs.sh` to create the three-layer directory structure:
 
-{{CORE_FEATURES}}
+| Layer | Directories | Nature |
+|-------|------------|--------|
+| IMMUTABLE (资产层) | `specs/`, `contracts/`, `tests/` | Source of truth |
+| MUTABLE (厕纸层) | `src/` | Disposable implementation |
+| SUPPORTING (支撑层) | `docs/`, `scripts/`, `ops/`, `artifacts/` | Documentation & tooling |
 
-## 独特价值
+### 9. .gitignore Generation
 
-{{UNIQUE_VALUE}}
+Copy `assets/templates/gitignore.template` to project root as `.gitignore`.
 
----
-
-## MVP 范围 (v1.0)
-
-### 核心功能
-
-{{MVP_CORE_FEATURES}}
-
-### 后续迭代计划
-
-{{ITERATION_PLAN}}
-
-### 验收标准
-
-{{ACCEPTANCE_CRITERIA}}
-
----
-
-*Generated: {{DATE}}*
-```
-
-### 3. docs/tech-stack.md (技术栈决策)
-Generate detailed tech stack documentation:
-```markdown
-# {{PROJECT_NAME}} - 技术栈
-
-## 架构概览
-
-| 层级 | 技术选型 | 版本 | 选择理由 |
-|------|----------|------|----------|
-{{TECH_STACK_TABLE_DETAILED}}
-
-## 关键依赖
-
-### 核心框架
-{{CORE_DEPENDENCIES}}
-
-### 开发工具
-{{DEV_TOOLS}}
-
-## 部署方案 / Deployment
-{{DEPLOYMENT_PLAN}}
-
-## 成本预估 / Cost Estimation
-
-| 服务 Service | 免费层 Free Tier | 月成本 (1K MAU) | 月成本 (10K MAU) |
-|--------------|------------------|-----------------|------------------|
-{{COST_ESTIMATION_TABLE}}
-
----
-*Generated: {{DATE}}*
-*Plan: {{PLAN_TYPE}}*
-```
-
-### 4. docs/decisions.md (架构决策记录 / ADR)
-
-Generate Architecture Decision Records from project choices:
-
-```markdown
-# {{PROJECT_NAME}} - Architecture Decision Records
-
-本文档记录项目的关键技术决策及其理由。
-This document records key technical decisions and their rationale.
-
----
-
-## ADR-001: Tech Stack Selection / 技术栈选择
-
-- **Date / 日期**: {{DATE}}
-- **Status / 状态**: Accepted / 已采纳
-- **Decider / 决策者**: {{USER_NAME}}
-
-### Context / 上下文
-
-{{PROJECT_BRIEF_SUMMARY}}
-
-### Decision / 决策
-
-选择 **{{PLAN_TYPE}}** 作为项目架构方案。
-Selected **{{PLAN_TYPE}}** as the project architecture.
-
-### Rationale / 理由
-
-{{TECH_STACK_RATIONALE}}
-
-### Trade-offs / 权衡
-
-| Alternative / 考虑方案 | Pros / 优点 | Cons / 缺点 | Decision / 决定 |
-|------------------------|-------------|-------------|-----------------|
-{{ALTERNATIVES_TABLE}}
-
-### Consequences / 后果
-
-- **Positive / 正面**: {{POSITIVE_CONSEQUENCES}}
-- **Negative / 负面**: {{NEGATIVE_CONSEQUENCES}}
-- **Risks / 风险**: {{RISKS}}
-
----
-
-## ADR-002: Team Size & Architecture Complexity / 团队规模与架构
-
-- **Date / 日期**: {{DATE}}
-- **Status / 状态**: Accepted / 已采纳
-- **Team Size / 团队规模**: {{TEAM_SIZE}}
-
-### Decision / 决策
-
-基于团队规模 ({{TEAM_SIZE}})，采用 {{ARCHITECTURE_COMPLEXITY}} 架构策略。
-Based on team size ({{TEAM_SIZE}}), adopting {{ARCHITECTURE_COMPLEXITY}} architecture.
-
-### Rationale / 理由
-
-{{TEAM_SIZE_RATIONALE}}
-
----
-
-## ADR Template / 决策模板
-
-Use this template for future decisions:
-
-\`\`\`markdown
-## ADR-XXX: [Title / 标题]
-
-- **Date**: YYYY-MM-DD
-- **Status**: Proposed / Accepted / Deprecated / Superseded
-- **Decider**: [Name]
-
-### Context
-[Background and problem that triggered this decision]
-
-### Decision
-[The decision made]
-
-### Rationale
-[Why this decision was made]
-
-### Consequences
-[Impact of this decision]
-\`\`\`
-
----
-
-*Generated: {{DATE}}*
-```
-
-### 5. Project Structure
-
-Create directories:
-
-```bash
-# ===== IMMUTABLE LAYER (资产层) =====
-# Specs - 功能规格
-mkdir -p specs/modules
-
-# Contracts - 接口契约
-mkdir -p contracts/modules
-
-# Tests - 测试是真理
-mkdir -p tests/unit
-mkdir -p tests/integration
-mkdir -p tests/e2e
-
-# ===== MUTABLE LAYER (厕纸层) =====
-# Source - 实现代码（可随时重写）
-mkdir -p src/modules
-
-# ===== SUPPORTING (支撑层) =====
-# Documentation
-mkdir -p docs/architecture
-mkdir -p docs/api
-mkdir -p docs/guides
-mkdir -p docs/archives
-
-# Scripts - 自动化脚本
-mkdir -p scripts
-
-# Operations (DO NOT commit)
-mkdir -p ops/database
-mkdir -p ops/secrets
-
-# Artifacts (DO NOT commit)
-mkdir -p artifacts
-
-# ===== Initial Files =====
-# Documentation files
-touch docs/PROGRESS.md
-touch docs/CHANGELOG.md
-touch docs/TODO.md
-touch docs/brief.md
-touch docs/tech-stack.md
-touch docs/decisions.md
-
-# Specs overview
-cat > specs/overview.md << 'EOF'
-# Project Specifications
-
-> **Spec is the Source of Truth. 规格是唯一真理的来源。**
-
-## How to Use
-
-1. Write spec first, then implement
-2. Changing spec = rewrite downstream
-3. No implementation without spec
-
-## Modules
-
-- Add module specs in `modules/` directory
-- Format: `{module-name}.spec.md`
-EOF
-
-# Contracts types
-cat > contracts/types.ts << 'EOF'
-/**
- * Shared Type Definitions
- *
- * IMMUTABLE: Changes here require downstream rewrites
- */
-
-// Add shared types here
-export {}
-EOF
-
-# Test README
-cat > tests/README.md << 'EOF'
-# Test Directory Structure
-
-> **Test is the new Spec. 测试是唯一的真理。**
-
-## Asset Hierarchy
-
-Tests are IMMUTABLE ASSETS. Implementation is DISPOSABLE.
-
-## Rules
-
-- Test code quantity ≥ Implementation code quantity
-- Test failure = Delete module and rewrite
-- Never modify tests to make buggy code pass
-
-## Running Tests
-
-```bash
-bun test              # Run all tests
-bun test --coverage   # With coverage
-bun test --watch      # Watch mode
-```
-EOF
-
-# Regenerate script - 一键删除重写模块
-cat > scripts/regenerate.sh << 'EOF'
-#!/bin/bash
-# Regenerate a module: delete implementation, keep spec/contract/tests
-# Usage: ./scripts/regenerate.sh <module-name>
-
-MODULE=$1
-
-if [ -z "$MODULE" ]; then
-  echo "Usage: ./scripts/regenerate.sh <module-name>"
-  echo "Example: ./scripts/regenerate.sh auth"
-  exit 1
-fi
-
-# Check if module exists
-if [ ! -d "src/modules/$MODULE" ]; then
-  echo "Module src/modules/$MODULE not found"
-  exit 1
-fi
-
-echo "🗑️  Deleting implementation: src/modules/$MODULE"
-rm -rf "src/modules/$MODULE"
-mkdir -p "src/modules/$MODULE"
-
-echo "✅ Module $MODULE cleared. Ready for rewrite."
-echo ""
-echo "Preserved assets:"
-echo "  - specs/modules/$MODULE.spec.md"
-echo "  - contracts/modules/$MODULE.contract.ts"
-echo "  - tests/unit/$MODULE/"
-echo "  - tests/integration/$MODULE/"
-EOF
-chmod +x scripts/regenerate.sh
-```
-
-### 6. .gitignore Generation
-Generate comprehensive `.gitignore`:
-```gitignore
-# ===== Operations (sensitive configs) =====
-ops/
-!ops/.gitkeep
-
-# ===== Build Artifacts =====
-artifacts/
-dist/
-build/
-.next/
-.nuxt/
-.output/
-coverage/
-
-# ===== Environment Variables =====
-.env
-.env.*
-!.env.example
-
-# ===== Dependencies =====
-node_modules/
-.pnpm-store/
-bun.lockb
-
-# ===== IDE & OS =====
-.DS_Store
-.idea/
-.vscode/settings.json
-*.swp
-*.swo
-
-# ===== Logs & Debug =====
-*.log
-npm-debug.log*
-pnpm-debug.log*
-debug.log
-
-# ===== Package Archives =====
-*.tar.gz
-*.tgz
-*.zip
-
-# ===== Database =====
-*.sqlite
-*.db
-*.sql.gz
-
-# ===== Secrets & Keys =====
-*.pem
-*.key
-*.p12
-secrets/
-```
-
-Create `ops/.gitkeep` to preserve empty ops folder structure:
-```bash
-touch ops/.gitkeep
-echo "# This folder contains sensitive operations files - DO NOT COMMIT" > ops/README.md
-```
-
-### 7. Init Script (init-project.sh)
+### 10. Init Script (init-project.sh)
 Generate executable script with:
 - Package installation commands
 - shadcn/ui initialization (if applicable)
 - Directory structure creation
 - Environment file setup
 
-### 8. Plugin Setup (if selected in Q7)
+### 11. Plugin Setup (if selected in Q7)
 Run `scripts/setup-plugins.sh` to:
 - Clone official plugins from `https://github.com/anthropics/claude-plugins-official`
 - Clone ast-grep skill from `https://github.com/ast-grep/claude-skill`
 - Install selected plugins to `~/.claude/skills/`
 - Configure hooks in `~/.claude/settings.json`
 
-### 9. Hook Configuration (if selected in Q8)
+### 12. Hook Configuration (if selected in Q8)
 
-Create `.claude/hooks/` directory with development protocol hooks:
+Copy hook files from `assets/hooks/` to `.claude/hooks/` and merge `assets/hooks/settings.template.json` into `.claude/settings.local.json`. See hook files table in Q8 above.
 
-```bash
-mkdir -p .claude/hooks
+---
+
+## CLAUDE.md Deep Docs Section
+
+The generated CLAUDE.md must include a **Deep Docs** index table (in `07-footer.partial.md`) that links to all generated documentation. This table tells the AI agent which doc to read for which scenario.
+
+```markdown
+## Deep Docs (按需阅读)
+
+CLAUDE.md 只放规则摘要。详细设计、模式、决策记录在 `docs/` 下，**碰到相关任务时去读**。
+
+| 触发场景 | 读哪个文件 |
+|----------|-----------|
+| 目录结构、分层、依赖图、数据流 | `docs/architecture.md` |
+| Package API、exports、模块划分 | `docs/packages.md` |
+| 技术选型疑问、版本号确认 | `docs/tech-stack.md` |
+| 为什么选了 X 而不是 Y | `docs/decisions.md` (ADR) |
+{{#IF PLAN_F}}| Metro ESM 踩坑、SVG 跨平台 | `docs/guides/metro-esm-gotchas.md` |{{/IF}}
+{{#IF HAS_JOTAI}}| 写 Jotai 状态 / Agent UI 状态 | `docs/guides/jotai-agent-patterns.md` |{{/IF}}
+| 项目简介、产品定位 | `docs/brief.md` |
+| 当前进度、里程碑、待办 | `docs/PROGRESS.md` |
+| 版本变更历史 | `docs/CHANGELOG.md` |
 ```
 
-**pre-code-change.sh** - Warn when modifying asset layer files:
-```bash
-#!/bin/bash
-TOOL_INPUT="$1"
-if echo "$TOOL_INPUT" | grep -qE "(\.contract\.|\.spec\.md|/tests/)"; then
-  echo "⚠️  警告: 正在修改「资产层」文件"
-  echo "   根据开发协议，修改这些文件意味着下游实现需要重写。"
-fi
+**Generation instructions**:
+- Always include architecture.md, tech-stack.md, decisions.md, brief.md, PROGRESS.md, CHANGELOG.md
+- packages.md: only for monorepo (Plan D) or multi-package projects
+- guides/: only include rows for guides that were actually generated
+- This table is the primary way CLAUDE.md stays small (<500 lines) while detailed docs live in `docs/`
+
+---
+
+## CalVer Version Tagging
+
+All generated documentation files must include CalVer version headers:
+
+```markdown
+> **Version**: v{{YEAR}}.{{MONTH_PADDED}}.0
+> **Last Updated**: {{DATE}}
 ```
 
-**post-bash.sh** - Remind to rewrite when tests fail:
-```bash
-#!/bin/bash
-TOOL_OUTPUT="$1"
-EXIT_CODE="$2"
-if [ "$EXIT_CODE" != "0" ]; then
-  if echo "$TOOL_OUTPUT" | grep -qEi "(FAIL|failed|error.*test)"; then
-    echo "🔴 测试失败 - 提醒：失败 = 重写模块，而非打补丁"
-  fi
-fi
-```
+**Rules**:
+- Version format: `v{YYYY}.{MM}.{patch}` (e.g., `v2026.02.0`)
+- Initial patch is always `0`
+- When docs are updated, the `doc-drift-guard` hook reminds to bump the version
+- `Last Updated` uses ISO date format (`YYYY-MM-DD`)
 
-**prompt-guard.sh** - Detect bug fix requests:
-```bash
-#!/bin/bash
-PROMPT="$1"
-if echo "$PROMPT" | grep -qEi "(fix|修|patch|bug)"; then
-  echo "📋 检测到修复请求 - 提醒：先写测试，再删模块重写"
-fi
-```
+**Files that get version headers**: architecture.md, packages.md, tech-stack.md, decisions.md, guides/*.md
 
-Update `.claude/settings.local.json`:
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [{ "type": "command", "command": "bash .claude/hooks/pre-code-change.sh \"$TOOL_INPUT\"" }]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "bash .claude/hooks/post-bash.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\"" }]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [{ "type": "command", "command": "bash .claude/hooks/prompt-guard.sh \"$PROMPT\"" }]
-      }
-    ]
-  }
-}
-```
+**Files that get Last Updated only** (no version): PROGRESS.md, CHANGELOG.md, brief.md
 
 ---
 
@@ -800,36 +482,22 @@ When generating configurations, consult:
 
 ## Example Outputs
 
-### Minimal B2B SaaS Config
+See `examples/b2b-config.md` for a minimal B2B SaaS config example.
 
-```markdown
-# my-saas-app Development Guide
-
-> **Service Target**: Development Team
-> **Interaction Style**: Professional English
-> **Thinking Mode**: ultrathink
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | Vite 6.x + React 19 + TypeScript |
-| Routing | TanStack Router |
-| Data | TanStack Query + Zustand |
-| UI | shadcn/ui + Tailwind CSS |
-| Backend | Supabase |
-```
-
-### Full Enterprise Config
-
-See `references/tech-stacks.md` for complete examples.
+For full enterprise examples, see `references/tech-stacks.md`.
 
 ---
 
 ## Workflow After Initialization
 
 1. **Run init script**: `bash init-project.sh`
-2. **Start development**: Begin coding with your configured environment
+2. **Plan with annotation loop** (recommended for non-trivial features):
+   - AI writes `docs/plan.md`
+   - You annotate inline in your editor (add context, delete sections, correct assumptions)
+   - Tell AI: "read annotations in docs/plan.md, update accordingly. Don't implement yet."
+   - Repeat 1-6 rounds until the plan is project-specific
+   - Then: "implement it all"
+3. **Start development**: Begin coding with your configured environment
 
 ---
 
@@ -837,7 +505,6 @@ See `references/tech-stacks.md` for complete examples.
 
 **Q: CLAUDE.md too long?**
 A: Keep under 500 lines. Move detailed docs to `docs/`.
-
 
 **Q: Bun compatibility issues?**
 A: Fall back to pnpm. Check `references/tech-stacks.md`.
