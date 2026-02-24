@@ -3,12 +3,7 @@
  * Template Assembly Script
  *
  * Concatenates partial files and performs variable substitution
- * to generate the final CLAUDE.md output.
- *
- * Usage:
- *   bun scripts/assemble-template.ts --help
- *   bun scripts/assemble-template.ts --plan C --name "MyProject"
- *   bun scripts/assemble-template.ts --quick --name "MyProject" --type C --pm bun
+ * to generate CLAUDE.md or AGENTS.md outputs.
  */
 
 import { readFileSync, existsSync, readdirSync } from "fs";
@@ -19,10 +14,13 @@ import { fileURLToPath } from "url";
 // Types
 // ============================================================================
 
+export type TemplateTarget = "claude" | "agents";
+
 export interface AssemblyOptions {
   planType: string; // "A" | "B" | "C" | "D" | "F" | "G" | "H" | "J" | "K"
   variables: Record<string, string>;
   cloudflareNative?: boolean;
+  target?: TemplateTarget;
 }
 
 export interface PartialInfo {
@@ -40,7 +38,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ASSETS_DIR = join(__dirname, "..", "assets");
 const PARTIALS_DIR = join(ASSETS_DIR, "partials");
+const PARTIALS_AGENTS_DIR = join(ASSETS_DIR, "partials-agents");
 const VERSIONS_FILE = join(ASSETS_DIR, "versions.json");
+
+const TARGET_DIRS: Record<TemplateTarget, string> = {
+  claude: PARTIALS_DIR,
+  agents: PARTIALS_AGENTS_DIR,
+};
 
 // Plans that include Cloudflare section
 const CLOUDFLARE_PLANS = new Set(["A", "C", "C+", "D"]);
@@ -52,27 +56,75 @@ const CLOUDFLARE_PARTIAL_PLANS = new Set(["G", "H"]);
 // ============================================================================
 
 /**
- * Load versions from versions.json
+ * Validate supported version syntax in versions.json.
  */
-export function loadVersions(): Record<string, string> {
-  if (!existsSync(VERSIONS_FILE)) {
-    throw new Error(`versions.json not found at ${VERSIONS_FILE}`);
+export function isValidVersionString(value: string): boolean {
+  if (value === "latest") return true;
+  if (/^\d+$/.test(value)) return true; // 19
+  if (/^\d+\.x(?:-[0-9A-Za-z.-]+)?$/.test(value)) return true; // 6.x, 3.x-beta
+  if (/^\d+(?:\.\d+){1,2}(?:-[0-9A-Za-z.-]+)?$/.test(value)) return true; // 2.0, 1.0.0-beta
+  if (/^\d+(?:\.\d+)+\+$/.test(value)) return true; // 0.110+, 0.84+
+  return false;
+}
+
+/**
+ * Parse CLI target argument safely.
+ */
+export function parseTarget(value: string): TemplateTarget {
+  if (value === "claude" || value === "agents") {
+    return value;
   }
 
-  const raw = readFileSync(VERSIONS_FILE, "utf-8");
-  const parsed = JSON.parse(raw);
+  throw new Error(
+    `Invalid target: ${value}. Expected one of: claude, agents.`
+  );
+}
+
+/**
+ * Load versions from versions.json.
+ */
+export function loadVersions(versionsFilePath: string = VERSIONS_FILE): Record<string, string> {
+  if (!existsSync(versionsFilePath)) {
+    throw new Error(`versions.json not found at ${versionsFilePath}`);
+  }
+
+  let parsed: unknown;
+  try {
+    const raw = readFileSync(versionsFilePath, "utf-8");
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(
+      `Failed to parse versions.json at ${versionsFilePath}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new Error(`Invalid versions.json format at ${versionsFilePath}: root must be an object`);
+  }
 
   // Flatten nested structure to flat key-value
   const versions: Record<string, string> = {};
 
-  for (const [category, items] of Object.entries(parsed)) {
+  for (const [category, items] of Object.entries(parsed as Record<string, unknown>)) {
     if (category.startsWith("$")) continue; // Skip $schema, $comment
-    if (typeof items === "object" && items !== null) {
-      for (const [key, value] of Object.entries(items as Record<string, string>)) {
-        // Convert to VERSION_XXX format (uppercase, hyphens to underscores)
-        const varName = `VERSION_${key.toUpperCase().replace(/-/g, "_")}`;
-        versions[varName] = value;
+    if (typeof items !== "object" || items === null) continue;
+
+    for (const [key, value] of Object.entries(items as Record<string, unknown>)) {
+      if (typeof value !== "string") {
+        throw new Error(
+          `Invalid version value for ${category}.${key}: expected string, got ${typeof value}`
+        );
       }
+
+      if (!isValidVersionString(value)) {
+        throw new Error(
+          `Invalid version format for ${category}.${key}: "${value}"`
+        );
+      }
+
+      // Convert to VERSION_XXX format (uppercase, hyphens to underscores)
+      const varName = `VERSION_${key.toUpperCase().replace(/-/g, "_")}`;
+      versions[varName] = value;
     }
   }
 
@@ -80,22 +132,32 @@ export function loadVersions(): Record<string, string> {
 }
 
 /**
- * Get ordered list of partial files
+ * Get ordered list of partial files.
  */
-export function getPartials(): PartialInfo[] {
-  const files = readdirSync(PARTIALS_DIR).filter(
+export function getPartials(target: TemplateTarget = "claude"): PartialInfo[] {
+  const partialDir = TARGET_DIRS[target];
+
+  if (!existsSync(partialDir)) {
+    throw new Error(`Partials directory not found for target "${target}": ${partialDir}`);
+  }
+
+  const files = readdirSync(partialDir).filter(
     (f) => f.endsWith(".partial.md") && /^\d{2}-/.test(f)
   );
+
+  if (files.length === 0) {
+    throw new Error(`No partial files found for target "${target}" in ${partialDir}`);
+  }
 
   return files
     .map((f) => {
       const order = parseInt(f.substring(0, 2), 10);
       const name = f.replace(".partial.md", "");
-      const conditional = name === "06-cloudflare" ? "CLOUDFLARE_NATIVE" : undefined;
+      const conditional = name.includes("cloudflare") ? "CLOUDFLARE_NATIVE" : undefined;
 
       return {
         name,
-        path: join(PARTIALS_DIR, f),
+        path: join(partialDir, f),
         order,
         conditional,
       };
@@ -104,7 +166,7 @@ export function getPartials(): PartialInfo[] {
 }
 
 /**
- * Read a partial file content
+ * Read a partial file content.
  */
 export function readPartial(partialPath: string): string {
   if (!existsSync(partialPath)) {
@@ -114,7 +176,7 @@ export function readPartial(partialPath: string): string {
 }
 
 /**
- * Determine if Cloudflare section should be included
+ * Determine if Cloudflare section should be included.
  */
 export function shouldIncludeCloudflare(planType: string, explicitFlag?: boolean): boolean {
   if (explicitFlag !== undefined) {
@@ -124,7 +186,7 @@ export function shouldIncludeCloudflare(planType: string, explicitFlag?: boolean
 }
 
 /**
- * Replace variables in template content
+ * Replace variables in template content.
  * Format: {{VARIABLE_NAME}} -> value
  */
 export function replaceVariables(
@@ -155,31 +217,68 @@ export function replaceVariables(
 }
 
 /**
- * Process conditional blocks
+ * Process conditional blocks with nested support.
  * Format: {{#IF CONDITION}}...content...{{/IF}}
  */
 export function processConditionals(
   content: string,
   conditions: Record<string, boolean>
 ): string {
+  const closeTag = "{{/IF}}";
   let result = content;
+  let iterations = 0;
 
-  // Match {{#IF CONDITION}}...{{/IF}} blocks (including newlines)
-  const ifPattern = /\{\{#IF\s+(\w+)\}\}([\s\S]*?)\{\{\/IF\}\}/g;
+  while (true) {
+    const closeIndex = result.indexOf(closeTag);
+    const hasOpenTag = result.includes("{{#IF");
 
-  result = result.replace(ifPattern, (match, condition, innerContent) => {
+    if (closeIndex === -1) {
+      if (hasOpenTag) {
+        throw new Error("Malformed conditional block: missing {{/IF}}");
+      }
+      break;
+    }
+
+    const head = result.slice(0, closeIndex);
+    const matches = [...head.matchAll(/\{\{#IF\s+(\w+)\}\}/g)];
+
+    if (matches.length === 0) {
+      throw new Error("Malformed conditional block: unexpected {{/IF}}");
+    }
+
+    const openMatch = matches[matches.length - 1];
+    const openTag = openMatch[0];
+    const condition = openMatch[1];
+    const openStart = openMatch.index as number;
+    const openEnd = openStart + openTag.length;
+
+    const innerContent = result.slice(openEnd, closeIndex);
     const shouldInclude = conditions[condition] ?? false;
-    return shouldInclude ? innerContent : "";
-  });
+    const replacement = shouldInclude ? innerContent : "";
+
+    result =
+      result.slice(0, openStart) +
+      replacement +
+      result.slice(closeIndex + closeTag.length);
+
+    iterations++;
+    if (iterations > 10000) {
+      throw new Error("Conditional processing exceeded safe iteration limit");
+    }
+  }
+
+  if (result.includes("{{/IF}}")) {
+    throw new Error("Malformed conditional block: unexpected {{/IF}}");
+  }
 
   return result;
 }
 
 /**
- * Main assembly function
+ * Main assembly function.
  */
 export function assembleTemplate(options: AssemblyOptions): string {
-  const { planType, variables, cloudflareNative } = options;
+  const { planType, variables, cloudflareNative, target = "claude" } = options;
 
   // Load version variables
   const versions = loadVersions();
@@ -192,7 +291,7 @@ export function assembleTemplate(options: AssemblyOptions): string {
   };
 
   // Get partials
-  const partials = getPartials();
+  const partials = getPartials(target);
 
   // Determine conditions
   const includeCloudflare = shouldIncludeCloudflare(planType, cloudflareNative);
@@ -237,14 +336,17 @@ Usage:
 
 Options:
   --help              Show this help message
+  --target <name>     Output target: claude (default) | agents
   --plan <type>       Plan type (A, B, C, D, F, G, H, J, K)
   --name <name>       Project name
   --quick             Quick mode (minimal questions)
   --no-cloudflare     Exclude Cloudflare section
+  --cloudflare        Include Cloudflare section
   --var KEY=VALUE     Set a template variable
 
 Examples:
   bun scripts/assemble-template.ts --plan C --name MyProject
+  bun scripts/assemble-template.ts --target agents --plan C --name MyProject
   bun scripts/assemble-template.ts --plan B --name CRM --no-cloudflare
   bun scripts/assemble-template.ts --plan C --var USER_NAME=John --var SERVICE_TARGET=B2B
 `);
@@ -252,6 +354,7 @@ Examples:
 
 function parseArgs(args: string[]): {
   help: boolean;
+  target: TemplateTarget;
   plan: string;
   name: string;
   quick: boolean;
@@ -260,6 +363,7 @@ function parseArgs(args: string[]): {
 } {
   const result = {
     help: false,
+    target: "claude" as TemplateTarget,
     plan: "C",
     name: "MyProject",
     quick: false,
@@ -275,6 +379,11 @@ function parseArgs(args: string[]): {
       case "-h":
         result.help = true;
         break;
+      case "--target": {
+        const targetValue = args[++i] || "claude";
+        result.target = parseTarget(targetValue);
+        break;
+      }
       case "--plan":
         result.plan = args[++i] || "C";
         break;
@@ -290,13 +399,14 @@ function parseArgs(args: string[]): {
       case "--cloudflare":
         result.cloudflare = true;
         break;
-      case "--var":
+      case "--var": {
         const varArg = args[++i];
         if (varArg && varArg.includes("=")) {
           const [key, ...valueParts] = varArg.split("=");
           result.variables[key] = valueParts.join("=");
         }
         break;
+      }
     }
   }
 
@@ -306,23 +416,25 @@ function parseArgs(args: string[]): {
 // Main entry point (only runs when executed directly)
 if (import.meta.main) {
   const args = process.argv.slice(2);
-  const parsed = parseArgs(args);
-
-  if (parsed.help) {
-    printHelp();
-    process.exit(0);
-  }
-
-  const options: AssemblyOptions = {
-    planType: parsed.plan,
-    variables: {
-      PROJECT_NAME: parsed.name,
-      ...parsed.variables,
-    },
-    cloudflareNative: parsed.cloudflare,
-  };
 
   try {
+    const parsed = parseArgs(args);
+
+    if (parsed.help) {
+      printHelp();
+      process.exit(0);
+    }
+
+    const options: AssemblyOptions = {
+      planType: parsed.plan,
+      target: parsed.target,
+      variables: {
+        PROJECT_NAME: parsed.name,
+        ...parsed.variables,
+      },
+      cloudflareNative: parsed.cloudflare,
+    };
+
     const output = assembleTemplate(options);
     console.log(output);
   } catch (error) {
