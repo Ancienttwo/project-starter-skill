@@ -135,6 +135,7 @@ create_structure() {
     echo -e "${BLUE}Creating project structure...${NC}"
 
     mkdir -p docs/architecture
+    mkdir -p docs/reference-configs
     mkdir -p ops
     mkdir -p artifacts
 
@@ -188,6 +189,30 @@ EOF
 
 ---
 *Updated: $(date +%Y-%m-%d)*
+EOF
+
+    cat > docs/reference-configs/changelog-versioning.yaml.md << 'EOF'
+# Changelog & Versioning Reference
+
+Use this file for detailed release-note and semantic-versioning rules.
+EOF
+
+    cat > docs/reference-configs/git-strategy.yaml.md << 'EOF'
+# Git Strategy Reference
+
+Use this file for branch model and commit convention details.
+EOF
+
+    cat > docs/reference-configs/release-deploy.yaml.md << 'EOF'
+# Release & Deployment Reference
+
+Use this file for release pipeline and deployment trigger details.
+EOF
+
+    cat > docs/reference-configs/ai-workflows.yaml.md << 'EOF'
+# AI Workflows Reference
+
+Use this file for extended AI workflow templates and session handoff protocols.
 EOF
 
     # Update .gitignore
