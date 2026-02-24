@@ -12,14 +12,19 @@ function countLines(content: string): number {
   return content.split("\n").length;
 }
 
+function unresolvedPlaceholders(content: string): string[] {
+  const matches = content.match(/\{\{[^{}]+\}\}/g) ?? [];
+  return [...new Set(matches)].filter(
+    (token) => !/^\{\{\s*secrets\.[^}]+\s*\}\}$/.test(token)
+  );
+}
+
 describe("Quick Mode vs Full Mode Parity", () => {
   const quickModeOutput = assembleTemplate({
     planType: "C",
+    quickMode: true,
     variables: {
       PROJECT_NAME: "TestProject",
-      USER_NAME: "Developer",
-      SERVICE_TARGET: "User",
-      INTERACTION_STYLE: "Technical, concise",
     },
   });
 
@@ -206,8 +211,26 @@ describe("Output Quality Gates", () => {
       variables: { PROJECT_NAME: "Test" },
     });
 
-    expect(countLines(claudeNoCloudflare)).toBeLessThanOrEqual(700);
-    expect(countLines(claudeWithCloudflare)).toBeLessThanOrEqual(980);
-    expect(countLines(agentsWithCloudflare)).toBeLessThanOrEqual(420);
+    expect(countLines(claudeNoCloudflare)).toBeLessThanOrEqual(500);
+    expect(countLines(claudeWithCloudflare)).toBeLessThanOrEqual(500);
+    expect(countLines(agentsWithCloudflare)).toBeLessThanOrEqual(260);
+  });
+
+  test("should not leak unresolved template placeholders", () => {
+    const claude = assembleTemplate({
+      planType: "C",
+      quickMode: true,
+      variables: { PROJECT_NAME: "NoLeak" },
+    });
+
+    const agents = assembleTemplate({
+      target: "agents",
+      planType: "C",
+      quickMode: true,
+      variables: { PROJECT_NAME: "NoLeak" },
+    });
+
+    expect(unresolvedPlaceholders(claude)).toEqual([]);
+    expect(unresolvedPlaceholders(agents)).toEqual([]);
   });
 });
