@@ -43,6 +43,9 @@ project/
 ├── AGENTS.md           # Agent execution protocol guide
 ├── .gitignore          # Comprehensive ignore rules
 ├── init-project.sh     # Project initialization script
+├── tasks/
+│   ├── todo.md         # Primary execution checklist + review section
+│   └── lessons.md      # Self-improvement loop (corrections -> prevention rules)
 ├── docs/
 │   ├── brief.md        # 产品简介 + MVP scope (from Q1.5, Q1.6)
 │   ├── tech-stack.md   # 技术栈决策 + 成本预估
@@ -53,7 +56,8 @@ project/
 │   ├── archives/       # Archived progress logs
 │   ├── reference-configs/ # Verbose workflow/release reference configs
 │   ├── PROGRESS.md     # AI development log (2000 lines max)
-│   ├── TODO.md         # Pending tasks only
+│   ├── TODO.md         # Legacy compatibility mirror (tasks/todo.md is primary)
+│   ├── plan.md         # Deep architecture/spec context (compatibility)
 │   └── CHANGELOG.md    # Version history
 ├── ops/                # DO NOT COMMIT
 │   ├── database/       # Migrations, seeds, backups
@@ -65,22 +69,32 @@ project/
 
 ## Development Tracking Rules
 
-### docs/PROGRESS.md
+### tasks/todo.md (Primary)
+
+```yaml
+RULES:
+  - PLAN FIRST with checkable items
+  - VERIFY PLAN before implementation
+  - TRACK PROGRESS by checking items during execution
+  - DOCUMENT RESULTS in a dedicated review section
+```
+
+### tasks/lessons.md (Primary)
+
+```yaml
+RULES:
+  - UPDATE after every correction from user/review
+  - CAPTURE mistake pattern and prevention rule
+  - REVIEW relevant lessons before coding sessions
+```
+
+### docs/PROGRESS.md (Compatibility History)
 
 ```yaml
 MAX_LINES: 2000
 ARCHIVE_TRIGGER: When exceeding 2000 lines
 ARCHIVE_TO: docs/archives/PROGRESS-{YYYY-MM-DD}.md
 KEEP_RECENT: 200 lines only
-```
-
-### docs/TODO.md
-
-```yaml
-RULES:
-  - ONLY keep tasks NOT YET STARTED
-  - DELETE immediately when task begins or completes
-  - NO "done" or "completed" markers
 ```
 
 ## Reference Files
