@@ -97,6 +97,10 @@ describe("Core Philosophy Preservation", () => {
     expect(output).toContain("Code is toilet paper");
   });
 
+  test("output should contain source-of-truth principle", () => {
+    expect(output.toLowerCase()).toContain("source of truth");
+  });
+
   test("output should contain Good Taste principles", () => {
     expect(output).toContain("Good Taste");
   });
@@ -163,6 +167,30 @@ describe("Output Quality Gates", () => {
     expect(output).not.toContain("assets/reference-configs/");
   });
 
+  test("should use tasks files as primary workflow contracts", () => {
+    const claude = assembleTemplate({
+      planType: "B",
+      variables: { PROJECT_NAME: "Test" },
+    });
+
+    const agents = assembleTemplate({
+      target: "agents",
+      planType: "B",
+      variables: { PROJECT_NAME: "Test" },
+    });
+
+    expect(claude).toContain("tasks/todo.md");
+    expect(claude).toContain("tasks/lessons.md");
+    expect(agents).toContain("tasks/todo.md");
+    expect(agents).toContain("tasks/lessons.md");
+    expect(claude).toContain("Self-Improvement Loop");
+    expect(agents).toContain("Self-Improvement Loop");
+
+    // Compatibility references should still exist.
+    expect(claude).toContain("docs/PROGRESS.md");
+    expect(agents).toContain("docs/PROGRESS.md");
+  });
+
   test("should stay within line-count budgets", () => {
     const claudeNoCloudflare = assembleTemplate({
       planType: "B",
@@ -178,8 +206,8 @@ describe("Output Quality Gates", () => {
       variables: { PROJECT_NAME: "Test" },
     });
 
-    expect(countLines(claudeNoCloudflare)).toBeLessThanOrEqual(560);
-    expect(countLines(claudeWithCloudflare)).toBeLessThanOrEqual(860);
-    expect(countLines(agentsWithCloudflare)).toBeLessThanOrEqual(320);
+    expect(countLines(claudeNoCloudflare)).toBeLessThanOrEqual(700);
+    expect(countLines(claudeWithCloudflare)).toBeLessThanOrEqual(980);
+    expect(countLines(agentsWithCloudflare)).toBeLessThanOrEqual(420);
   });
 });

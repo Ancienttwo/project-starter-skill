@@ -28,6 +28,11 @@ describe("AGENTS Target Assembly", () => {
     expect(output).toContain("## Coding Constraints");
     expect(output).toContain("## Quality & Safety");
     expect(output).toContain("## Deep Docs Index");
+    expect(output).toContain("### First Principles");
+    expect(output).toContain("### Single Source of Truth");
+    expect(output).toContain("Self-Improvement Loop");
+    expect(output).toContain("tasks/todo.md");
+    expect(output).toContain("tasks/lessons.md");
   });
 
   test("should preserve core governance semantics between CLAUDE and AGENTS", () => {
@@ -47,6 +52,10 @@ describe("AGENTS Target Assembly", () => {
     expect(agents.toLowerCase()).toContain("verification");
     expect(claude.toLowerCase()).toContain("plan");
     expect(agents.toLowerCase()).toContain("plan");
+    expect(claude.toLowerCase()).toContain("rewrite over patch");
+    expect(agents.toLowerCase()).toContain("rewrite over patch");
+    expect(claude.toLowerCase()).toContain("source of truth");
+    expect(agents.toLowerCase()).toContain("source of truth");
   });
 
   test("should render cloudflare section for both targets when enabled by plan", () => {
