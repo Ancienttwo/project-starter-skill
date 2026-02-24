@@ -1,6 +1,6 @@
 # Partial Assembly Order
 
-This document defines the order in which partials are concatenated to form the final `CLAUDE.md` output.
+This document defines the order used to assemble `CLAUDE.md`.
 
 ## Assembly Sequence
 
@@ -12,42 +12,29 @@ This document defines the order in which partials are concatenated to form the f
 5. 05-workflow.partial.md
 6. {{#IF CLOUDFLARE_NATIVE}}06-cloudflare.partial.md{{/IF}}
 7. 07-footer.partial.md
+8. 08-orchestration.partial.md
 ```
 
 ## Conditional Logic
 
-### 06-cloudflare.partial.md
+Cloudflare section is included when:
+- Plan A, C, C+, D
+- Plan G/H (partial Cloudflare support)
+- Or explicit `--cloudflare`
 
-Include based on Plan Type:
-
-| Plan | Include Cloudflare Section? |
-|------|----------------------------|
-| Plan A (Remix) | ✅ Yes |
-| Plan B (UmiJS) | ❌ No |
-| Plan C (Vite + TanStack) | ✅ Yes |
-| Plan C+ (AI Chat) | ✅ Yes |
-| Plan D (Monorepo) | ✅ Yes |
-| Plan F (Mobile/Expo) | ❌ No |
-| Plan G (Python Quant) | ⚠️ Partial (Containers only) |
-| Plan H (Trading) | ⚠️ Partial (Workers only) |
-| Plan J (TUI) | ❌ No |
+It is excluded when:
+- Plan B, F, J
+- Or explicit `--no-cloudflare`
 
 ## Variable Substitution
 
-Variables are substituted AFTER partial concatenation:
-
 1. Concatenate partials in order
-2. Replace `{{VARIABLE_NAME}}` with values
-3. Process conditional blocks `{{#IF CONDITION}}...{{/IF}}`
-4. Output final CLAUDE.md
+2. Process conditional blocks `{{#IF CONDITION}}...{{/IF}}`
+3. Replace `{{VARIABLE_NAME}}` placeholders
+4. Output final markdown
 
 ## Rules
 
-- Partials MUST NOT reference other partials
-- Partials are flat, single-level only
-- No nested includes allowed
-- Maximum 2 rounds of variable substitution (prevents circular references)
-
----
-
-*Assembly order defined for skill-refactor plan*
+- Partials are flat files; no partial includes
+- One conceptual purpose per partial
+- Keep core rules concise and move details to references

@@ -1,85 +1,57 @@
 # Template Partials
 
-This directory contains the composable partial files that are assembled to create the final `CLAUDE.md` output.
+This directory contains composable partial files used to build `CLAUDE.md`.
 
 ## Directory Structure
 
 ```
 partials/
-├── _assembly-order.md      # Assembly sequence documentation
-├── SPLIT_PLAN.md           # Original split analysis
-├── README.md               # This file
+├── _assembly-order.md
+├── SPLIT_PLAN.md
+├── README.md
 ├── 01-header.partial.md
 ├── 02-iron-rules.partial.md
-├── 03-philosophy.partial.md    # DO NOT SPLIT
+├── 03-philosophy.partial.md      # DO NOT SPLIT
 ├── 04-project-structure.partial.md
 ├── 05-workflow.partial.md
-├── 06-cloudflare.partial.md    # Conditional
-└── 07-footer.partial.md
+├── 06-cloudflare.partial.md      # Conditional
+├── 07-footer.partial.md
+└── 08-orchestration.partial.md   # Workflow orchestration protocol
 ```
 
 ## Partial Descriptions
 
-| Partial | Purpose | Lines | Conditional |
-|---------|---------|-------|-------------|
-| 01-header | Project title, metadata variables | ~10 | No |
-| 02-iron-rules | Iron Rules 1-6 | ~50 | No |
-| 03-philosophy | Core development philosophy | ~90 | No |
-| 04-project-structure | Directory structure, tech stack | ~95 | No |
-| 05-workflow | Progress tracking, versioning, git | ~240 | No |
-| 06-cloudflare | Cloudflare deployment options | ~300 | Yes |
-| 07-footer | AI workflows, documentation index | ~265 | No |
-
-## Adding a New Partial
-
-1. Create file with naming convention: `XX-name.partial.md` where XX is the order number
-2. Add header comment documenting purpose and variables
-3. Update `_assembly-order.md` with the new partial
-4. Update assembly logic in `scripts/assemble-template.ts` if conditional
-5. Add tests in `tests/assembly.test.ts`
+| Partial | Purpose | Conditional |
+|---------|---------|-------------|
+| 01-header | Project metadata variables | No |
+| 02-iron-rules | Core engineering constraints | No |
+| 03-philosophy | Development protocol philosophy | No |
+| 04-project-structure | Repo structure and stack overview | No |
+| 05-workflow | Plan loop, task tracking, progress protocol | No |
+| 06-cloudflare | Cloudflare deployment guidance | Yes |
+| 07-footer | Docs index and first principles | No |
+| 08-orchestration | Plan/subagent/verification orchestration | No |
 
 ## Variable Reference
 
-### User-Provided Variables
-- `{{PROJECT_NAME}}` - Project name
-- `{{USER_NAME}}` - Developer name/nickname
-- `{{SERVICE_TARGET}}` - Target user description
-- `{{INTERACTION_STYLE}}` - Communication style preference
-- `{{PROJECT_STRUCTURE}}` - Directory tree
-- `{{TECH_STACK_TABLE}}` - Tech stack markdown table
-- `{{PROHIBITIONS}}` - Project-specific prohibitions
+### User Variables
+- `{{PROJECT_NAME}}`
+- `{{USER_NAME}}`
+- `{{SERVICE_TARGET}}`
+- `{{INTERACTION_STYLE}}`
+- `{{PROJECT_STRUCTURE}}`
+- `{{TECH_STACK_TABLE}}`
+- `{{PROHIBITIONS}}`
 
-### Version Variables (from versions.json)
-- `{{VERSION_VITE}}` - Vite version
-- `{{VERSION_REACT}}` - React version
-- `{{VERSION_TYPESCRIPT}}` - TypeScript version
-- See `assets/versions.json` for complete list
+### Version Variables
+- Generated from `assets/versions.json` as `VERSION_*` keys
 
 ### Conditional Markers
-- `{{#IF CLOUDFLARE_NATIVE}}...{{/IF}}` - Include block for Cloudflare projects
+- `{{#IF CLOUDFLARE_NATIVE}}...{{/IF}}`
 
 ## Rules
 
-1. **Partials are flat** - No partial may reference another partial
-2. **One purpose per partial** - Each partial handles one conceptual unit
-3. **03-philosophy is sacred** - Never split the core philosophy section
-4. **Variables are substituted after assembly** - Write variables as-is in partials
-5. **Test before commit** - Run `bun test` to verify assembly works
-
-## Assembly Command
-
-```bash
-# Preview output
-bun scripts/assemble-template.ts --plan C --name MyProject
-
-# With all options
-bun scripts/assemble-template.ts \
-  --plan C \
-  --name MyProject \
-  --var USER_NAME=Dev \
-  --var SERVICE_TARGET="B2B Users"
-```
-
----
-
-*Part of project-initializer skill refactor*
+1. Keep each partial narrowly focused
+2. Keep `03-philosophy.partial.md` unsplit
+3. Run tests after edits: `bun test`
+4. Move verbose configs into reference files when possible
