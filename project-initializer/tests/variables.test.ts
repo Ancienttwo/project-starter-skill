@@ -1,5 +1,12 @@
 import { describe, test, expect } from "bun:test";
-import { loadVersions, replaceVariables } from "../scripts/assemble-template";
+import { mkdtempSync, writeFileSync, rmSync } from "fs";
+import { join } from "path";
+import { tmpdir } from "os";
+import {
+  loadVersions,
+  replaceVariables,
+  isValidVersionString,
+} from "../scripts/assemble-template";
 
 describe("Variable Substitution", () => {
   test("should replace single variable", () => {
@@ -53,7 +60,7 @@ describe("versions.json Integration", () => {
   test("should have VERSION_ prefixed keys", () => {
     const versions = loadVersions();
     const keys = Object.keys(versions);
-    
+
     for (const key of keys) {
       expect(key.startsWith("VERSION_")).toBe(true);
     }
@@ -61,7 +68,7 @@ describe("versions.json Integration", () => {
 
   test("should include core versions", () => {
     const versions = loadVersions();
-    
+
     expect(versions.VERSION_VITE).toBeDefined();
     expect(versions.VERSION_REACT).toBeDefined();
     expect(versions.VERSION_TYPESCRIPT).toBeDefined();
@@ -69,11 +76,34 @@ describe("versions.json Integration", () => {
 
   test("should convert kebab-case to UPPER_SNAKE_CASE", () => {
     const versions = loadVersions();
-    
+
     expect(versions.VERSION_TANSTACK_ROUTER).toBeDefined();
     expect(versions.VERSION_TANSTACK_QUERY).toBeDefined();
   });
 
-  test.todo("should validate version format (X.x or X.Y.Z)");
-  test.todo("should error on invalid versions.json");
+  test("should validate version format", () => {
+    const versions = loadVersions();
+
+    for (const value of Object.values(versions)) {
+      expect(isValidVersionString(value)).toBe(true);
+    }
+
+    expect(isValidVersionString("latest")).toBe(true);
+    expect(isValidVersionString("5.x")).toBe(true);
+    expect(isValidVersionString("1.0.0-beta")).toBe(true);
+    expect(isValidVersionString("0.84+")).toBe(true);
+    expect(isValidVersionString("invalid version")).toBe(false);
+  });
+
+  test("should error on invalid versions.json", () => {
+    const dir = mkdtempSync(join(tmpdir(), "versions-invalid-"));
+    const path = join(dir, "versions.json");
+
+    try {
+      writeFileSync(path, JSON.stringify({ core: { vite: "bad@version" } }), "utf-8");
+      expect(() => loadVersions(path)).toThrow("Invalid version format");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });

@@ -9,18 +9,18 @@ import {
 
 describe("Template Assembly", () => {
   test("should read partials in correct order", () => {
-    const partials = getPartials();
-    expect(partials.length).toBeGreaterThanOrEqual(7);
-    
+    const partials = getPartials("claude");
+    expect(partials.length).toBeGreaterThanOrEqual(8);
+
     for (let i = 1; i < partials.length; i++) {
       expect(partials[i].order).toBeGreaterThan(partials[i - 1].order);
     }
   });
 
   test("should have expected partial names", () => {
-    const partials = getPartials();
+    const partials = getPartials("claude");
     const names = partials.map((p) => p.name);
-    
+
     expect(names).toContain("01-header");
     expect(names).toContain("02-iron-rules");
     expect(names).toContain("03-philosophy");
@@ -28,27 +28,57 @@ describe("Template Assembly", () => {
     expect(names).toContain("05-workflow");
     expect(names).toContain("06-cloudflare");
     expect(names).toContain("07-footer");
+    expect(names).toContain("08-orchestration");
   });
 
   test("should read partial content", () => {
-    const partials = getPartials();
+    const partials = getPartials("claude");
     const firstPartial = partials[0];
-    
+
     const content = readPartial(firstPartial.path);
     expect(content).toBeDefined();
     expect(content.length).toBeGreaterThan(0);
   });
 
-  test("should mark 06-cloudflare as conditional", () => {
-    const partials = getPartials();
+  test("should mark cloudflare partial as conditional", () => {
+    const partials = getPartials("claude");
     const cloudflarePartial = partials.find((p) => p.name === "06-cloudflare");
-    
+
     expect(cloudflarePartial).toBeDefined();
     expect(cloudflarePartial?.conditional).toBe("CLOUDFLARE_NATIVE");
   });
 
-  test.todo("should concatenate partials without gaps");
-  test.todo("should preserve line breaks between partials");
+  test("should concatenate partials in sequence", () => {
+    const output = assembleTemplate({
+      planType: "C",
+      variables: { PROJECT_NAME: "TestProject" },
+    });
+
+    const sections = [
+      "## Iron Rules",
+      "## Project Structure",
+      "### Plan Annotation Protocol",
+      "## Core Documentation Index",
+      "## Workflow Orchestration",
+    ];
+
+    let lastIndex = -1;
+    for (const section of sections) {
+      const idx = output.indexOf(section);
+      expect(idx).toBeGreaterThan(lastIndex);
+      lastIndex = idx;
+    }
+  });
+
+  test("should preserve blank line separators between major sections", () => {
+    const output = assembleTemplate({
+      planType: "C",
+      variables: { PROJECT_NAME: "TestProject" },
+    });
+
+    expect(output).toMatch(/---\n{2,}## Iron Rules/);
+    expect(output).toMatch(/---\n{2,}## Project Structure/);
+  });
 });
 
 describe("Conditional Sections", () => {
@@ -82,8 +112,28 @@ End`;
     expect(result).toBe("a ");
   });
 
-  test.todo("should handle nested conditionals");
-  test.todo("should error on malformed conditional syntax");
+  test("should handle nested conditionals", () => {
+    const content = "{{#IF OUTER}}outer {{#IF INNER}}inner{{/IF}}{{/IF}}";
+
+    const includeBoth = processConditionals(content, { OUTER: true, INNER: true });
+    expect(includeBoth).toBe("outer inner");
+
+    const includeOuterOnly = processConditionals(content, { OUTER: true, INNER: false });
+    expect(includeOuterOnly).toBe("outer ");
+
+    const includeNone = processConditionals(content, { OUTER: false, INNER: true });
+    expect(includeNone).toBe("");
+  });
+
+  test("should error on malformed conditional syntax", () => {
+    expect(() => processConditionals("{{#IF A}}missing close", { A: true })).toThrow(
+      "Malformed conditional block"
+    );
+
+    expect(() => processConditionals("unexpected {{/IF}}", {})).toThrow(
+      "Malformed conditional block"
+    );
+  });
 });
 
 describe("Cloudflare Plan Detection", () => {
@@ -121,10 +171,14 @@ describe("Full Assembly", () => {
         PROJECT_NAME: "TestProject",
       },
     });
-    
+
     expect(result).toBeDefined();
     expect(result.length).toBeGreaterThan(0);
   });
 
-  test.todo("should handle missing partials gracefully");
+  test("should handle missing partials gracefully", () => {
+    expect(() => readPartial("/tmp/this-file-does-not-exist.partial.md")).toThrow(
+      "Partial not found"
+    );
+  });
 });

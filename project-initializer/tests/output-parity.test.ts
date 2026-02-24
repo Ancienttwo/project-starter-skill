@@ -1,6 +1,17 @@
 import { describe, test, expect } from "bun:test";
 import { assembleTemplate } from "../scripts/assemble-template";
 
+function extractHeadings(content: string, levels: Array<"## " | "### ">): string[] {
+  return content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => levels.some((level) => line.startsWith(level)));
+}
+
+function countLines(content: string): number {
+  return content.split("\n").length;
+}
+
 describe("Quick Mode vs Full Mode Parity", () => {
   const quickModeOutput = assembleTemplate({
     planType: "C",
@@ -45,8 +56,17 @@ describe("Quick Mode vs Full Mode Parity", () => {
     expect(fullModeOutput).toContain("Workflow Rules");
   });
 
-  test.todo("should produce same sections in both modes");
-  test.todo("should have same structure regardless of mode");
+  test("should produce same sections in both modes", () => {
+    const quickSections = extractHeadings(quickModeOutput, ["## "]);
+    const fullSections = extractHeadings(fullModeOutput, ["## "]);
+    expect(quickSections).toEqual(fullSections);
+  });
+
+  test("should have same structure regardless of mode", () => {
+    const quickStructure = extractHeadings(quickModeOutput, ["## ", "### "]);
+    const fullStructure = extractHeadings(fullModeOutput, ["## ", "### "]);
+    expect(quickStructure).toEqual(fullStructure);
+  });
 });
 
 describe("Core Philosophy Preservation", () => {
@@ -126,5 +146,40 @@ describe("Cloudflare Conditional Inclusion", () => {
       cloudflareNative: false,
     });
     expect(output).not.toContain("Cloudflare Deployment");
+  });
+});
+
+describe("Output Quality Gates", () => {
+  test("should reference project-local reference configs", () => {
+    const output = assembleTemplate({
+      planType: "B",
+      variables: { PROJECT_NAME: "Test" },
+    });
+
+    expect(output).toContain("docs/reference-configs/changelog-versioning.yaml.md");
+    expect(output).toContain("docs/reference-configs/git-strategy.yaml.md");
+    expect(output).toContain("docs/reference-configs/release-deploy.yaml.md");
+    expect(output).toContain("docs/reference-configs/ai-workflows.yaml.md");
+    expect(output).not.toContain("assets/reference-configs/");
+  });
+
+  test("should stay within line-count budgets", () => {
+    const claudeNoCloudflare = assembleTemplate({
+      planType: "B",
+      variables: { PROJECT_NAME: "Test" },
+    });
+    const claudeWithCloudflare = assembleTemplate({
+      planType: "C",
+      variables: { PROJECT_NAME: "Test" },
+    });
+    const agentsWithCloudflare = assembleTemplate({
+      target: "agents",
+      planType: "C",
+      variables: { PROJECT_NAME: "Test" },
+    });
+
+    expect(countLines(claudeNoCloudflare)).toBeLessThanOrEqual(560);
+    expect(countLines(claudeWithCloudflare)).toBeLessThanOrEqual(860);
+    expect(countLines(agentsWithCloudflare)).toBeLessThanOrEqual(320);
   });
 });
