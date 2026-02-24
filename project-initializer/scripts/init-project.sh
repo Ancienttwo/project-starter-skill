@@ -136,6 +136,7 @@ create_structure() {
 
     mkdir -p docs/architecture
     mkdir -p docs/reference-configs
+    mkdir -p tasks
     mkdir -p ops
     mkdir -p artifacts
 
@@ -174,18 +175,55 @@ All notable changes to this project will be documented in this file.
 *Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)*
 EOF
 
+    cat > tasks/todo.md << 'EOF'
+# Task Execution Checklist (Primary)
+
+## Plan
+- [ ] Define scope and acceptance criteria
+- [ ] Break down into checkable tasks
+
+## Execution
+- [ ] Implement task 1
+- [ ] Implement task 2
+
+## Review Section
+- Verification evidence:
+- Behavior diff notes:
+- Risks / follow-ups:
+
+---
+*Updated: $(date +%Y-%m-%d)*
+EOF
+
+    cat > tasks/lessons.md << 'EOF'
+# Lessons Learned (Self-Improvement Loop)
+
+## Template
+- Date:
+- Triggered by correction:
+- Mistake pattern:
+- Prevention rule:
+- Where to apply next time:
+
+---
+*Updated: $(date +%Y-%m-%d)*
+EOF
+
     cat > docs/TODO.md << 'EOF'
-# TODO List
+# TODO List (Legacy Compatibility)
 
-## High Priority
-- [ ] Environment configuration
-- [ ] Database setup
+Primary execution checklist has moved to `tasks/todo.md`.
+Keep this file only for legacy tools that still read docs/TODO.md.
 
-## Medium Priority
-- [ ] Core features implementation
+---
+*Updated: $(date +%Y-%m-%d)*
+EOF
 
-## Low Priority
-- [ ] Documentation improvements
+    cat > docs/plan.md << 'EOF'
+# Deep Plan Notes (Compatibility)
+
+Use this file for detailed architecture/spec context.
+Primary execution checklist lives in `tasks/todo.md`.
 
 ---
 *Updated: $(date +%Y-%m-%d)*
@@ -283,7 +321,8 @@ main() {
     echo "  1. cd $PROJECT_NAME"
     echo "  2. Copy .env.example to .env and configure"
     echo "  3. Run: $PKG_MANAGER run dev"
-    echo "  4. Start with: *workflow-status"
+    echo "  4. Add checklist to tasks/todo.md"
+    echo "  5. Capture corrections in tasks/lessons.md"
     echo ""
 }
 

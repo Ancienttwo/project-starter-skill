@@ -1,20 +1,34 @@
 #!/bin/bash
 # Prompt Guard Hook — UserPromptSubmit
 # Detects bug fix / new feature requests and injects TDD/BDD context
-# Detects plan.md annotation changes and enforces "don't implement yet"
+# Detects plan/task annotation changes and enforces "don't implement yet"
 
 PROMPT="$1"
 
-# --- Plan Annotation Detection ---
-# Check if docs/plan.md has uncommitted user modifications
-if [ -f "docs/plan.md" ]; then
-  PLAN_DIRTY=$(git diff --name-only 2>/dev/null | grep -c "docs/plan.md")
-  PLAN_UNSTAGED=$(git diff --name-only --cached 2>/dev/null | grep -c "docs/plan.md")
-  if [ "$PLAN_DIRTY" -gt 0 ] || [ "$PLAN_UNSTAGED" -gt 0 ]; then
-    # Only warn if user is NOT explicitly saying "implement"
-    if ! echo "$PROMPT" | grep -qEi "(implement|实现|execute|执行|build it|do it)"; then
-      echo "📋 docs/plan.md has been modified. Read annotations and update the plan. Don't implement yet."
-    fi
+has_changes() {
+  local file="$1"
+  local dirty staged
+
+  dirty=$(git diff --name-only 2>/dev/null | grep -Fx "$file" | wc -l | tr -d ' ')
+  staged=$(git diff --name-only --cached 2>/dev/null | grep -Fx "$file" | wc -l | tr -d ' ')
+
+  if [ "$dirty" -gt 0 ] || [ "$staged" -gt 0 ]; then
+    return 0
+  fi
+  return 1
+}
+
+if ! echo "$PROMPT" | grep -qEi "(implement|实现|execute|执行|build it|do it)"; then
+  if [ -f "tasks/todo.md" ] && has_changes "tasks/todo.md"; then
+    echo "📋 tasks/todo.md has been modified. Read annotations and update the plan. Don't implement yet."
+  fi
+
+  if [ -f "tasks/lessons.md" ] && has_changes "tasks/lessons.md"; then
+    echo "🧠 tasks/lessons.md has updates. Review prevention rules before coding."
+  fi
+
+  if [ -f "docs/plan.md" ] && has_changes "docs/plan.md"; then
+    echo "📎 docs/plan.md changed (compatibility deep notes). Sync with tasks/todo.md before implementing."
   fi
 fi
 

@@ -111,20 +111,22 @@ AI_SECURITY:
 ```yaml
 SESSION_HANDOFF:
   BEFORE_END:
-    1. Update docs/PROGRESS.md with current state
-    2. List incomplete tasks in docs/TODO.md
-    3. Document any blockers or decisions needed
-    4. Create checkpoint commit
+    1. Update tasks/todo.md review section with completion evidence
+    2. Append new patterns to tasks/lessons.md after corrections
+    3. Update docs/PROGRESS.md with current state
+    4. Document any blockers or decisions needed
+    5. Create checkpoint commit
 
   NEXT_SESSION_START:
-    1. AI reads docs/PROGRESS.md (latest 200 lines)
-    2. AI reads docs/TODO.md for pending work
-    3. AI checks git status for uncommitted changes
-    4. Resume from last checkpoint
+    1. AI reads tasks/todo.md for active execution checklist
+    2. AI reads tasks/lessons.md for prevention rules
+    3. AI reads docs/PROGRESS.md (latest 200 lines)
+    4. AI checks git status for uncommitted changes
+    5. Resume from last checkpoint
 
   CONTEXT_PRESERVATION:
     - Key decisions -> docs/architecture/decisions/
-    - Technical debt -> docs/TODO.md (Backlog)
+    - Technical debt -> docs/TODO.md (Legacy Backlog Mirror)
     - Learnings -> docs/PROGRESS.md (Notes section)
 ```
 
