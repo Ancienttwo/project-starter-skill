@@ -24,8 +24,8 @@ BASENAME=$(basename "$FILE_PATH")
 DIRNAME=$(dirname "$FILE_PATH")
 
 # 1. package.json exports 变更 → packages.md 可能过时
-if [[ "$BASENAME" == "package.json" ]] && echo "$DIRNAME" | grep -q "packages/"; then
-  PKG_NAME=$(echo "$DIRNAME" | grep -oP 'packages/[^/]+' | head -1)
+if [[ "$BASENAME" == "package.json" && "$DIRNAME" =~ (^|/)packages/([^/]+) ]]; then
+  PKG_NAME="packages/${BASH_REMATCH[2]}"
   if [[ -n "$PKG_NAME" ]]; then
     echo "[DocDrift] $PKG_NAME/package.json changed"
     echo "   Check: docs/packages.md exports table may need updating"
@@ -33,15 +33,15 @@ if [[ "$BASENAME" == "package.json" ]] && echo "$DIRNAME" | grep -q "packages/";
 fi
 
 # 2. 新模块目录 (packages/*/src/ 下新增子目录)
-if echo "$FILE_PATH" | grep -qE "packages/[^/]+/src/[^/]+/index\.ts$"; then
-  MODULE=$(echo "$FILE_PATH" | grep -oP 'packages/[^/]+/src/\K[^/]+')
-  PKG=$(echo "$FILE_PATH" | grep -oP 'packages/\K[^/]+')
+if [[ "$FILE_PATH" =~ (^|/)packages/([^/]+)/src/([^/]+)/index\.ts$ ]]; then
+  PKG="${BASH_REMATCH[2]}"
+  MODULE="${BASH_REMATCH[3]}"
   echo "[DocDrift] New module '$MODULE' in $PKG"
   echo "   Check: docs/packages.md and docs/architecture.md may need updating"
 fi
 
 # 3. apps 结构变更 (新增 app 路由或组件目录)
-if echo "$FILE_PATH" | grep -qE "apps/[^/]+/src/(app|components|hooks)/[^/]+/"; then
+if [[ "$FILE_PATH" =~ (^|/)apps/[^/]+/src/(app|components|hooks)/[^/]+/ ]]; then
   echo "[DocDrift] App structure changed: $FILE_PATH"
   echo "   Check: docs/architecture.md source tree may need updating"
 fi
@@ -52,7 +52,7 @@ if [[ "$BASENAME" == "metro.config.js" ]] || [[ "$BASENAME" == "metro.config.ts"
   echo "   Check: docs/guides/metro-esm-gotchas.md may need updating"
 fi
 
-if [[ "$BASENAME" == "tsconfig.json" ]] && echo "$DIRNAME" | grep -qE "(packages|apps)/"; then
+if [[ "$BASENAME" == "tsconfig.json" && "$DIRNAME" =~ (^|/)(packages|apps)/ ]]; then
   echo "[DocDrift] TypeScript config changed in $(basename "$DIRNAME")"
   echo "   Check: docs/packages.md may need updating"
 fi

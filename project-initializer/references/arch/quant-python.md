@@ -230,7 +230,7 @@ ml = [
 ```json
 {
   "hooks": {
-    "PostToolCall": [
+    "PostToolUse": [
       {
         "matcher": "Write\\(.*\\.py\\)",
         "command": "ruff format \"$CLAUDE_FILE_PATH\" && ruff check --fix \"$CLAUDE_FILE_PATH\" 2>&1 | head -10"
@@ -260,4 +260,3 @@ quant-project/
 ```
 
 ---
-

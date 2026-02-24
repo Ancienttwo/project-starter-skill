@@ -14,6 +14,7 @@ These plugins are critical for professional development workflows:
 | `frontend-design` | Official | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design) | Create distinctive, production-grade frontend interfaces with high design quality |
 | `code-simplifier` | Official | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/code-simplifier) | Simplifies and refines code for clarity, consistency, and maintainability |
 | `code-review` | Official | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/code-review) | Reviews code for bugs, logic errors, security vulnerabilities, and quality issues |
+| `superpowers@superpowers-marketplace` | Marketplace | [obra/superpowers](https://github.com/obra/superpowers) | Default workflow booster: planning/execution skills and command bundles for agentic coding loops |
 | `ast-grep` | Community | [ast-grep/claude-skill](https://github.com/ast-grep/claude-skill) | AST-based code search - "Find all async functions without error handling" |
 
 ---
@@ -130,15 +131,17 @@ When using `/project-init`, LSP plugins are automatically selected based on proj
 
 | Project Type | Plan | Auto-Selected LSP |
 |--------------|------|-------------------|
-| B2B SaaS / Internal Tools | Plan C | `typescript-lsp` |
-| Traditional Enterprise | Plan B | `jdtls-lsp` |
 | C-Side with SEO (Remix) | Plan A | `typescript-lsp` |
-| AI Chat / Assistant | Plan C | `typescript-lsp` |
-| Mobile App (Expo) | Plan F | `typescript-lsp` |
+| Traditional Enterprise | Plan B | `jdtls-lsp` |
+| B2B SaaS / Internal Tools | Plan C | `typescript-lsp` |
 | Monorepo | Plan D | `typescript-lsp` |
+| Landing Page / Marketing | Plan E | `typescript-lsp` |
+| Mobile App (Expo) | Plan F | `typescript-lsp` |
 | AI Quantitative Trading | Plan G | `pyright-lsp` |
 | Financial Trading (FIX/Rust) | Plan H | `rust-analyzer-lsp` |
+| Web3 DApp (EVM) | Plan I | `typescript-lsp` |
 | AI Coding Agent / TUI | Plan J | `typescript-lsp` |
+| Custom Configuration | Plan K | `typescript-lsp` |
 
 ---
 
@@ -312,13 +315,13 @@ From [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills):
         "command": "echo '\u001b[1;33m🛡️ Quality guard active...\u001b[0m'"
       }
     ],
-    "PreToolCall": [
+    "PreToolUse": [
       {
         "matcher": "Edit|Write",
         "command": "echo '\u001b[0;34m📝 Code modification detected\u001b[0m'"
       }
     ],
-    "PostToolCall": [
+    "PostToolUse": [
       {
         "matcher": "Bash\\(.*test.*\\)",
         "command": "echo '\u001b[0;32m✅ Tests completed\u001b[0m'"
@@ -350,7 +353,7 @@ From [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills):
   "hooks": {
     "UserPromptSubmit": [
       {
-        "command": "python3 ~/.claude/hooks/anti-simplification-guard.py"
+        "command": "bash .claude/hooks/anti-simplification.sh"
       }
     ]
   }
@@ -361,7 +364,7 @@ From [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills):
 ```json
 {
   "hooks": {
-    "PostToolCall": [
+    "PostToolUse": [
       {
         "matcher": "Write\\(.*\\.tsx?\\)",
         "command": "npx tsc --noEmit 2>&1 | head -20"
@@ -375,7 +378,7 @@ From [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills):
 ```json
 {
   "hooks": {
-    "PostToolCall": [
+    "PostToolUse": [
       {
         "matcher": "Write\\(.*\\.(ts|tsx|js|jsx|json)\\)",
         "command": "bunx biome check --write \"$CLAUDE_FILE_PATH\" 2>&1 | head -10"
@@ -389,7 +392,7 @@ From [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills):
 ```json
 {
   "hooks": {
-    "PostToolCall": [
+    "PostToolUse": [
       {
         "matcher": "Write\\(.*\\.(ts|tsx|js|jsx)\\)",
         "command": "bunx biome ci \"$CLAUDE_FILE_PATH\" 2>&1 | head -20"
@@ -410,6 +413,8 @@ From [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills):
 ~/.claude/skills/project-initializer/scripts/setup-plugins.sh
 ```
 
+This default flow also adds marketplace `obra/superpowers-marketplace` and enables `superpowers@superpowers-marketplace`.
+
 ### Manual Installation
 
 ```bash
@@ -429,6 +434,10 @@ cp -r "$CLAUDE_DIR/plugins-official/plugins/code-review" "$SKILLS_DIR/"
 git clone https://github.com/ast-grep/claude-skill.git "$CLAUDE_DIR/ast-grep-skill"
 cp -r "$CLAUDE_DIR/ast-grep-skill"/*.md "$SKILLS_DIR/ast-grep/" 2>/dev/null || \
   mkdir -p "$SKILLS_DIR/ast-grep" && cp "$CLAUDE_DIR/ast-grep-skill"/*.md "$SKILLS_DIR/ast-grep/"
+
+# Install Superpowers marketplace plugin (default)
+claude plugin marketplace add obra/superpowers-marketplace
+claude plugin install superpowers@superpowers-marketplace
 ```
 
 ---

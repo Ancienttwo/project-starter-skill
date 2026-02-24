@@ -1,7 +1,8 @@
 #!/bin/bash
 # Claude Code Plugin Auto-Setup Script
 # Part of project-initializer skill
-# Automatically installs essential plugins and configures hooks
+# Installs global plugins and configures global hooks in ~/.claude/settings.json.
+# Project-local hooks (.claude/settings.local.json in a repo) are configured separately.
 
 set -e
 
@@ -20,6 +21,8 @@ HOOKS_DIR="$CLAUDE_DIR/hooks"
 PLUGINS_REPO="https://github.com/anthropics/claude-plugins-official.git"
 AST_GREP_REPO="https://github.com/ast-grep/claude-skill.git"
 OBSIDIAN_REPO="https://github.com/kepano/obsidian-skills.git"
+SUPERPOWERS_MARKETPLACE="obra/superpowers-marketplace"
+SUPERPOWERS_PLUGIN_ID="superpowers@superpowers-marketplace"
 
 # Essential plugins that must be installed
 ESSENTIAL_PLUGINS=(
@@ -39,21 +42,31 @@ OPTIONAL_PLUGINS=(
     "ralph-loop"
 )
 
-# LSP plugins mapped by project type
-declare -A LSP_BY_PROJECT=(
-    ["plan-a"]="typescript-lsp"    # Remix
-    ["plan-b"]="jdtls-lsp"         # UmiJS/Java
-    ["plan-c"]="typescript-lsp"    # Vite + TanStack
-    ["plan-d"]="typescript-lsp"    # Monorepo
-    ["plan-f"]="typescript-lsp"    # Expo Mobile (cross-platform)
-    ["plan-f-swift"]="swift-lsp"   # iOS Native SwiftUI
-    ["plan-f-kotlin"]="kotlin-lsp" # Android Native Compose
-    ["plan-g"]="pyright-lsp"       # FastAPI Python
-    ["plan-h"]="rust-analyzer-lsp" # Rust Trading
-    ["plan-j"]="typescript-lsp"    # TUI Tool (OpenTUI/Ink)
-    ["plan-j-rust"]="rust-analyzer-lsp" # TUI Tool (Ratatui)
-    ["plan-k"]="typescript-lsp"    # AI Agent Backend (Bun+Hono)
-)
+default_lsp_for_project_type() {
+    case "$1" in
+        "plan-a"|"plan-c"|"plan-d"|"plan-e"|"plan-f"|"plan-i"|"plan-j"|"plan-k")
+            echo "typescript-lsp"
+            ;;
+        "plan-b")
+            echo "jdtls-lsp"
+            ;;
+        "plan-f-swift")
+            echo "swift-lsp"
+            ;;
+        "plan-f-kotlin")
+            echo "kotlin-lsp"
+            ;;
+        "plan-g")
+            echo "pyright-lsp"
+            ;;
+        "plan-h"|"plan-j-rust")
+            echo "rust-analyzer-lsp"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
 
 print_banner() {
     echo -e "${CYAN}"
@@ -62,6 +75,10 @@ print_banner() {
     echo "║     Essential plugins + hooks configuration              ║"
     echo "╚══════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
+}
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
 }
 
 check_ast_grep() {
@@ -114,6 +131,56 @@ install_ast_grep_skill() {
     fi
 }
 
+install_superpowers_plugin() {
+    local settings_file="$CLAUDE_DIR/settings.json"
+    local configured=false
+
+    echo -e "${BLUE}Configuring Superpowers plugin (default)...${NC}"
+
+    if command_exists claude; then
+        if claude plugin marketplace add "$SUPERPOWERS_MARKETPLACE" >/dev/null 2>&1; then
+            echo -e "  ${GREEN}✓${NC} Marketplace added: $SUPERPOWERS_MARKETPLACE"
+        else
+            echo -e "  ${YELLOW}!${NC} Marketplace add skipped (already added or command unavailable)"
+        fi
+
+        if claude plugin install "$SUPERPOWERS_PLUGIN_ID" >/dev/null 2>&1; then
+            echo -e "  ${GREEN}✓${NC} Installed: $SUPERPOWERS_PLUGIN_ID"
+            configured=true
+        else
+            echo -e "  ${YELLOW}!${NC} Could not install via CLI, falling back to settings.json enablement"
+        fi
+    else
+        echo -e "  ${YELLOW}!${NC} Claude CLI not found, enabling in settings.json only"
+    fi
+
+    if [ -f "$settings_file" ] && command_exists jq; then
+        jq --arg id "$SUPERPOWERS_PLUGIN_ID" \
+          '.enabledPlugins = (.enabledPlugins // {}) | .enabledPlugins[$id] = true' \
+          "$settings_file" > "$settings_file.new" && mv "$settings_file.new" "$settings_file"
+        echo -e "  ${GREEN}✓${NC} Enabled in settings: $SUPERPOWERS_PLUGIN_ID"
+        configured=true
+    elif [ ! -f "$settings_file" ]; then
+        cat > "$settings_file" << SETTINGS_EOF
+{
+  "enabledPlugins": {
+    "$SUPERPOWERS_PLUGIN_ID": true
+  }
+}
+SETTINGS_EOF
+        echo -e "  ${GREEN}✓${NC} Created settings and enabled: $SUPERPOWERS_PLUGIN_ID"
+        configured=true
+    elif ! command_exists jq; then
+        echo -e "  ${YELLOW}!${NC} jq not found; could not merge into existing settings.json"
+    fi
+
+    if [ "$configured" = false ]; then
+        echo -e "  ${YELLOW}!${NC} Manual fallback:"
+        echo -e "    claude plugin marketplace add $SUPERPOWERS_MARKETPLACE"
+        echo -e "    claude plugin install $SUPERPOWERS_PLUGIN_ID"
+    fi
+}
+
 configure_hooks() {
     local hook_type="$1"
     echo -e "${BLUE}Configuring hooks ($hook_type)...${NC}"
@@ -133,13 +200,13 @@ configure_hooks() {
         "command": "echo '\u001b[1;33m🛡️ Quality guard active...\u001b[0m'"
       }
     ],
-    "PreToolCall": [
+    "PreToolUse": [
       {
         "matcher": "Edit|Write",
         "command": "echo '\u001b[0;34m📝 Code modification detected\u001b[0m'"
       }
     ],
-    "PostToolCall": [
+    "PostToolUse": [
       {
         "matcher": "Bash\\(.*test.*\\)",
         "command": "echo '\u001b[0;32m✅ Tests completed\u001b[0m'"
@@ -171,7 +238,7 @@ HOOKS_EOF
         "command": "echo '\u001b[1;33m🛡️ Quality guard + Biome active...\u001b[0m'"
       }
     ],
-    "PostToolCall": [
+    "PostToolUse": [
       {
         "matcher": "Write\\(.*\\.(ts|tsx|js|jsx|json)\\)",
         "command": "bunx biome check --write \"$CLAUDE_FILE_PATH\" 2>&1 | head -10"
@@ -190,7 +257,7 @@ HOOKS_EOF
         "command": "echo '\u001b[1;33m🛡️ Quality guard + Biome CI active...\u001b[0m'"
       }
     ],
-    "PostToolCall": [
+    "PostToolUse": [
       {
         "matcher": "Write\\(.*\\.(ts|tsx|js|jsx)\\)",
         "command": "bunx biome ci \"$CLAUDE_FILE_PATH\" 2>&1 | head -20"
@@ -271,6 +338,9 @@ print_summary() {
     if [ -d "$SKILLS_DIR/ast-grep" ]; then
         echo -e "  ${GREEN}✓${NC} ast-grep"
     fi
+    if [ -f "$CLAUDE_DIR/settings.json" ] && grep -q "\"$SUPERPOWERS_PLUGIN_ID\"[[:space:]]*:[[:space:]]*true" "$CLAUDE_DIR/settings.json"; then
+        echo -e "  ${GREEN}✓${NC} $SUPERPOWERS_PLUGIN_ID (default)"
+    fi
 
     # Show LSP plugin if installed
     for lsp in typescript-lsp pyright-lsp rust-analyzer-lsp jdtls-lsp; do
@@ -339,6 +409,8 @@ main() {
             --help)
                 echo "Usage: setup-plugins.sh [options]"
                 echo ""
+                echo "Default behavior: installs essential plugins + enables $SUPERPOWERS_PLUGIN_ID"
+                echo ""
                 echo "Options:"
                 echo "  --with-optional    Install optional plugins (commit-commands, pr-review-toolkit, ralph-loop, etc.)"
                 echo "  --with-obsidian    Install Obsidian skills"
@@ -359,11 +431,13 @@ main() {
                 echo "  plan-b (UmiJS/Java)      -> jdtls-lsp"
                 echo "  plan-c (Vite+TanStack)   -> typescript-lsp"
                 echo "  plan-d (Monorepo)        -> typescript-lsp"
+                echo "  plan-e (Astro Landing)   -> typescript-lsp"
                 echo "  plan-f (Expo Mobile)     -> typescript-lsp"
                 echo "  plan-f-swift (iOS)       -> swift-lsp"
                 echo "  plan-f-kotlin (Android)  -> kotlin-lsp"
                 echo "  plan-g (FastAPI Python)  -> pyright-lsp"
                 echo "  plan-h (Rust Trading)    -> rust-analyzer-lsp"
+                echo "  plan-i (Web3 DApp)       -> typescript-lsp"
                 echo "  plan-j (TUI OpenTUI/Ink) -> typescript-lsp"
                 echo "  plan-j-rust (Ratatui)    -> rust-analyzer-lsp"
                 echo "  plan-k (Bun+Hono Agent)  -> typescript-lsp"
@@ -378,7 +452,7 @@ main() {
 
     # Auto-select LSP based on project type if specified
     if [ -n "$project_type" ] && [ -z "$lsp_plugin" ]; then
-        lsp_plugin="${LSP_BY_PROJECT[$project_type]}"
+        lsp_plugin="$(default_lsp_for_project_type "$project_type")"
         if [ -n "$lsp_plugin" ]; then
             echo -e "${BLUE}Auto-selected LSP for $project_type: $lsp_plugin${NC}"
         fi
@@ -491,13 +565,19 @@ main() {
         fi
     fi
 
-    # Configure hooks
+    # Configure hooks (global ~/.claude/settings.json)
     echo ""
+    echo -e "${CYAN}ℹ${NC} Configuring global hooks in ~/.claude/settings.json"
+    echo -e "${CYAN}ℹ${NC} Project-local hooks are configured separately in each repo (.claude/settings.local.json)"
     configure_hooks "$hook_type"
 
     # Add permissions
     echo ""
     add_permissions
+
+    # Configure Superpowers marketplace plugin (default)
+    echo ""
+    install_superpowers_plugin
 
     # Print summary
     print_summary

@@ -20,6 +20,10 @@
       {
         "matcher": "Bash",
         "hooks": [{ "type": "command", "command": "bash .claude/hooks/post-bash.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\"" }]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/context-pressure-hook.sh" }]
       }
     ],
     "UserPromptSubmit": [
