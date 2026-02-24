@@ -46,7 +46,7 @@ For rapid project initialization with minimal questions (5 questions only):
 | # | Question | Purpose |
 |---|----------|---------|
 | Q1 | Project Name | Used for CLAUDE.md header and directory |
-| Q2 | Project Type | Determines tech stack (Plan A-K) |
+| Q2 | Project Type | Determines tech stack (Plan A..J + K Custom) |
 | Q3 | Package Manager | bun / pnpm / npm |
 | Q4 | Developer Name | Personalization in CLAUDE.md |
 | Q5 | Brief Description | One-line product summary |
@@ -137,18 +137,17 @@ For rapid project initialization with minimal questions (5 questions only):
 
 **Q2: Project Type**
 ```
-A) B2B SaaS / Internal Tools     → Plan C: Vite + TanStack Router
-B) Traditional Enterprise        → Plan B: UmiJS + Ant Design Pro
-C) C-Side with SEO (Dynamic)    → Plan A: Remix
-D) AI Chat / Assistant App      → Plan C + Ant Design X
-E) Landing Page / Marketing      → Plan E2: Astro + Starwind UI ⭐
+A) C-Side with SEO (Dynamic)    → Plan A: Remix
+B) Traditional Enterprise       → Plan B: UmiJS + Ant Design Pro
+C) B2B SaaS / Internal Tools    → Plan C: Vite + TanStack Router
+D) Monorepo (Multi-project)     → Plan D: Bun + Turborepo
+E) Landing Page / Marketing     → Plan E: Astro + Starwind UI
 F) Mobile App                   → Plan F: Expo + NativeWind
-G) Monorepo (Multi-project)     → Plan D: Bun + Turborepo
-H) AI Quantitative Trading      → Plan G: FastAPI + Vite Frontend
-I) Financial Trading (FIX/RFQ)  → Plan H: FIX/Rust + Hono + Vite
-J) Web3 DApp (NFT/DeFi/Agent)  → Plan I: Astro Landing + Vite + Wagmi ⭐
-K) AI Coding Agent / TUI Tool   → Plan J: OpenTUI + TypeScript ⭐
-L) Custom Configuration         → Manual selection
+G) AI Quantitative Trading      → Plan G: FastAPI + Vite Frontend
+H) Financial Trading (FIX/RFQ)  → Plan H: FIX/Rust + Hono + Vite
+I) Web3 DApp (NFT/DeFi/Agent)   → Plan I: Astro Landing + Vite + Wagmi
+J) AI Coding Agent / TUI Tool   → Plan J: OpenTUI + TypeScript
+K) Custom Configuration         → Plan K: Manual selection
 ```
 
 **Q3: Package Manager**
@@ -243,14 +242,16 @@ Add project-specific prohibitions beyond defaults:
 
 **Q7: Install Recommended Plugins**
 
+`Q7` is for global Claude environment setup (`~/.claude/skills`, `~/.claude/settings.json`).
+
 Auto-selection rules:
 
 | Condition | Auto-selected Plugins |
 |-----------|----------------------|
-| All projects | feature-dev, frontend-design, code-simplifier, code-review, ast-grep, hookify, agent-browser |
+| All projects | feature-dev, frontend-design, code-simplifier, code-review, ast-grep, hookify, agent-browser, superpowers@superpowers-marketplace |
 | Cloudflare-native (Plan A/C/D/G/H) | cf-agents-sdk |
 | Mobile (Plan F) | expo-app-design, expo-deployment |
-| React/TS (Plan A/C/D/J) | typescript-lsp |
+| React/TS (Plan A/C/D/E/F/I/J/K) | typescript-lsp |
 | Python (Plan G) | pyright-lsp |
 | Rust (Plan H) | rust-analyzer-lsp |
 | Java (Plan B) | jdtls-lsp |
@@ -258,6 +259,9 @@ Auto-selection rules:
 Full plugin catalog with descriptions and installation: See `references/plugins-core.md`
 
 **Q8: Configure Hooks**
+
+`Q8` is for project-local hooks (`<project>/.claude/hooks/` + `<project>/.claude/settings.local.json`).
+
 ```
 A) Standard Hooks + TDD Guard + Doc Drift + Context Pressure (recommended)
    → UserPromptSubmit: Quality guard + TDD/BDD context injection
@@ -288,6 +292,7 @@ F) Custom Hooks
 |-----------|--------|---------|
 | `assets/hooks/tdd-guard-hook.sh` | `.claude/hooks/tdd-guard-hook.sh` | PreToolUse (Edit\|Write) |
 | `assets/hooks/pre-code-change.sh` | `.claude/hooks/pre-code-change.sh` | PreToolUse (Edit\|Write) |
+| `assets/hooks/anti-simplification.sh` | `.claude/hooks/anti-simplification.sh` | PostToolUse (Edit\|Write) |
 | `assets/hooks/post-bash.sh` | `.claude/hooks/post-bash.sh` | PostToolUse (Bash) |
 | `assets/hooks/prompt-guard.sh` | `.claude/hooks/prompt-guard.sh` | UserPromptSubmit (TDD/BDD + plan annotation detection) |
 | `assets/hooks/doc-drift-guard.sh` | `.claude/hooks/doc-drift-guard.sh` | PostToolUse (Edit\|Write) |
@@ -339,6 +344,13 @@ After collecting all answers, generate:
 3. Substitute variables with user-provided values
 4. Output final CLAUDE.md or AGENTS.md based on target
 
+**Canonical Plan Mapping**:
+- `assets/plan-map.json` is the single source of truth for:
+  - Plan code (`A..J + K`)
+  - Cloudflare inclusion
+  - Default LSP recommendation
+  - Quick/default template variables
+
 **Assembly Script**:
 ```bash
 bun scripts/assemble-template.ts --plan C --name "MyProject" --var USER_NAME=Dev
@@ -356,9 +368,9 @@ bun scripts/assemble-template.ts --target agents --plan C --name "MyProject"
 - `{{CALVER_VERSION}}` - CalVer version string (e.g., `v2026.02.0`)
 
 **Conditional Sections**:
-- `06-cloudflare.partial.md` included only for: Plan A, C, C+, D, G (partial), H (partial)
-- `cf-agents-sdk` skill auto-recommended for: Plan A, C, C+, D, G, H (Cloudflare-native)
-- Excluded for: Plan B, E, F, J
+- `06-cloudflare.partial.md` included for Cloudflare-native plans in `assets/plan-map.json` (currently: A, C, D, G, H)
+- `cf-agents-sdk` skill auto-recommended for the same Cloudflare-native plans
+- Excluded for non-Cloudflare-native plans (currently: B, E, F, I, J, K)
 
 **Version Variables** (from `assets/versions.json`):
 - `{{VERSION_VITE}}` - Vite version (6.x)
@@ -403,7 +415,7 @@ Run `scripts/create-project-dirs.sh` to create the three-layer directory structu
 |-------|------------|--------|
 | IMMUTABLE (资产层) | `specs/`, `contracts/`, `tests/` | Source of truth |
 | MUTABLE (厕纸层) | `src/` | Disposable implementation |
-| SUPPORTING (支撑层) | `docs/`, `tasks/`, `scripts/`, `ops/`, `artifacts/` | Documentation & tooling |
+| SUPPORTING (支撑层) | `docs/`, `tasks/`, `scripts/`, `.ops/`, `artifacts/` | Documentation & tooling |
 
 ### 9. .gitignore Generation
 
@@ -420,6 +432,8 @@ Generate executable script with:
 Run `scripts/setup-plugins.sh` to:
 - Clone official plugins from `https://github.com/anthropics/claude-plugins-official`
 - Clone ast-grep skill from `https://github.com/ast-grep/claude-skill`
+- Add Superpowers marketplace `obra/superpowers-marketplace`
+- Install and enable `superpowers@superpowers-marketplace` by default
 - Install selected plugins to `~/.claude/skills/`
 - Configure hooks in `~/.claude/settings.json`
 

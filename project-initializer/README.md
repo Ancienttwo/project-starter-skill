@@ -5,7 +5,7 @@
 ## Features
 
 - **Guided Q&A Setup** - Interactive project initialization flow
-- **10 Project Types** - From B2B SaaS to Financial Trading Platforms
+- **11 Project Types** - Plan A..J plus K Custom
 - **Cloudflare Native First** - Optimized for edge deployment
 - **AI Native Stack** - Built for vibe coding with Claude Code
 - **Plugin Recommendations** - Essential Claude Code plugins auto-configured
@@ -24,16 +24,19 @@
 
 | Type | Plan | Stack |
 |------|------|-------|
-| B2B SaaS / Internal Tools | Plan C | Vite + TanStack Router |
-| Traditional Enterprise | Plan B | UmiJS + Ant Design Pro |
 | C-Side with SEO | Plan A | Remix |
-| AI Chat / Assistant | Plan C+ | Vite + Ant Design X |
+| Traditional Enterprise | Plan B | UmiJS + Ant Design Pro |
+| B2B SaaS / Internal Tools | Plan C | Vite + TanStack Router |
+| Monorepo (Multi-project) | Plan D | Bun + Turborepo |
+| Landing Page / Marketing | Plan E | Astro + Starwind UI |
 | Mobile App | Plan F | Expo + NativeWind |
-| Monorepo | Plan D | Bun + Turborepo |
 | AI Quantitative Trading | Plan G | FastAPI + Vite |
 | Financial Trading (FIX/RFQ) | Plan H | FIX/Rust + Hono + Vite |
-| AI Coding Agent / TUI | Plan J | OpenTUI + TypeScript ⭐ |
+| Web3 DApp (EVM Chains) | Plan I | Astro Landing + Vite + Wagmi |
+| AI Coding Agent / TUI | Plan J | OpenTUI + TypeScript |
 | Custom Configuration | Plan K | Manual selection |
+
+AI Chat / Assistant scenarios use **Plan C** with Ant Design X extension.
 
 ## Generated Files
 
@@ -59,7 +62,7 @@ project/
 │   ├── TODO.md         # Legacy compatibility mirror (tasks/todo.md is primary)
 │   ├── plan.md         # Deep architecture/spec context (compatibility)
 │   └── CHANGELOG.md    # Version history
-├── ops/                # DO NOT COMMIT
+├── .ops/               # DO NOT COMMIT
 │   ├── database/       # Migrations, seeds, backups
 │   ├── scripts/        # Deployment scripts
 │   ├── docker/         # Docker configs
@@ -125,6 +128,7 @@ project-initializer/
 │   ├── partials/               # CLAUDE template partials
 │   ├── partials-agents/        # AGENTS template partials
 │   ├── reference-configs/      # Verbose workflow reference configs
+│   ├── plan-map.json           # Canonical plan map (A..K + defaults)
 │   └── CLAUDE.template.md      # Legacy full template (reference)
 ├── scripts/
 │   ├── setup-plugins.sh        # Plugin installation script

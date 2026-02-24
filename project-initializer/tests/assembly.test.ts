@@ -5,6 +5,8 @@ import {
   processConditionals,
   assembleTemplate,
   shouldIncludeCloudflare,
+  loadPlanMap,
+  resolvePlanType,
 } from "../scripts/assemble-template";
 
 describe("Template Assembly", () => {
@@ -157,9 +159,26 @@ describe("Cloudflare Plan Detection", () => {
     expect(shouldIncludeCloudflare("J")).toBe(false);
   });
 
+  test("should exclude cloudflare for Plan K (Custom)", () => {
+    expect(shouldIncludeCloudflare("K")).toBe(false);
+  });
+
   test("should respect explicit flag over plan type", () => {
     expect(shouldIncludeCloudflare("C", false)).toBe(false);
     expect(shouldIncludeCloudflare("B", true)).toBe(true);
+  });
+});
+
+describe("Plan Map", () => {
+  test("should resolve legacy aliases via plan-map", () => {
+    const planMap = loadPlanMap();
+    expect(resolvePlanType("C+", planMap)).toBe("C");
+  });
+
+  test("should include canonical plans A..K", () => {
+    const planMap = loadPlanMap();
+    const planCodes = Object.keys(planMap.plans).sort();
+    expect(planCodes).toEqual(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]);
   });
 });
 

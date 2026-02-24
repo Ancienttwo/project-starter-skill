@@ -5,7 +5,7 @@
 ```
 Start → Project Type?
 │
-├─ Need SEO?
+├─ C-Side with SEO (dynamic)?
 │  └─ Yes → Plan A: Remix (SSR)
 │
 ├─ Traditional Enterprise (CRM/ERP)?
@@ -13,15 +13,16 @@ Start → Project Type?
 │
 ├─ Modern B2B SaaS (Internal Tools)?
 │  └─ Yes → Plan C: Vite + TanStack Router ⭐
-│
-├─ AI Chat/Assistant App?
-│  └─ Yes → Plan C + Ant Design X
-│
-├─ Mobile App?
-│  └─ Yes → Plan F: Expo + NativeWind
+│      └─ AI Chat/Assistant extension: Plan C + Ant Design X
 │
 ├─ Monorepo (Multi-project)?
 │  └─ Yes → Plan D: Bun + Turborepo
+│
+├─ Landing / Marketing Site?
+│  └─ Yes → Plan E: Astro + Starwind UI
+│
+├─ Mobile App?
+│  └─ Yes → Plan F: Expo + NativeWind
 │
 ├─ AI Quantitative Trading (Python Backend)?
 │  └─ Yes → Plan G: FastAPI + Vite Frontend ⭐
@@ -29,8 +30,14 @@ Start → Project Type?
 ├─ Financial Trading (FIX/RFQ)?
 │  └─ Yes → Plan H: FIX Engine + Hono + Vite ⭐
 │
-└─ AI Coding Agent / TUI Tool?
-   └─ Yes → Plan J: OpenTUI + TypeScript ⭐
+├─ Web3 DApp (EVM Chains)?
+│  └─ Yes → Plan I: Astro Landing + Vite + Wagmi ⭐
+│
+├─ AI Coding Agent / TUI Tool?
+│  └─ Yes → Plan J: OpenTUI + TypeScript ⭐
+│
+└─ Custom stack?
+   └─ Plan K: Manual selection
 ```
 
 ---

@@ -17,10 +17,11 @@ import { fileURLToPath } from "url";
 export type TemplateTarget = "claude" | "agents";
 
 export interface AssemblyOptions {
-  planType: string; // "A" | "B" | "C" | "D" | "F" | "G" | "H" | "J" | "K"
+  planType: string; // A..J + K (custom)
   variables: Record<string, string>;
   cloudflareNative?: boolean;
   target?: TemplateTarget;
+  quickMode?: boolean;
 }
 
 export interface PartialInfo {
@@ -30,26 +31,67 @@ export interface PartialInfo {
   conditional?: string; // e.g., "CLOUDFLARE_NATIVE"
 }
 
+export interface PlanConfig {
+  name: string;
+  stack: string;
+  cloudflareNative: boolean;
+  defaultLsp?: string;
+  defaultTemplateVariables?: Record<string, string>;
+}
+
+export interface PlanMap {
+  aliases?: Record<string, string>;
+  quickDefaults?: Record<string, string>;
+  plans: Record<string, PlanConfig>;
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const ASSETS_DIR = join(__dirname, "..", "assets");
+const REPO_ROOT = join(__dirname, "..");
+const ASSETS_DIR = join(REPO_ROOT, "assets");
 const PARTIALS_DIR = join(ASSETS_DIR, "partials");
 const PARTIALS_AGENTS_DIR = join(ASSETS_DIR, "partials-agents");
 const VERSIONS_FILE = join(ASSETS_DIR, "versions.json");
+const PLAN_MAP_FILE = join(ASSETS_DIR, "plan-map.json");
 
 const TARGET_DIRS: Record<TemplateTarget, string> = {
   claude: PARTIALS_DIR,
   agents: PARTIALS_AGENTS_DIR,
 };
 
-// Plans that include Cloudflare section
-const CLOUDFLARE_PLANS = new Set(["A", "C", "C+", "D"]);
-// Plans that include partial Cloudflare (containers or workers only)
-const CLOUDFLARE_PARTIAL_PLANS = new Set(["G", "H"]);
+const FALLBACK_TEMPLATE_VARIABLES: Record<string, string> = {
+  USER_NAME: "Developer",
+  SERVICE_TARGET: "User",
+  INTERACTION_STYLE: "Technical, concise",
+  PROHIBITIONS:
+    "- No `any` in production code\n" +
+    "- No `console.log` in production code\n" +
+    "- Always present 2-3 options with trade-offs at ambiguous decision points\n" +
+    "- Always push back on requests that violate project rules",
+  PROJECT_STRUCTURE:
+    "{{PROJECT_NAME}}/\n" +
+    "├── specs/\n" +
+    "├── contracts/\n" +
+    "├── tests/\n" +
+    "├── src/\n" +
+    "├── docs/\n" +
+    "├── tasks/\n" +
+    "├── .ops/\n" +
+    "└── artifacts/",
+  TECH_STACK_TABLE:
+    "| Stack | Select based on chosen plan |\n" +
+    "| Runtime | Bun + TypeScript |",
+};
+
+const ALLOWED_UNRESOLVED_PATTERNS: RegExp[] = [
+  /^\{\{\s*secrets\.[^}]+\s*\}\}$/,
+];
+
+let cachedPlanMap: PlanMap | null = null;
 
 // ============================================================================
 // Core Functions
@@ -132,6 +174,122 @@ export function loadVersions(versionsFilePath: string = VERSIONS_FILE): Record<s
 }
 
 /**
+ * Load and validate plan mapping file.
+ */
+export function loadPlanMap(planMapFilePath: string = PLAN_MAP_FILE): PlanMap {
+  if (planMapFilePath === PLAN_MAP_FILE && cachedPlanMap) {
+    return cachedPlanMap;
+  }
+
+  if (!existsSync(planMapFilePath)) {
+    throw new Error(`plan-map.json not found at ${planMapFilePath}`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(planMapFilePath, "utf-8"));
+  } catch (error) {
+    throw new Error(
+      `Failed to parse plan-map.json at ${planMapFilePath}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new Error(`Invalid plan-map.json format at ${planMapFilePath}: root must be an object`);
+  }
+
+  const candidate = parsed as Partial<PlanMap>;
+  if (!candidate.plans || typeof candidate.plans !== "object") {
+    throw new Error(`Invalid plan-map.json format: missing \"plans\" object`);
+  }
+
+  const map: PlanMap = {
+    aliases: candidate.aliases ?? {},
+    quickDefaults: candidate.quickDefaults ?? {},
+    plans: candidate.plans as Record<string, PlanConfig>,
+  };
+
+  const supportedCodes = Object.keys(map.plans).sort();
+  for (const code of supportedCodes) {
+    if (!/^[A-K]$/.test(code)) {
+      throw new Error(`Invalid plan code in plan-map.json: ${code}. Expected A..K`);
+    }
+
+    const plan = map.plans[code];
+    if (!plan || typeof plan !== "object") {
+      throw new Error(`Invalid plan-map.json entry for ${code}`);
+    }
+
+    if (typeof plan.name !== "string" || typeof plan.stack !== "string") {
+      throw new Error(`Invalid plan-map.json entry for ${code}: missing name/stack`);
+    }
+
+    if (typeof plan.cloudflareNative !== "boolean") {
+      throw new Error(`Invalid plan-map.json entry for ${code}: cloudflareNative must be boolean`);
+    }
+  }
+
+  if (planMapFilePath === PLAN_MAP_FILE) {
+    cachedPlanMap = map;
+  }
+
+  return map;
+}
+
+/**
+ * Normalize a plan type and resolve aliases.
+ */
+export function resolvePlanType(rawPlanType: string, planMap: PlanMap = loadPlanMap()): string {
+  const normalized = rawPlanType.trim().toUpperCase();
+  const aliasResolved = (planMap.aliases?.[normalized] ?? normalized).toUpperCase();
+
+  if (!planMap.plans[aliasResolved]) {
+    const supported = Object.keys(planMap.plans).sort().join(", ");
+    throw new Error(`Unsupported plan type: ${rawPlanType}. Supported plans: ${supported}`);
+  }
+
+  return aliasResolved;
+}
+
+function readRelativeTextFile(relativePath: string): string {
+  const absolutePath = join(REPO_ROOT, relativePath);
+  if (!existsSync(absolutePath)) {
+    throw new Error(`Referenced file not found: ${relativePath}`);
+  }
+  return readFileSync(absolutePath, "utf-8").trim();
+}
+
+/**
+ * Build default template variables for a plan.
+ */
+export function getDefaultTemplateVariables(
+  planType: string,
+  planMap: PlanMap = loadPlanMap(),
+  _quickMode = false
+): Record<string, string> {
+  const resolvedPlan = resolvePlanType(planType, planMap);
+  const planConfig = planMap.plans[resolvedPlan];
+
+  const quickDefaults = planMap.quickDefaults ?? {};
+  const planDefaults = { ...(planConfig.defaultTemplateVariables ?? {}) };
+
+  if (planDefaults.PROJECT_STRUCTURE_FILE) {
+    planDefaults.PROJECT_STRUCTURE = readRelativeTextFile(planDefaults.PROJECT_STRUCTURE_FILE);
+    delete planDefaults.PROJECT_STRUCTURE_FILE;
+  }
+
+  if (!planDefaults.TECH_STACK_TABLE) {
+    planDefaults.TECH_STACK_TABLE = `| Stack | ${planConfig.stack} |`;
+  }
+
+  return {
+    ...FALLBACK_TEMPLATE_VARIABLES,
+    ...quickDefaults,
+    ...planDefaults,
+  };
+}
+
+/**
  * Get ordered list of partial files.
  */
 export function getPartials(target: TemplateTarget = "claude"): PartialInfo[] {
@@ -182,7 +340,10 @@ export function shouldIncludeCloudflare(planType: string, explicitFlag?: boolean
   if (explicitFlag !== undefined) {
     return explicitFlag;
   }
-  return CLOUDFLARE_PLANS.has(planType) || CLOUDFLARE_PARTIAL_PLANS.has(planType);
+
+  const planMap = loadPlanMap();
+  const resolvedPlan = resolvePlanType(planType, planMap);
+  return planMap.plans[resolvedPlan].cloudflareNative;
 }
 
 /**
@@ -195,7 +356,7 @@ export function replaceVariables(
 ): string {
   let result = content;
   let iterations = 0;
-  const maxIterations = 2; // Prevent circular references
+  const maxIterations = 3; // Allow nested placeholders inside substituted content
 
   while (iterations < maxIterations) {
     let changed = false;
@@ -275,10 +436,29 @@ export function processConditionals(
 }
 
 /**
+ * Validate unresolved placeholders after substitution.
+ */
+export function assertNoUnresolvedVariables(content: string): void {
+  const matches = content.match(/\{\{[^{}]+\}\}/g) ?? [];
+  const unresolved = [...new Set(matches)]
+    .filter(
+      (token) => !ALLOWED_UNRESOLVED_PATTERNS.some((pattern) => pattern.test(token))
+    )
+    .sort();
+
+  if (unresolved.length > 0) {
+    throw new Error(`Unresolved template variables: ${unresolved.join(", ")}`);
+  }
+}
+
+/**
  * Main assembly function.
  */
 export function assembleTemplate(options: AssemblyOptions): string {
-  const { planType, variables, cloudflareNative, target = "claude" } = options;
+  const { planType, variables, cloudflareNative, target = "claude", quickMode = false } = options;
+
+  const planMap = loadPlanMap();
+  const resolvedPlanType = resolvePlanType(planType, planMap);
 
   // Load version variables
   const versions = loadVersions();
@@ -286,15 +466,16 @@ export function assembleTemplate(options: AssemblyOptions): string {
   // Merge all variables (user variables take precedence)
   const allVariables: Record<string, string> = {
     ...versions,
+    ...getDefaultTemplateVariables(resolvedPlanType, planMap, quickMode),
     ...variables,
-    PLAN_TYPE: planType,
+    PLAN_TYPE: resolvedPlanType,
   };
 
   // Get partials
   const partials = getPartials(target);
 
   // Determine conditions
-  const includeCloudflare = shouldIncludeCloudflare(planType, cloudflareNative);
+  const includeCloudflare = shouldIncludeCloudflare(resolvedPlanType, cloudflareNative);
   const conditions: Record<string, boolean> = {
     CLOUDFLARE_NATIVE: includeCloudflare,
   };
@@ -320,12 +501,23 @@ export function assembleTemplate(options: AssemblyOptions): string {
   // Then replace variables
   assembled = replaceVariables(assembled, allVariables);
 
+  // Fail fast on unresolved placeholders (except explicit whitelist)
+  assertNoUnresolvedVariables(assembled);
+
   return assembled;
 }
 
 // ============================================================================
 // CLI
 // ============================================================================
+
+function supportedPlansText(): string {
+  try {
+    return Object.keys(loadPlanMap().plans).sort().join(", ");
+  } catch {
+    return "A, B, C, D, E, F, G, H, I, J, K";
+  }
+}
 
 function printHelp() {
   console.log(`
@@ -337,9 +529,9 @@ Usage:
 Options:
   --help              Show this help message
   --target <name>     Output target: claude (default) | agents
-  --plan <type>       Plan type (A, B, C, D, F, G, H, J, K)
+  --plan <type>       Plan type (${supportedPlansText()})
   --name <name>       Project name
-  --quick             Quick mode (minimal questions)
+  --quick             Quick mode (inject defaults for minimal Q&A)
   --no-cloudflare     Exclude Cloudflare section
   --cloudflare        Include Cloudflare section
   --var KEY=VALUE     Set a template variable
@@ -348,7 +540,7 @@ Examples:
   bun scripts/assemble-template.ts --plan C --name MyProject
   bun scripts/assemble-template.ts --target agents --plan C --name MyProject
   bun scripts/assemble-template.ts --plan B --name CRM --no-cloudflare
-  bun scripts/assemble-template.ts --plan C --var USER_NAME=John --var SERVICE_TARGET=B2B
+  bun scripts/assemble-template.ts --plan C --quick --var USER_NAME=John
 `);
 }
 
@@ -428,6 +620,7 @@ if (import.meta.main) {
     const options: AssemblyOptions = {
       planType: parsed.plan,
       target: parsed.target,
+      quickMode: parsed.quick,
       variables: {
         PROJECT_NAME: parsed.name,
         ...parsed.variables,
