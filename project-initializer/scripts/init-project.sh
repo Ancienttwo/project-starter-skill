@@ -133,15 +133,17 @@ create_project() {
 # Create project structure
 create_structure() {
     echo -e "${BLUE}Creating project structure...${NC}"
+    local TODAY
+    TODAY="$(date +%Y-%m-%d)"
 
     mkdir -p docs/architecture
     mkdir -p docs/reference-configs
     mkdir -p tasks
-    mkdir -p ops
+    mkdir -p .ops
     mkdir -p artifacts
 
     # Create documentation files
-    cat > docs/PROGRESS.md << 'EOF'
+    cat > docs/PROGRESS.md << EOF
 # Development Progress
 
 ## Current Sprint
@@ -158,7 +160,7 @@ create_structure() {
 3. Implement first feature
 
 ---
-*Last updated: $(date +%Y-%m-%d)*
+*Last updated: ${TODAY}*
 EOF
 
     cat > docs/CHANGELOG.md << 'EOF'
@@ -175,7 +177,7 @@ All notable changes to this project will be documented in this file.
 *Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)*
 EOF
 
-    cat > tasks/todo.md << 'EOF'
+    cat > tasks/todo.md << EOF
 # Task Execution Checklist (Primary)
 
 ## Plan
@@ -192,10 +194,10 @@ EOF
 - Risks / follow-ups:
 
 ---
-*Updated: $(date +%Y-%m-%d)*
+*Updated: ${TODAY}*
 EOF
 
-    cat > tasks/lessons.md << 'EOF'
+    cat > tasks/lessons.md << EOF
 # Lessons Learned (Self-Improvement Loop)
 
 ## Template
@@ -206,27 +208,27 @@ EOF
 - Where to apply next time:
 
 ---
-*Updated: $(date +%Y-%m-%d)*
+*Updated: ${TODAY}*
 EOF
 
-    cat > docs/TODO.md << 'EOF'
+    cat > docs/TODO.md << EOF
 # TODO List (Legacy Compatibility)
 
 Primary execution checklist has moved to `tasks/todo.md`.
 Keep this file only for legacy tools that still read docs/TODO.md.
 
 ---
-*Updated: $(date +%Y-%m-%d)*
+*Updated: ${TODAY}*
 EOF
 
-    cat > docs/plan.md << 'EOF'
+    cat > docs/plan.md << EOF
 # Deep Plan Notes (Compatibility)
 
 Use this file for detailed architecture/spec context.
 Primary execution checklist lives in `tasks/todo.md`.
 
 ---
-*Updated: $(date +%Y-%m-%d)*
+*Updated: ${TODAY}*
 EOF
 
     cat > docs/reference-configs/changelog-versioning.yaml.md << 'EOF'
@@ -257,21 +259,18 @@ EOF
     cat >> .gitignore << 'EOF'
 
 # Project-specific
-ops/
+.*/
 artifacts/
 *.tar.gz
 *.tgz
 
 # Environment
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# OS metadata
+.DS_Store
 EOF
 
     # Create .env.example

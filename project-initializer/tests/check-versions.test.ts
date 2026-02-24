@@ -1,4 +1,4 @@
-import { describe, test, expect, mock } from "bun:test";
+import { describe, test, expect } from "bun:test";
 import {
   toVersionsJsonFormat,
   isMajorBump,
@@ -155,7 +155,9 @@ describe("applyUpdates", () => {
 // Integration Tests (network required)
 // ============================================================================
 
-describe("npm registry", () => {
+const describeNetwork = process.env.RUN_NETWORK_TESTS === "1" ? describe : describe.skip;
+
+describeNetwork("npm registry", () => {
   test("fetches vite latest version", async () => {
     const version = await fetchNpmVersion("vite");
     expect(version).toMatch(/^\d+\.\d+\.\d+/);
@@ -173,7 +175,7 @@ describe("npm registry", () => {
   });
 });
 
-describe("pypi registry", () => {
+describeNetwork("pypi registry", () => {
   test("fetches fastapi latest version", async () => {
     const version = await fetchPypiVersion("fastapi");
     expect(version).toMatch(/^\d+\.\d+/);
@@ -186,7 +188,7 @@ describe("pypi registry", () => {
   });
 });
 
-describe("checkAllVersions", () => {
+describeNetwork("checkAllVersions", () => {
   test("checks core category only", async () => {
     const json = loadVersionsJson();
     const results = await checkAllVersions(json, { category: "core" });

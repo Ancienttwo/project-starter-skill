@@ -37,7 +37,7 @@
 │   │   └── tech-stack.md
 │   ├── PROGRESS.md
 │   └── CHANGELOG.md
-├── ops/                         # Operations (not in Git)
+├── .ops/                        # Operations (not in Git)
 ├── artifacts/                   # Build outputs (not in Git)
 ├── .env.example
 ├── .gitignore

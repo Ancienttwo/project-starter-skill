@@ -38,7 +38,7 @@
 │   │   └── tech-stack.md
 │   ├── PROGRESS.md
 │   └── CHANGELOG.md
-├── ops/                         # Operations (not in Git)
+├── .ops/                        # Operations (not in Git)
 ├── .env.example
 ├── .gitignore
 ├── app.json                     # Expo config

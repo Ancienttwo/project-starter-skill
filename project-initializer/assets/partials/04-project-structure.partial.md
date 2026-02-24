@@ -79,7 +79,7 @@ DIRECTORY STRUCTURE:
     INCLUDES:
       - regenerate.sh     # One-click delete and rewrite a module
 
-  /ops/:
+  /.ops/:
     PURPOSE: Operations & sensitive configs (DO NOT commit to Git)
     INCLUDES:
       - .env.local        # Local environment variables

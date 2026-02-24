@@ -5,7 +5,7 @@
 # Creates the three-layer project structure:
 #   IMMUTABLE LAYER (资产层): specs, contracts, tests
 #   MUTABLE LAYER (厕纸层): src
-#   SUPPORTING (支撑层): docs, scripts, ops, artifacts, tasks
+#   SUPPORTING (支撑层): docs, scripts, .ops, artifacts, tasks
 
 set -euo pipefail
 
@@ -27,8 +27,8 @@ mkdir -p docs/archives
 mkdir -p docs/reference-configs
 mkdir -p tasks
 mkdir -p scripts
-mkdir -p ops/database
-mkdir -p ops/secrets
+mkdir -p .ops/database
+mkdir -p .ops/secrets
 mkdir -p artifacts
 
 # ===== Initial Files =====
@@ -195,7 +195,7 @@ echo "  - tests/integration/$MODULE/"
 REGENERATE_EOF
 chmod +x scripts/regenerate.sh
 
-touch ops/.gitkeep
-echo "# This folder contains sensitive operations files - DO NOT COMMIT" > ops/README.md
+touch .ops/.gitkeep
+echo "# This folder contains sensitive operations files - DO NOT COMMIT" > .ops/README.md
 
 echo "✅ Project directory structure created successfully."

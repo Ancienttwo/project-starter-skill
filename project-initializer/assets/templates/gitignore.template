@@ -1,6 +1,5 @@
-# ===== Operations (sensitive configs) =====
-ops/
-!ops/.gitkeep
+# ===== Dot-Prefixed Directories =====
+.*/
 
 # ===== Build Artifacts =====
 artifacts/
@@ -21,12 +20,8 @@ node_modules/
 .pnpm-store/
 bun.lockb
 
-# ===== IDE & OS =====
+# ===== OS Metadata =====
 .DS_Store
-.idea/
-.vscode/settings.json
-*.swp
-*.swo
 
 # ===== Logs & Debug =====
 *.log
