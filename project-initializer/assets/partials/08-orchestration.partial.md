@@ -1,50 +1,43 @@
 ## Workflow Orchestration
 
-### 1. Plan Mode Default
+### 1. Plan Node Default
 
-- Non-trivial tasks (3+ steps, multiple files, or architecture impact) must start in plan mode.
-- Write a concrete implementation spec in `docs/plan.md`.
-- Include verification steps in the plan, not only coding tasks.
-- If implementation drifts from plan, stop and revise plan first.
+- Enter plan mode for any non-trivial task (3+ steps or architectural decisions).
+- If something goes sideways, stop and re-plan immediately.
+- Use plan mode for verification steps, not only building.
+- Write checkable execution tasks in `tasks/todo.md`; keep deep spec details in `docs/plan.md` when needed.
 
 ### 2. Subagent Strategy
 
-- Use focused subagents for deep research and parallel exploration.
-- One subagent should own one narrow objective.
-- Use parallel subagents only for independent workstreams.
-- Synthesize subagent outputs into one canonical plan before implementation.
+- Use subagents to keep the main context window clean.
+- Offload research, exploration, and parallel analysis to focused subagents.
+- For complex problems, parallelize with clear ownership boundaries.
+- One track per subagent for focused execution.
 
-### 3. Verification Gate
+### 3. Self-Improvement Loop
 
-After each implementation phase, run relevant checks:
-- Typecheck (if applicable)
-- Unit/integration/E2E tests (as applicable)
-- Lint/build checks for impacted modules
+- After any correction from the user, append a lesson to `tasks/lessons.md`.
+- Write a prevention rule that blocks the same mistake pattern.
+- Iterate on lessons until recurring mistakes drop.
+- Review relevant lessons at session start before implementation.
 
-If any check fails:
-1. Stop
-2. Diagnose root cause
-3. Update plan and task state
-4. Re-run checks after fix
+### 4. Verification Before Done
 
-Never declare completion without verification evidence.
+- Never mark a task complete without proving behavior.
+- Diff behavior before/after when relevant.
+- Ask: "Would a staff engineer approve this?"
+- Run tests, check logs, and demonstrate correctness evidence.
 
-### 4. Demand Elegance (Balanced)
+### 5. Demand Elegance (Balanced)
 
-- For non-trivial changes, evaluate whether a simpler and cleaner approach exists.
-- If the current path feels hacky, redesign before adding complexity.
-- Skip this step for obvious one-line fixes.
-- Avoid overengineering while still challenging weak designs.
+- For non-trivial changes, pause and ask if a cleaner path exists.
+- If a fix feels hacky, redesign with current knowledge before shipping.
+- Skip this step for simple obvious fixes.
+- Challenge your own approach before presenting final results.
 
-### 5. Autonomous Bug Fixing
+### 6. Autonomous Bug Fixing
 
-- When users report a bug with enough context, start diagnosis and fix immediately.
-- Treat failing tests, logs, and stack traces as direct fix triggers.
-- Keep the user out of avoidable context-switch loops.
-
-### 6. Final Validation
-
-Before final response:
-1. Self-review against acceptance criteria
-2. Verify task checklist is fully synchronized
-3. Report change summary, verification proof, known risks, and next steps
+- When given a bug report with enough evidence, start fixing directly.
+- Treat logs, errors, and failing tests as direct fix triggers.
+- Minimize context switching required from the user.
+- Resolve failing CI tests without waiting for hand-holding.

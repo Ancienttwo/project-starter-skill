@@ -20,6 +20,12 @@
 +-----------------------------------------------------+
 ```
 
+#### Single Source of Truth
+
+- The source of truth lives in the immutable layer: `specs/`, `contracts/`, `tests/`.
+- Implementation in `src/` is disposable and can be rewritten anytime.
+- If they diverge: update Spec first, then Contract, then Tests, then rewrite Implementation.
+
 #### Response Protocol
 
 ```yaml

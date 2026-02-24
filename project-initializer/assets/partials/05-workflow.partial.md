@@ -2,51 +2,65 @@
 
 > **Origin**: Research -> Plan -> Annotate -> Implement -> Feedback.
 
-Use `docs/plan.md` as shared mutable state between you and the AI.
+Use `tasks/todo.md` as the primary execution contract and checklist. Use `docs/plan.md` for deep design context when required.
 
 ```yaml
 PLAN_LOOP:
-  FILE: docs/plan.md
+  PRIMARY_FILE: tasks/todo.md
+  LESSONS_FILE: tasks/lessons.md
+  DEEP_SPEC_FILE: docs/plan.md  # compatibility/deep context
   GUARD: Do not implement until user explicitly says "implement"
-  ROUNDS: 1-6 (iterate until decisions are complete)
 
   ON_ANNOTATED_PLAN:
-    1. Re-read docs/plan.md in full
-    2. Identify every user annotation and deletion
-    3. Rewrite the plan with those updates
-    4. Ask clarifying questions only when ambiguity remains
-    5. Stop after updating plan (no implementation)
+    1. Re-read tasks/todo.md and related comments in full
+    2. Re-read tasks/lessons.md for relevant mistake patterns
+    3. Update checklist items and success criteria
+    4. If architecture details are needed, sync docs/plan.md
+    5. Stop after plan update (no implementation)
 
   ON_IMPLEMENT_COMMAND:
-    1. Re-read the final docs/plan.md
-    2. Convert plan sections into a task checklist
-    3. Execute in phases and keep status synchronized
-    4. Record verification evidence for each phase
+    1. Execute from tasks/todo.md in phases
+    2. Mark tasks complete only after verification evidence
+    3. Write review notes per completed task
+    4. Append new lessons when corrections occur
 ```
-
-**When to use**: Any feature with 3+ files, architectural choices, or unclear scope.
 
 ---
 
 ### Task Management Protocol
 
 ```yaml
-TASK_STATE:
-  SOURCE_OF_TRUTH:
-    - docs/plan.md
-    - docs/TODO.md
-    - docs/PROGRESS.md
+TASK_MANAGEMENT:
+  STEP_1_PLAN_FIRST:
+    - Write plan to tasks/todo.md with checkable items
+  STEP_2_VERIFY_PLAN:
+    - Confirm scope and acceptance before coding
+  STEP_3_TRACK_PROGRESS:
+    - Mark checklist items as completed during execution
+  STEP_4_EXPLAIN_CHANGES:
+    - Keep high-level step summaries for each phase
+  STEP_5_DOCUMENT_RESULTS:
+    - Add a review section in tasks/todo.md
+  STEP_6_CAPTURE_LESSONS:
+    - Update tasks/lessons.md after any correction
+```
 
-  RULES:
-    - Keep only UNSTARTED tasks in docs/TODO.md
-    - Move in-progress/completed details into docs/PROGRESS.md
-    - Mark a task complete immediately when verification passes
-    - If user says "continue", proceed to next pending step
+### File Roles (Tasks-Primary + Docs-Compatible)
 
-  EXECUTION_STYLE:
-    - Work in batched phases
-    - Keep exactly one active task at a time
-    - Do not silently expand scope beyond plan
+```yaml
+PRIMARY:
+  tasks/todo.md:
+    PURPOSE: Active execution checklist + review notes
+  tasks/lessons.md:
+    PURPOSE: Mistake patterns and prevention rules
+
+COMPATIBILITY:
+  docs/plan.md:
+    PURPOSE: Deep architecture and spec narrative
+  docs/TODO.md:
+    PURPOSE: Legacy task mirror for existing workflows
+  docs/PROGRESS.md:
+    PURPOSE: Long-form history and session archive
 ```
 
 ### Progress Tracking
@@ -58,22 +72,6 @@ docs/PROGRESS.md:
   ARCHIVE_TRIGGER: Exceeds 2000 lines
   ARCHIVE_PATH: docs/archives/PROGRESS-{YYYY-MM-DD}.md
   KEEP_RECENT: 200 lines
-
-  SESSION_FORMAT: |
-    ## YYYY-MM-DD Session
-    ### Completed
-    - [x] Task description
-    ### In Progress
-    - [ ] Current work
-    ### Notes
-    - Key decisions and blockers
-
-docs/TODO.md:
-  PURPOSE: Pending work queue
-  RULES:
-    - Keep only not-started tasks
-    - Delete tasks when started/completed
-    - No "done" markers
 ```
 
 ### Release, Git, and Deployment
