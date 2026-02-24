@@ -2,15 +2,21 @@
 
 ```yaml
 TASK_SOURCES:
-  - docs/plan.md
-  - docs/TODO.md
-  - docs/PROGRESS.md
+  - tasks/todo.md
+  - tasks/lessons.md
+  - docs/PROGRESS.md  # compatibility long-form history
 
 RULES:
-  - Keep docs/TODO.md for not-started tasks only
-  - Track in-progress and completed work in docs/PROGRESS.md
-  - Keep checklist state synchronized with real execution
-  - Continue to next task when user says "continue"
+  - Plan first in tasks/todo.md with checkable items
+  - Verify plan before implementation starts
+  - Track progress by marking items as completed during execution
+  - Explain each phase with concise high-level summaries
+  - Keep a REVIEW_SECTION in tasks/todo.md for completion evidence
+  - Capture corrections in tasks/lessons.md with prevention rules
+
+COMPATIBILITY:
+  - docs/plan.md can store deep architecture notes
+  - docs/TODO.md remains a legacy mirror for older workflows
 
 BLOCKERS:
   - Document blocker and attempted fix in docs/PROGRESS.md

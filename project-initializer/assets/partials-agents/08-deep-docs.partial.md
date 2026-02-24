@@ -1,10 +1,11 @@
 ## Deep Docs Index
 
 Read these docs on demand:
-- `docs/research.md`: discovered codebase context
-- `docs/plan.md`: approved implementation plan
-- `docs/PROGRESS.md`: execution history
-- `docs/TODO.md`: pending tasks only
+- `tasks/todo.md`: primary execution checklist + review section
+- `tasks/lessons.md`: self-improvement rules from corrections
+- `docs/plan.md`: detailed architecture/spec context (compatibility)
+- `docs/PROGRESS.md`: execution history and archived decisions
+- `docs/TODO.md`: legacy mirror for older workflows
 - `docs/decisions.md`: architecture decisions and trade-offs
 - `docs/architecture/`: architecture deep dives
 - `docs/tech-stack.md`: dependency and runtime constraints
