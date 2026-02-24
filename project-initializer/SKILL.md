@@ -2,7 +2,7 @@
 name: project-initializer
 description: |
   Initialize new projects with comprehensive tech stack configuration and vibe coding setup.
-  Generates CLAUDE.md (AI development guide), project structure, and initialization scripts
+  Generates CLAUDE.md/AGENTS.md (AI development guides), project structure, and initialization scripts
   through guided Q&A.
 
   Use when:
@@ -305,30 +305,44 @@ Customization notes for doc-drift-guard.sh:
 
 After collecting all answers, generate:
 
-### 1. CLAUDE.md
+### 1. CLAUDE.md + AGENTS.md
 
 **Architecture**: Composable partials with runtime assembly.
 
-**Partial Files** (in `assets/partials/`):
+**CLAUDE Partial Files** (in `assets/partials/`):
 ```
 01-header.partial.md        # Project title + metadata
 02-iron-rules.partial.md    # Iron Rules 1-6
 03-philosophy.partial.md    # Core philosophy (DO NOT SPLIT)
 04-project-structure.partial.md  # Project structure + file management
-05-workflow.partial.md      # Progress tracking, versioning, git strategy
+05-workflow.partial.md      # Plan loop, progress tracking, task protocol
 06-cloudflare.partial.md    # Cloudflare deployment (conditional)
-07-footer.partial.md        # AI workflows, Deep Docs index table, philosophy reminder
+07-footer.partial.md        # Deep docs index + first principles
+08-orchestration.partial.md # Plan/Subagent/Verification orchestration
+```
+
+**AGENTS Partial Files** (in `assets/partials-agents/`):
+```
+01-header.partial.md
+02-operating-mode.partial.md
+03-orchestration.partial.md
+04-task-protocol.partial.md
+05-coding-constraints.partial.md
+06-quality-safety.partial.md
+07-cloudflare.partial.md    # Cloudflare deployment (conditional)
+08-deep-docs.partial.md
 ```
 
 **Assembly Process**:
 1. Concatenate partials in order (see `assets/partials/_assembly-order.md`)
 2. Apply conditional logic (`{{#IF CLOUDFLARE_NATIVE}}...{{/IF}}`)
 3. Substitute variables with user-provided values
-4. Output final CLAUDE.md
+4. Output final CLAUDE.md or AGENTS.md based on target
 
 **Assembly Script**:
 ```bash
 bun scripts/assemble-template.ts --plan C --name "MyProject" --var USER_NAME=Dev
+bun scripts/assemble-template.ts --target agents --plan C --name "MyProject"
 ```
 
 **Variable Substitutions**:
@@ -364,6 +378,10 @@ Generate from templates in `assets/templates/`:
 | `docs/architecture.md` | `assets/templates/architecture.template.md` | Scan actual project tree |
 | `docs/packages.md` | `assets/templates/packages.template.md` | Monorepo only (Plan D) |
 | `docs/PROGRESS.md` | `assets/templates/progress.template.md` | Q1.6 MVP + iteration plan |
+| `docs/reference-configs/changelog-versioning.yaml.md` | `assets/reference-configs/changelog-versioning.yaml.md` | Release/changelog deep reference |
+| `docs/reference-configs/git-strategy.yaml.md` | `assets/reference-configs/git-strategy.yaml.md` | Git branching/commit deep reference |
+| `docs/reference-configs/release-deploy.yaml.md` | `assets/reference-configs/release-deploy.yaml.md` | Release/deploy deep reference |
+| `docs/reference-configs/ai-workflows.yaml.md` | `assets/reference-configs/ai-workflows.yaml.md` | AI workflow deep reference |
 
 **Conditional guides** (only generate for matching plan):
 

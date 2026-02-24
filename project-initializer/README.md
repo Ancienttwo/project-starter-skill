@@ -40,6 +40,7 @@
 ```
 project/
 ├── CLAUDE.md           # AI development guide
+├── AGENTS.md           # Agent execution protocol guide
 ├── .gitignore          # Comprehensive ignore rules
 ├── init-project.sh     # Project initialization script
 ├── docs/
@@ -50,6 +51,7 @@ project/
 │   ├── api/            # API documentation
 │   ├── guides/         # Developer guides
 │   ├── archives/       # Archived progress logs
+│   ├── reference-configs/ # Verbose workflow/release reference configs
 │   ├── PROGRESS.md     # AI development log (2000 lines max)
 │   ├── TODO.md         # Pending tasks only
 │   └── CHANGELOG.md    # Version history
@@ -106,10 +108,14 @@ project-initializer/
 ├── SKILL.md                    # Main skill definition
 ├── README.md                   # This file
 ├── assets/
-│   └── CLAUDE.template.md      # AI guide template
+│   ├── partials/               # CLAUDE template partials
+│   ├── partials-agents/        # AGENTS template partials
+│   ├── reference-configs/      # Verbose workflow reference configs
+│   └── CLAUDE.template.md      # Legacy full template (reference)
 ├── scripts/
 │   ├── setup-plugins.sh        # Plugin installation script
-│   └── init-project.sh         # Project setup script
+│   ├── init-project.sh         # Project setup script
+│   └── assemble-template.ts    # CLAUDE/AGENTS template assembler
 └── references/
     ├── tech-stacks.md          # Technology stack details
     ├── best-practices.md       # Engineering standards
