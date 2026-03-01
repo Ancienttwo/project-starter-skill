@@ -17,3 +17,10 @@ bun.lockb
 # Sisyphus internal state (not project deliverables)
 .sisyphus/boulder.json
 .sisyphus/notepads/
+
+# Local Claude overrides/state
+.claude/settings.local.json
+.claude/.context-pressure/
+.claude/.session-id
+.claude/.session-handoff.md
+.claude/.tool-call-count

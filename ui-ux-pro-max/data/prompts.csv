@@ -1,6 +1,0 @@
-No,Style Category,AI Prompt Keywords (Copy-Paste Ready),CSS/Technical Keywords,Implementation Checklist
-1,Glassmorphism,"frosted glass, translucent, blur effect, layered depth, vibrant background","backdrop-filter: blur(), rgba(), border: 1px solid rgba(255,255,255,0.2)","☐ Vibrant background ☐ Backdrop blur 10-20px ☐ Translucent white ☐ Subtle border"
-2,Minimalism,"clean, simple, whitespace, functional, essential, swiss design","max-width, padding, line-height, font-weight: 400","☐ Limited color palette ☐ Ample whitespace ☐ Clear typography ☐ No decorative elements"
-3,Neubrutalism,"bold borders, thick shadows, primary colors, raw, offset shadow","box-shadow: 4px 4px 0 #000, border: 3px solid #000","☐ Black borders 3-4px ☐ 45° hard shadows ☐ Primary colors ☐ No gradients"
-4,Dark Mode,"dark theme, OLED black, night mode, eye-friendly, high contrast","background: #000000, color: #FFFFFF, accent colors","☐ True black #000 ☐ High contrast text ☐ Vibrant accents ☐ Reduced eye strain"
-5,Bento Grid,"modular cards, asymmetric grid, Apple-style, dashboard tiles","display: grid, grid-template-columns, gap, border-radius: 16px","☐ Varied card sizes ☐ Consistent gaps ☐ Rounded corners ☐ Subtle shadows"

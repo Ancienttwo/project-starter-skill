@@ -1,4 +1,5 @@
-*.DS_Store
-*.zip
-__pycache__/
-.venv/
+# Keep repository scope to project-initializer only
+*
+!/.gitignore
+!/project-initializer/
+!/project-initializer/**

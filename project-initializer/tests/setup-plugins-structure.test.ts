@@ -41,6 +41,15 @@ describe("setup-plugins structure", () => {
     expect(setup).toContain("\"$HOOKS_DIR/hook-input.sh\"");
   });
 
+  test("embedded hook-input.sh should include all shared functions", () => {
+    const setup = readSetup();
+    expect(setup).toContain("hook_read_stdin_once");
+    expect(setup).toContain("hook_json_get");
+    expect(setup).toContain("hook_parse_json_arg");
+    expect(setup).toContain("hook_get_file_path");
+    expect(setup).toContain("hook_get_prompt");
+  });
+
   test("configure_hooks should use nested hooks schema and no argv blob injection", () => {
     const setup = readSetup();
 
