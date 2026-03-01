@@ -10,6 +10,14 @@
 - **AI Native Stack** - Built for vibe coding with Claude Code
 - **Plugin Recommendations** - Essential Claude Code plugins auto-configured
 
+## Default Runtime Model
+
+- **Workflow**: Plan-first (`Plan + Permissionless`)
+- **Codex**: Full access semantics (`sandbox_mode=danger-full-access`, `approval_policy=never`)
+- **Claude**: `--dangerously-skip-permissions`
+- **Mutation Safety**: Write operations must run in linked git worktrees
+- **Commit Strategy**: Atomic checkpoint commit after successful `test|typecheck|lint|build`
+
 ## Quick Start
 
 ```bash

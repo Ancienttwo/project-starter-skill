@@ -4,6 +4,7 @@
 > **Service Target**: {{SERVICE_TARGET}}
 > **Interaction Style**: {{INTERACTION_STYLE}}
 > **Thinking Mode**: ultrathink - Three-layer traversal (Phenomenon -> Essence -> Philosophy -> Output)
+> **Default Runtime Profile**: Plan + Permissionless | Codex full access (`sandbox_mode=danger-full-access`, `approval_policy=never`) | Claude `--dangerously-skip-permissions` | Mutations only in linked worktrees with atomic checkpoints
 
 ---
 
@@ -258,8 +259,9 @@ TEST_STANDARDS:
 MODIFY FIRST PRINCIPLE:
   1. Check existing file structure first
   2. Prefer modifying/extending over creating new files
-  3. Get permission before creating files
-  4. Delete temporary files immediately after use
+  3. Permissionless by default for file mutations
+  4. Mutate only in linked git worktrees and commit atomically after green checks
+  5. Delete temporary files immediately after use
 
 DIRECTORY STRUCTURE:
   # ===== IMMUTABLE LAYER (Asset Layer - Core Assets) =====

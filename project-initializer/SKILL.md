@@ -57,6 +57,11 @@ For rapid project initialization with minimal questions (5 questions only):
 |---------|---------------|
 | Service Target | "User" |
 | Interaction Style | "Technical, concise" |
+| Runtime Profile | Plan + Permissionless |
+| Codex Policy | Full access (`sandbox_mode=danger-full-access`, `approval_policy=never`) |
+| Claude Policy | `--dangerously-skip-permissions` |
+| Mutation Safety | Linked git worktree required for write operations |
+| Commit Policy | Atomic checkpoint after green checks |
 | Cloudflare Native | Auto-detected from Plan Type |
 | Team Size | Solo (1 person) |
 | MVP Scope | Skipped (can add later) |
@@ -264,6 +269,9 @@ Full plugin catalog with descriptions and installation: See `references/plugins-
 
 ```
 A) Standard Hooks + TDD Guard + Doc Drift + Context Pressure (recommended)
+   → Runtime profile: Plan + Permissionless
+   → Worktree guard: blocks Edit/Write outside linked worktree
+   → Atomic commit: checkpoint commit after successful test/typecheck/lint/build
    → UserPromptSubmit: Quality guard + TDD/BDD context injection
    → PreToolUse (Edit|Write): TDD guard — checks test file exists before src modification
    → PostToolUse (Edit|Write): Anti-simplification check + Doc drift guard
@@ -291,9 +299,12 @@ F) Custom Hooks
 | Asset File | Target | Trigger |
 |-----------|--------|---------|
 | `assets/hooks/tdd-guard-hook.sh` | `.claude/hooks/tdd-guard-hook.sh` | PreToolUse (Edit\|Write) |
+| `assets/hooks/worktree-guard.sh` | `.claude/hooks/worktree-guard.sh` | PreToolUse (Edit\|Write) |
 | `assets/hooks/pre-code-change.sh` | `.claude/hooks/pre-code-change.sh` | PreToolUse (Edit\|Write) |
 | `assets/hooks/anti-simplification.sh` | `.claude/hooks/anti-simplification.sh` | PostToolUse (Edit\|Write) |
+| `assets/hooks/atomic-pending.sh` | `.claude/hooks/atomic-pending.sh` | PostToolUse (Edit\|Write) |
 | `assets/hooks/post-bash.sh` | `.claude/hooks/post-bash.sh` | PostToolUse (Bash) |
+| `assets/hooks/atomic-commit.sh` | `.claude/hooks/atomic-commit.sh` | PostToolUse (Bash) |
 | `assets/hooks/prompt-guard.sh` | `.claude/hooks/prompt-guard.sh` | UserPromptSubmit (TDD/BDD + plan annotation detection) |
 | `assets/hooks/doc-drift-guard.sh` | `.claude/hooks/doc-drift-guard.sh` | PostToolUse (Edit\|Write) |
 | `assets/hooks/context-pressure-hook.sh` | `.claude/hooks/context-pressure-hook.sh` | PostToolUse (*) |
@@ -435,7 +446,9 @@ Run `scripts/setup-plugins.sh` to:
 - Add Superpowers marketplace `obra/superpowers-marketplace`
 - Install and enable `superpowers@superpowers-marketplace` by default
 - Install selected plugins to `~/.claude/skills/`
+- Install global policy hooks in `~/.claude/hooks/` (worktree guard + atomic pending + atomic commit)
 - Configure hooks in `~/.claude/settings.json`
+- Apply default runtime profile semantics: Plan + Permissionless, Codex full access semantics, Claude skip permissions
 
 ### 12. Hook Configuration (if selected in Q8)
 

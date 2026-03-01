@@ -3,6 +3,11 @@
 # Part of project-initializer skill
 # Installs global plugins and configures global hooks in ~/.claude/settings.json.
 # Project-local hooks (.claude/settings.local.json in a repo) are configured separately.
+# Default runtime profile:
+#   - Plan + Permissionless
+#   - Codex full access (danger-full-access + approval_policy=never semantics)
+#   - Claude --dangerously-skip-permissions
+#   - Worktree-enforced mutations + atomic checkpoint commits
 
 set -e
 
@@ -72,7 +77,7 @@ print_banner() {
     echo -e "${CYAN}"
     echo "╔══════════════════════════════════════════════════════════╗"
     echo "║     Claude Code Plugin Auto-Setup                        ║"
-    echo "║     Essential plugins + hooks configuration              ║"
+    echo "║     Plan + Permissionless runtime profile                ║"
     echo "╚══════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 }
@@ -167,6 +172,88 @@ install_superpowers_plugin() {
     "$SUPERPOWERS_PLUGIN_ID": true
   }
 }
+
+install_permissionless_policy_hooks() {
+    echo -e "${BLUE}Installing policy hooks (worktree + atomic commit)...${NC}"
+    mkdir -p "$HOOKS_DIR"
+
+    cat > "$HOOKS_DIR/worktree-guard.sh" << 'EOF'
+#!/bin/bash
+# Global Worktree Guard — block mutations outside linked worktrees.
+set -u
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "❌ Mutation blocked: not a git repository."
+  echo "   Required policy: write operations must run in a linked git worktree."
+  exit 1
+fi
+
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || true)"
+if [[ "$GIT_DIR" != *".git/worktrees/"* ]]; then
+  echo "❌ Mutation blocked: primary working tree detected ($GIT_DIR)."
+  echo "   Use linked worktree for all write operations."
+  exit 1
+fi
+
+exit 0
+EOF
+
+    cat > "$HOOKS_DIR/atomic-pending.sh" << 'EOF'
+#!/bin/bash
+# Global Atomic Pending Marker — marks pending checkpoint state.
+set -u
+mkdir -p ".claude" >/dev/null 2>&1 || true
+date "+%Y-%m-%d %H:%M:%S" > ".claude/.atomic_pending" 2>/dev/null || true
+exit 0
+EOF
+
+    cat > "$HOOKS_DIR/atomic-commit.sh" << 'EOF'
+#!/bin/bash
+# Global Atomic Commit Hook — commit after successful green checks.
+set -u
+
+TOOL_OUTPUT="${1:-}"
+EXIT_CODE="${2:-1}"
+TOOL_INPUT="${3:-${TOOL_INPUT:-}}"
+MARKER=".claude/.atomic_pending"
+
+if [[ "$EXIT_CODE" != "0" ]]; then
+  exit 0
+fi
+
+if ! echo "$TOOL_INPUT" | grep -Eiq "(^|[[:space:]])(test|typecheck|lint|build)([[:space:]]|$)"; then
+  exit 0
+fi
+
+if [[ ! -f "$MARKER" ]]; then
+  exit 0
+fi
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  rm -f "$MARKER" >/dev/null 2>&1 || true
+  exit 0
+fi
+
+if git diff --quiet && git diff --cached --quiet; then
+  rm -f "$MARKER" >/dev/null 2>&1 || true
+  exit 0
+fi
+
+git add -A
+STAMP="$(date "+%Y-%m-%d %H:%M:%S")"
+if git commit -m "chore(atom): checkpoint $STAMP" >/dev/null 2>&1; then
+  echo "✅ Atomic checkpoint committed: $STAMP"
+  rm -f "$MARKER" >/dev/null 2>&1 || true
+else
+  echo "⚠️ Atomic checkpoint commit skipped (commit failed)."
+fi
+
+exit 0
+EOF
+
+    chmod +x "$HOOKS_DIR/worktree-guard.sh" "$HOOKS_DIR/atomic-pending.sh" "$HOOKS_DIR/atomic-commit.sh"
+    echo -e "  ${GREEN}✓${NC} Policy hooks installed to $HOOKS_DIR"
+}
 SETTINGS_EOF
         echo -e "  ${GREEN}✓${NC} Created settings and enabled: $SUPERPOWERS_PLUGIN_ID"
         configured=true
@@ -203,13 +290,25 @@ configure_hooks() {
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
+        "command": "bash ~/.claude/hooks/worktree-guard.sh"
+      },
+      {
+        "matcher": "Edit|Write",
         "command": "echo '\u001b[0;34m📝 Code modification detected\u001b[0m'"
       }
     ],
     "PostToolUse": [
       {
+        "matcher": "Edit|Write",
+        "command": "bash ~/.claude/hooks/atomic-pending.sh"
+      },
+      {
         "matcher": "Bash\\(.*test.*\\)",
         "command": "echo '\u001b[0;32m✅ Tests completed\u001b[0m'"
+      },
+      {
+        "matcher": "Bash",
+        "command": "bash ~/.claude/hooks/atomic-commit.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\" \"$TOOL_INPUT\""
       }
     ]
   }
@@ -238,10 +337,24 @@ HOOKS_EOF
         "command": "echo '\u001b[1;33m🛡️ Quality guard + Biome active...\u001b[0m'"
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "bash ~/.claude/hooks/worktree-guard.sh"
+      }
+    ],
     "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "bash ~/.claude/hooks/atomic-pending.sh"
+      },
       {
         "matcher": "Write\\(.*\\.(ts|tsx|js|jsx|json)\\)",
         "command": "bunx biome check --write \"$CLAUDE_FILE_PATH\" 2>&1 | head -10"
+      },
+      {
+        "matcher": "Bash",
+        "command": "bash ~/.claude/hooks/atomic-commit.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\" \"$TOOL_INPUT\""
       }
     ]
   }
@@ -257,10 +370,24 @@ HOOKS_EOF
         "command": "echo '\u001b[1;33m🛡️ Quality guard + Biome CI active...\u001b[0m'"
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "bash ~/.claude/hooks/worktree-guard.sh"
+      }
+    ],
     "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "bash ~/.claude/hooks/atomic-pending.sh"
+      },
       {
         "matcher": "Write\\(.*\\.(ts|tsx|js|jsx)\\)",
         "command": "bunx biome ci \"$CLAUDE_FILE_PATH\" 2>&1 | head -20"
+      },
+      {
+        "matcher": "Bash",
+        "command": "bash ~/.claude/hooks/atomic-commit.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\" \"$TOOL_INPUT\""
       }
     ]
   }
@@ -292,7 +419,7 @@ HOOKS_EOF
 }
 
 add_permissions() {
-    echo -e "${BLUE}Adding plugin permissions...${NC}"
+    echo -e "${BLUE}Adding compatibility allow-list permissions...${NC}"
 
     # Create permissions array
     local permissions='[
@@ -317,9 +444,9 @@ add_permissions() {
         jq --argjson perms "$permissions" '.permissions.allow = (.permissions.allow // []) + $perms | .permissions.allow |= unique' \
             "$CLAUDE_DIR/settings.json" > "$CLAUDE_DIR/settings.json.new"
         mv "$CLAUDE_DIR/settings.json.new" "$CLAUDE_DIR/settings.json"
-        echo -e "  ${GREEN}✓${NC} Permissions added"
+        echo -e "  ${GREEN}✓${NC} Compatibility permissions added"
     else
-        echo -e "  ${YELLOW}!${NC} Could not add permissions (jq required for merge)"
+        echo -e "  ${YELLOW}!${NC} Could not add compatibility permissions (jq required for merge)"
     fi
 }
 
@@ -356,6 +483,13 @@ print_summary() {
         fi
     done
 
+    echo ""
+    echo -e "${BLUE}Default runtime profile:${NC}"
+    echo -e "  - Plan + Permissionless"
+    echo -e "  - Codex: Full access semantics (danger-full-access + approval_policy=never)"
+    echo -e "  - Claude: --dangerously-skip-permissions"
+    echo -e "  - Mutations: linked git worktree only"
+    echo -e "  - Commits: atomic checkpoints after green checks"
     echo ""
     echo -e "${BLUE}Available commands:${NC}"
     echo -e "  /feature-dev      - Guided feature development"
@@ -410,6 +544,9 @@ main() {
                 echo "Usage: setup-plugins.sh [options]"
                 echo ""
                 echo "Default behavior: installs essential plugins + enables $SUPERPOWERS_PLUGIN_ID"
+                echo "Runtime defaults: Plan + Permissionless, Codex full access semantics,"
+                echo "  Claude --dangerously-skip-permissions, worktree-enforced mutations,"
+                echo "  atomic checkpoint commits after green checks."
                 echo ""
                 echo "Options:"
                 echo "  --with-optional    Install optional plugins (commit-commands, pr-review-toolkit, ralph-loop, etc.)"
@@ -421,10 +558,10 @@ main() {
                 echo "  --help             Show this help"
                 echo ""
                 echo "Hook types:"
-                echo "  standard      - Basic quality guard with test completion notifications"
+                echo "  standard      - Worktree guard + atomic commits + quality reminders (default)"
                 echo "  minimal       - Only UserPromptSubmit quality guard"
-                echo "  biome         - Auto lint/format with Biome on file write (recommended)"
-                echo "  biome-strict  - Biome CI mode (fails on warnings)"
+                echo "  biome         - Standard profile + Biome auto-check on write"
+                echo "  biome-strict  - Standard profile + Biome CI mode (fails on warnings)"
                 echo ""
                 echo "LSP by project type:"
                 echo "  plan-a (Remix)           -> typescript-lsp"
@@ -463,6 +600,9 @@ main() {
     # Create necessary directories
     echo -e "${YELLOW}Creating directories...${NC}"
     mkdir -p "$SKILLS_DIR" "$HOOKS_DIR"
+
+    # Install runtime policy hooks (global ~/.claude/hooks)
+    install_permissionless_policy_hooks
 
     # Clone or update official plugins
     echo -e "${YELLOW}Setting up official plugins repository...${NC}"

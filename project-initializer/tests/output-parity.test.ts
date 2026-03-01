@@ -159,6 +159,23 @@ describe("Cloudflare Conditional Inclusion", () => {
 });
 
 describe("Output Quality Gates", () => {
+  test("should enforce runtime profile defaults in CLAUDE output", () => {
+    const output = assembleTemplate({
+      planType: "C",
+      variables: { PROJECT_NAME: "RuntimeDefaults" },
+    });
+
+    expect(output).toContain("Default Runtime Profile");
+    expect(output).toContain("Codex full access");
+    expect(output).toContain("--dangerously-skip-permissions");
+    expect(output).toContain("MODE: Plan + Permissionless");
+    expect(output).toContain("EXECUTION_CONTEXT: git worktree required for mutations");
+    expect(output).toContain("COMMIT_POLICY: atomic checkpoint after green checks");
+    expect(output).toContain("Permissionless by default for file mutations");
+    expect(output).toContain("Mutate only in linked git worktrees");
+    expect(output).not.toContain("Get permission before creating files");
+  });
+
   test("should reference project-local reference configs", () => {
     const output = assembleTemplate({
       planType: "B",

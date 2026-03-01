@@ -47,6 +47,18 @@ describe("Bootstrap Script Contracts", () => {
     for (const fileName of hookCommands) {
       expect(existsSync(join(ROOT, "assets/hooks", fileName))).toBe(true);
     }
+
+    expect(hookCommands).toContain("worktree-guard.sh");
+    expect(hookCommands).toContain("atomic-pending.sh");
+    expect(hookCommands).toContain("atomic-commit.sh");
+  });
+
+  test("setup script should install global policy hooks", () => {
+    const setup = read("scripts/setup-plugins.sh");
+    expect(setup).toContain("install_permissionless_policy_hooks");
+    expect(setup).toContain("worktree-guard.sh");
+    expect(setup).toContain("atomic-pending.sh");
+    expect(setup).toContain("atomic-commit.sh");
   });
 
   test("hook docs and scripts should use ToolUse event names", () => {

@@ -1,6 +1,8 @@
 ## Operating Mode
 
-- Default to **Plan-First**.
+- Default to **Plan + Permissionless**.
+- Runtime profile: Codex full access (`sandbox_mode=danger-full-access`, `approval_policy=never`).
+- Runtime profile: Claude `--dangerously-skip-permissions`.
 - Do not implement until the user explicitly asks to implement.
 - For non-trivial work: Research -> Plan -> Annotate -> Implement -> Verify -> Report.
 - Canonical execution contract: `tasks/todo.md`.

@@ -33,6 +33,10 @@ describe("AGENTS Target Assembly", () => {
     expect(output).toContain("Self-Improvement Loop");
     expect(output).toContain("tasks/todo.md");
     expect(output).toContain("tasks/lessons.md");
+    expect(output).toContain("Default to **Plan + Permissionless**.");
+    expect(output).toContain("Codex full access");
+    expect(output).toContain("--dangerously-skip-permissions");
+    expect(output).toContain("linked worktrees");
   });
 
   test("should preserve core governance semantics between CLAUDE and AGENTS", () => {

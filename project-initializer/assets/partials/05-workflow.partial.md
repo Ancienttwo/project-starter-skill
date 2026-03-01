@@ -1,14 +1,14 @@
 ### Plan Annotation Protocol
-
 > **Origin**: Research -> Plan -> Annotate -> Implement -> Feedback.
-
 Use `tasks/todo.md` as the primary execution contract and checklist. Use `docs/plan.md` for deep design context when required.
-
 ```yaml
 PLAN_LOOP:
+  MODE: Plan + Permissionless
   PRIMARY_FILE: tasks/todo.md
   LESSONS_FILE: tasks/lessons.md
   DEEP_SPEC_FILE: docs/plan.md  # compatibility/deep context
+  EXECUTION_CONTEXT: git worktree required for mutations
+  COMMIT_POLICY: atomic checkpoint after green checks
   GUARD: Do not implement until user explicitly says "implement"
 
   ON_ANNOTATED_PLAN:

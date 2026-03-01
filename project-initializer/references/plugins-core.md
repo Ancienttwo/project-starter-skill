@@ -526,7 +526,12 @@ When the project involves building an AI Agent for a specific domain, recommend 
 
 ## Permissions Configuration
 
-Add to `~/.claude/settings.json`:
+Default execution model in this skill is **Plan + Permissionless**:
+- Codex full access semantics (`sandbox_mode=danger-full-access`, `approval_policy=never`)
+- Claude `--dangerously-skip-permissions`
+- Safety comes from `git worktree` isolation + atomic checkpoint commits
+
+For compatibility with plugin gating, keep an allow-list in `~/.claude/settings.json`:
 
 ```json
 {
@@ -542,6 +547,31 @@ Add to `~/.claude/settings.json`:
       "Skill(code-review:*)",
       "Skill(ast-grep)",
       "Skill(ast-grep:*)"
+    ]
+  }
+}
+```
+
+### Worktree + Atomic Commit Hooks (Recommended)
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "bash ~/.claude/hooks/worktree-guard.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "bash ~/.claude/hooks/atomic-pending.sh"
+      },
+      {
+        "matcher": "Bash",
+        "command": "bash ~/.claude/hooks/atomic-commit.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\" \"$TOOL_INPUT\""
+      }
     ]
   }
 }

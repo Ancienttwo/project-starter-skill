@@ -9,7 +9,8 @@
 
 ### Safety Rules
 - Do not silently expand scope beyond approved plan.
-- Do not run destructive actions without explicit confirmation.
+- Enforce safety through worktree isolation + atomic commits + easy rollback.
+- Block write operations in the primary working tree; mutate only in linked worktrees.
 - If unexpected repo changes appear, stop and ask.
 - Prefer modifying existing files over unnecessary file creation.
 

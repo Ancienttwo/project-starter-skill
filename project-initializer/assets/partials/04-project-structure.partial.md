@@ -20,8 +20,9 @@
 MODIFY FIRST PRINCIPLE:
   1. Check existing file structure first
   2. Prefer modifying/extending over creating new files
-  3. Get permission before creating files
-  4. Delete temporary files immediately after use
+  3. Permissionless by default for file mutations
+  4. Mutate only in linked git worktrees and commit atomically after green checks
+  5. Delete temporary files immediately after use
 
 DIRECTORY STRUCTURE:
   # ===== IMMUTABLE LAYER (Asset Layer - Core Assets) =====
