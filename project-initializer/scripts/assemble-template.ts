@@ -35,6 +35,7 @@ export interface PlanConfig {
   name: string;
   stack: string;
   cloudflareNative: boolean;
+  tier?: "core" | "preset" | "custom";
   defaultLsp?: string;
   defaultTemplateVariables?: Record<string, string>;
 }
@@ -42,6 +43,7 @@ export interface PlanConfig {
 export interface PlanMap {
   aliases?: Record<string, string>;
   quickDefaults?: Record<string, string>;
+  planTiers?: Record<string, string[]>;
   plans: Record<string, PlanConfig>;
 }
 
@@ -67,6 +69,8 @@ const FALLBACK_TEMPLATE_VARIABLES: Record<string, string> = {
   USER_NAME: "Developer",
   SERVICE_TARGET: "User",
   INTERACTION_STYLE: "Technical, concise",
+  RUNTIME_MODE: "Plan-only",
+  RUNTIME_PROFILE: "Plan-only (recommended)",
   PROHIBITIONS:
     "- No `any` in production code\n" +
     "- No `console.log` in production code\n" +
@@ -206,6 +210,7 @@ export function loadPlanMap(planMapFilePath: string = PLAN_MAP_FILE): PlanMap {
   const map: PlanMap = {
     aliases: candidate.aliases ?? {},
     quickDefaults: candidate.quickDefaults ?? {},
+    planTiers: candidate.planTiers ?? {},
     plans: candidate.plans as Record<string, PlanConfig>,
   };
 
@@ -226,6 +231,10 @@ export function loadPlanMap(planMapFilePath: string = PLAN_MAP_FILE): PlanMap {
 
     if (typeof plan.cloudflareNative !== "boolean") {
       throw new Error(`Invalid plan-map.json entry for ${code}: cloudflareNative must be boolean`);
+    }
+
+    if (plan.tier && !["core", "preset", "custom"].includes(plan.tier)) {
+      throw new Error(`Invalid plan-map.json entry for ${code}: unsupported tier "${plan.tier}"`);
     }
   }
 
@@ -249,6 +258,24 @@ export function resolvePlanType(rawPlanType: string, planMap: PlanMap = loadPlan
   }
 
   return aliasResolved;
+}
+
+/**
+ * Get plan tier (core/preset/custom) for UI and Q&A routing.
+ */
+export function getPlanTier(
+  planType: string,
+  planMap: PlanMap = loadPlanMap()
+): "core" | "preset" | "custom" {
+  const resolved = resolvePlanType(planType, planMap);
+  return planMap.plans[resolved].tier ?? "core";
+}
+
+/**
+ * Convenience check for core plans.
+ */
+export function isCorePlan(planType: string, planMap: PlanMap = loadPlanMap()): boolean {
+  return getPlanTier(planType, planMap) === "core";
 }
 
 function readRelativeTextFile(relativePath: string): string {
@@ -285,6 +312,9 @@ export function getDefaultTemplateVariables(
   return {
     ...FALLBACK_TEMPLATE_VARIABLES,
     ...quickDefaults,
+    PLAN_NAME: planConfig.name,
+    PLAN_STACK: planConfig.stack,
+    PLAN_TIER: planConfig.tier ?? "core",
     ...planDefaults,
   };
 }

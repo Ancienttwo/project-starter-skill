@@ -166,16 +166,14 @@ describe("Output Quality Gates", () => {
     });
 
     expect(output).toContain("Default Runtime Profile");
-    expect(output).toContain("Codex full access");
-    expect(output).toContain("--dangerously-skip-permissions");
-    expect(output).toContain("MODE: Plan + Permissionless");
+    expect(output).toContain("Plan-only (recommended)");
+    expect(output).toContain("MODE: Plan-only (recommended)");
     expect(output).toContain(
       "EXECUTION_CONTEXT: primary worktree warning by default; enforce via .claude/.require-worktree"
     );
     expect(output).toContain("COMMIT_POLICY: atomic checkpoint after green checks");
-    expect(output).toContain("Permissionless by default for file mutations");
+    expect(output).toContain("Plan-only by default for file mutations");
     expect(output).toContain("Primary worktree warns by default; enforce via `.claude/.require-worktree`");
-    expect(output).not.toContain("Get permission before creating files");
   });
 
   test("should reference project-local reference configs", () => {

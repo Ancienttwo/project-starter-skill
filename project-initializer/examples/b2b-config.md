@@ -7,7 +7,8 @@ Sample output from `/project-init` with Plan C (B2B SaaS):
 
 > **Service Target**: Development Team
 > **Interaction Style**: Professional English
-> **Thinking Mode**: ultrathink
+> **Runtime Mode**: Plan-only
+> **Runtime Profile**: Plan-only (recommended)
 
 ## Tech Stack
 
@@ -21,3 +22,7 @@ Sample output from `/project-init` with Plan C (B2B SaaS):
 ```
 
 For full enterprise examples, see `references/tech-stacks.md`.
+
+Notes:
+- For Plan C (B2B SaaS), package manager default is typically `bun`.
+- For Python-centric presets (Plan G/H), default package manager is `uv`.

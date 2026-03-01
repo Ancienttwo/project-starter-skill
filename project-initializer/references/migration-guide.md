@@ -1,13 +1,18 @@
-# Migration Guide (to 2.2.0)
+# Migration Guide (to 2.3.x)
 
 This guide upgrades existing repositories to current project-initializer conventions.
 
-## Key Changes in 2.2.0
+## Key Changes in 2.3.x
 
 - Team hooks move to `.claude/settings.json`.
 - `docs/TODO.md` is removed; `tasks/todo.md` is the only task contract.
 - Hook input parsing is hybrid (stdin JSON + env/argv fallback).
 - BDD/TDD reminders now route by path.
+- Runtime mode is configurable via template variables:
+  - `{{RUNTIME_MODE}}`
+  - `{{RUNTIME_PROFILE}}`
+- Question pack is now kept under `assets/initializer-question-pack.v1.json`.
+- Plan G/H default package manager is `uv`.
 
 ## Automated Migration
 
@@ -26,6 +31,7 @@ bash scripts/migrate-project-template.sh --repo /path/to/project --apply
 3. If `jq` exists, moves `hooks` from `settings.local.json` into `settings.json`.
 4. Removes legacy `docs/TODO.md` if present.
 5. Prints a migration report.
+6. Keeps hooks references valid by copying available scripts from `assets/hooks/`, with warning when missing.
 
 ## Manual Follow-up
 
@@ -33,6 +39,7 @@ bash scripts/migrate-project-template.sh --repo /path/to/project --apply
 2. Confirm `.claude/settings.local.json` only contains personal overrides.
 3. Run project smoke checks and basic hook trigger scenarios.
 4. Commit migration in one isolated change-set.
+5. If your old docs referenced `governance/` contracts or skill-audit scripts, remove those references and use `assets/initializer-question-pack.v1.json` as the Q&A source of truth.
 
 ## Rollback
 

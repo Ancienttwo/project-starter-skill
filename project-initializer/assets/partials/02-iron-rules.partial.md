@@ -1,51 +1,26 @@
 ## Iron Rules
 
 ### 1. Good Taste
-- Eliminate special cases instead of adding if/else
-- More than 3 branches -> Stop, refactor data structure
-- More than 3 levels of nesting -> Design error, must refactor
-- More than 20 lines per function -> Ask if you're doing it wrong
+- Prefer data structures over branch explosion.
+- More than 3 branches or nesting levels is a refactor signal.
 
 ### 2. Pragmatism
-- Solve real problems, not hypothetical threats
-- Write the simplest working implementation first, then optimize
+- Solve real constraints first.
+- Keep defaults inferred; ask only override-level questions.
 
-### 3. Stand on Giants' Shoulders
+### 3. Zero Compatibility Debt
+- No compatibility shims as default behavior.
+- Use deprecation + replacement routing instead of hidden forks.
 
-**New feature development flow:**
-1. **Search for mature solutions** - Use Context7 / GitHub / npm for best practices
-2. **Analyze project constraints** - Evaluate against existing codebase and tech stack
-3. **Propose integration plan** - Don't reinvent wheels, but don't blindly copy either
-
-### 4. Zero Compatibility Debt
-
-```yaml
-FORBIDDEN:
-  - Writing special branches for backward compatibility
-  - Keeping deprecated APIs or functions
-  - Feature detection to support multiple implementations
-  - "for compatibility" or "legacy support" comments
-  - Backward-compatible shims or polyfills
-  - Renaming unused _vars variables
-  - Adding "// removed" comments for history
-
-REQUIRED:
-  - Delete unused code directly
-  - Upgrade dependencies or refactor, never write compatibility layers
-  - If breaking old formats, let it break
-  - Keep codebase clean, no historical baggage
-```
-
-### 5. Code Quality Red Lines
-
-| Metric | Limit |
-|--------|-------|
-| File lines | <= 800 |
-| Files per folder | <= 8 (create subdirectories if more) |
-| Function lines | <= 20 |
-| Nesting levels | <= 3 |
-| Branch count | <= 3 |
-
-### 6. Prohibitions
+### 4. Project-Specific Prohibitions
 
 {{PROHIBITIONS}}
+
+### 5. Detailed Standards (On Demand)
+
+Load these only when needed:
+- `docs/reference-configs/coding-standards.md`
+- `docs/reference-configs/development-protocol.md`
+- `docs/reference-configs/workflow-orchestration.md`
+
+---

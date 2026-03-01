@@ -18,6 +18,7 @@ STACK="${2:-vite-tanstack}"
 PKG_MANAGER="${3:-bun}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASSETS_REF_DIR="$SCRIPT_DIR/../assets/reference-configs"
+ASSETS_HOOKS_DIR="$SCRIPT_DIR/../assets/hooks"
 
 echo -e "${BLUE}=== Project Initializer ===${NC}"
 echo -e "Project: ${GREEN}$PROJECT_NAME${NC}"
@@ -267,6 +268,17 @@ EOF
 }
 EOF
 
+    # Copy hook scripts into the project
+    if [ -d "$ASSETS_HOOKS_DIR" ]; then
+        cp "$ASSETS_HOOKS_DIR"/*.sh .claude/hooks/ 2>/dev/null || true
+        chmod +x .claude/hooks/*.sh 2>/dev/null || true
+        echo -e "${GREEN}Hooks installed to .claude/hooks/${NC}"
+    else
+        echo -e "${YELLOW}Warning: Hook scripts not found at $ASSETS_HOOKS_DIR${NC}"
+        echo -e "${YELLOW}  .claude/settings.json references hooks that don't exist yet.${NC}"
+        echo -e "${YELLOW}  Add hook scripts to .claude/hooks/ or remove references from settings.json.${NC}"
+    fi
+
     if [ -d "$ASSETS_REF_DIR" ]; then
         cp "$ASSETS_REF_DIR"/*.md docs/reference-configs/
     else
@@ -292,6 +304,24 @@ EOF
 # AI Workflows Reference
 
 Use this file for extended AI workflow templates and session handoff protocols.
+EOF
+
+        cat > docs/reference-configs/coding-standards.md << 'EOF'
+# Coding Standards Reference
+
+Use this file for detailed coding constraints and refactor thresholds.
+EOF
+
+        cat > docs/reference-configs/development-protocol.md << 'EOF'
+# Development Protocol Reference
+
+Use this file for detailed feature/bug flow playbooks and layer model rules.
+EOF
+
+        cat > docs/reference-configs/workflow-orchestration.md << 'EOF'
+# Workflow Orchestration Reference
+
+Use this file for advanced plan/execution orchestration patterns.
 EOF
     fi
 

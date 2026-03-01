@@ -1,10 +1,10 @@
 ## Cloudflare Deployment Notes
 
-Use Cloudflare-native patterns when the selected plan supports edge deployment:
+Use Cloudflare-native patterns for cloudflare-enabled plans:
 - Workers/Pages first
-- Keep runtime constraints explicit (edge vs node)
+- Keep edge vs node constraints explicit
 - Prefer platform primitives over custom infra
 
-If the plan is non-Cloudflare-native, this section is omitted.
+If plan is non-Cloudflare-native, this section is omitted.
 
 ---

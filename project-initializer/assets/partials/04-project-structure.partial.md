@@ -14,89 +14,9 @@
 
 ## Workflow Rules
 
-### File Management
+- Prefer modifying existing files over adding new files.
+- {{RUNTIME_MODE}} by default for file mutations.
+- Primary worktree warns by default; enforce via `.claude/.require-worktree`.
+- Commit after green checks with atomic checkpoint discipline.
+- Keep execution contracts in `tasks/todo.md` and `tasks/lessons.md`.
 
-```yaml
-MODIFY FIRST PRINCIPLE:
-  1. Check existing file structure first
-  2. Prefer modifying/extending over creating new files
-  3. Permissionless by default for file mutations
-  4. Primary worktree warns by default; enforce via `.claude/.require-worktree`; commit atomically after green checks
-  5. Delete temporary files immediately after use
-
-DIRECTORY STRUCTURE:
-  # ===== IMMUTABLE LAYER (Asset Layer - Core Assets) =====
-  /specs/:
-    PURPOSE: Feature specifications (IMMUTABLE)
-    INCLUDES:
-      - overview.md       # Overall requirements overview
-      - modules/          # Module-specific feature specs
-    RULES:
-      - Modifying Spec = Rewrite all downstream
-      - Write Spec first, then code
-
-  /contracts/:
-    PURPOSE: Interface contracts (IMMUTABLE)
-    INCLUDES:
-      - types.ts          # Shared type definitions
-      - modules/          # Module-specific interface contracts
-    RULES:
-      - Changing interface must first change Spec
-      - Interface is the only basis for implementation
-
-  /tests/:
-    PURPOSE: Tests are the truth (IMMUTABLE)
-    INCLUDES:
-      - unit/             # Unit tests
-      - integration/      # Integration tests
-      - e2e/              # End-to-end tests
-    RULES:
-      - Test code quantity >= Implementation code quantity
-      - Test failure = Delete module and rewrite
-
-  # ===== MUTABLE LAYER (Toilet Paper Layer - Can Rewrite Anytime) =====
-  /src/:
-    PURPOSE: Implementation (MUTABLE - Toilet Paper Zone)
-    INCLUDES:
-      - modules/          # Module-organized implementation code
-    RULES:
-      - Can be deleted and rewritten anytime
-      - Don't patch, rewrite
-
-  # ===== SUPPORTING (Support Layer) =====
-  /docs/:
-    PURPOSE: Technical documentation (commit to Git)
-    INCLUDES:
-      - architecture/     # System design docs
-      - api/              # API documentation
-      - guides/           # Developer guides
-      - archives/         # Archived PROGRESS.md files
-      - PROGRESS.md       # AI development log
-      - CHANGELOG.md      # Version history
-      - plan.md           # Deep compatibility planning notes
-      - reference-configs/ # Release/deploy/git workflow references
-
-  /tasks/:
-    PURPOSE: Execution contracts and lessons (commit to Git)
-    INCLUDES:
-      - todo.md           # Primary task checklist + review notes
-      - lessons.md        # Mistake patterns + prevention rules
-
-  /scripts/:
-    PURPOSE: Automation scripts
-    INCLUDES:
-      - regenerate.sh     # One-click delete and rewrite a module
-
-  /.ops/:
-    PURPOSE: Operations & sensitive configs (DO NOT commit to Git)
-    INCLUDES:
-      - .env.local        # Local environment variables
-      - database/         # DB migrations, seeds
-      - secrets/          # API keys, certificates
-
-  /artifacts/:
-    PURPOSE: Build outputs (DO NOT commit to Git)
-    INCLUDES:
-      - dist/             # Production builds
-      - coverage/         # Test coverage reports
-```

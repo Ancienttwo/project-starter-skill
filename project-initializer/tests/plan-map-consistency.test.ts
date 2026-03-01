@@ -1,7 +1,7 @@
 import { describe, test, expect } from "bun:test";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { loadPlanMap } from "../scripts/assemble-template";
+import { getPlanTier, isCorePlan, loadPlanMap } from "../scripts/assemble-template";
 
 const ROOT = join(import.meta.dir, "..");
 
@@ -14,6 +14,22 @@ describe("Plan map consistency", () => {
     const planMap = loadPlanMap();
     const planCodes = Object.keys(planMap.plans).sort();
     expect(planCodes).toEqual(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]);
+  });
+
+  test("plan tiers should enforce core A-F and preset/custom G-K model", () => {
+    const planMap = loadPlanMap();
+
+    expect(planMap.planTiers?.core).toEqual(["A", "B", "C", "D", "E", "F"]);
+    expect(planMap.planTiers?.presets).toEqual(["G", "H", "I", "J"]);
+    expect(planMap.planTiers?.custom).toEqual(["K"]);
+
+    expect(getPlanTier("A", planMap)).toBe("core");
+    expect(getPlanTier("F", planMap)).toBe("core");
+    expect(getPlanTier("G", planMap)).toBe("preset");
+    expect(getPlanTier("J", planMap)).toBe("preset");
+    expect(getPlanTier("K", planMap)).toBe("custom");
+    expect(isCorePlan("C", planMap)).toBe(true);
+    expect(isCorePlan("H", planMap)).toBe(false);
   });
 
   test("docs should not reference deprecated plan labels", () => {
@@ -34,5 +50,10 @@ describe("Plan map consistency", () => {
       expect(skill).toContain(`Plan ${plan}`);
       expect(techStacks).toContain(`Plan ${plan}`);
     }
+
+    expect(skill).toContain("Core Plans (A-F)");
+    expect(skill).toContain("Custom Presets (G-K)");
+    expect(techStacks).toContain("Core Plans (A-F)");
+    expect(techStacks).toContain("Custom Presets (G-K)");
   });
 });
