@@ -11,8 +11,6 @@ Recommended combinations:
 - Full edge stack: `Pages + Workers + D1/R2`
 - AI app: `Workers + AI Gateway + Workers AI + Vectorize`
 
-Deployment triggers: production=`v*` tag on `main`; staging=`develop`; preview=`PR`.
-
 Deep docs:
 - `docs/reference-configs/release-deploy.yaml.md`
 - `docs/reference-configs/git-strategy.yaml.md`

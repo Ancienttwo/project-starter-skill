@@ -1,32 +1,23 @@
 ## Workflow Orchestration
 
 ### 1. Plan Node Default
-- Enter plan mode for any non-trivial task.
+- Enter plan mode for non-trivial tasks.
 - Keep active checklist items in `tasks/todo.md`.
-- Re-plan immediately when execution drifts.
 
 ### 2. Subagent Strategy
-- Offload research and exploration to focused subagents.
-- Parallelize only independent tracks.
-- Keep one clear ownership boundary per subagent.
+- Offload independent tracks to focused subagents.
+- Parallelize only non-dependent paths.
 
 ### 3. Self-Improvement Loop
-- After user correction, append lesson in `tasks/lessons.md`.
-- Convert correction into a prevention rule.
-- Review relevant lessons before execution starts.
+- After correction, append prevention rule to `tasks/lessons.md`.
 
 ### 4. Verification Before Done
-- No task completion without proof.
-- Run impact-based checks (typecheck/tests/lint/build).
-- Validate before/after behavior when relevant.
+- No completion without verification evidence.
 
-### 5. Demand Elegance (Balanced)
-- For non-trivial changes, ask whether a cleaner path exists.
-- Redesign hacky fixes before shipping.
-- Avoid overengineering for simple fixes.
+### 5. Balanced Elegance
+- Redesign hacky non-trivial fixes before shipping.
 
 ### 6. Autonomous Bug Fixing
-- Start fixing when logs/errors/failing tests provide enough evidence.
-- Reduce user context switching and keep momentum.
+- Start fixes when logs/errors/tests are sufficient.
 
 ---

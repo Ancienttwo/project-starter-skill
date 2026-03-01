@@ -526,10 +526,20 @@ When the project involves building an AI Agent for a specific domain, recommend 
 
 ## Permissions Configuration
 
-Default execution model in this skill is **Plan + Permissionless**:
-- Codex full access semantics (`sandbox_mode=danger-full-access`, `approval_policy=never`)
-- Claude `--dangerously-skip-permissions`
-- Safety comes from `git worktree` isolation + atomic checkpoint commits
+Default execution model in this skill is **Plan-only (recommended)**.
+
+Optional runtime profiles:
+- **Plan-only (recommended)**:
+  - Codex: `sandbox_mode=platform-default, approval_policy=on-failure`
+  - Claude: default permissions
+- **Plan + Permissionless**:
+  - Codex: `sandbox_mode=danger-full-access, approval_policy=never`
+  - Claude: `--dangerously-skip-permissions`
+- **Standard (ask before each action)**:
+  - Codex: `sandbox_mode=platform-default, approval_policy=always`
+  - Claude: default permissions
+
+Safety baseline remains `git worktree` isolation + atomic checkpoint commits.
 
 For compatibility with plugin gating, keep an allow-list in `~/.claude/settings.json`:
 

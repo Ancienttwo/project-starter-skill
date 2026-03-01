@@ -2,6 +2,8 @@
 
 ## Quick Decision Tree
 
+### Core Plans (A-F)
+
 ```
 Start → Project Type?
 │
@@ -24,21 +26,21 @@ Start → Project Type?
 ├─ Mobile App?
 │  └─ Yes → Plan F: Expo + NativeWind
 │
-├─ AI Quantitative Trading (Python Backend)?
-│  └─ Yes → Plan G: FastAPI + Vite Frontend ⭐
-│
-├─ Financial Trading (FIX/RFQ)?
-│  └─ Yes → Plan H: FIX Engine + Hono + Vite ⭐
-│
-├─ Web3 DApp (EVM Chains)?
-│  └─ Yes → Plan I: Astro Landing + Vite + Wagmi ⭐
-│
-├─ AI Coding Agent / TUI Tool?
-│  └─ Yes → Plan J: OpenTUI + TypeScript ⭐
-│
-└─ Custom stack?
-   └─ Plan K: Manual selection
+└─ Domain-specific constraints not covered above?
+   └─ Choose Custom Presets (G-K)
 ```
+
+---
+
+### Custom Presets (G-K)
+
+Use these only after confirming A-F does not fit:
+
+- Plan G: AI Quantitative Trading (Python backend)
+- Plan H: Financial Trading (FIX/RFQ)
+- Plan I: Web3 DApp (EVM chains)
+- Plan J: AI Coding Agent / TUI
+- Plan K: Fully custom stack
 
 ---
 
@@ -1461,6 +1463,8 @@ const query = `
 
 ## Plan G: AI Quantitative Trading Platform (Python Backend) ⭐
 
+**Package Manager Default:** `uv` (primary for Python dependencies)
+
 **Architecture Overview:**
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1748,6 +1752,8 @@ bun add framer-motion
 ---
 
 ## Plan H: Financial Trading Platform (FIX + REST) ⭐
+
+**Package Manager Default:** `uv` (primary for Python dependencies in mixed stacks)
 
 **Architecture Overview:**
 ```

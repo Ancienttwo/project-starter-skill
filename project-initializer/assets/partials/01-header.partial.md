@@ -3,7 +3,8 @@
 > **Developer**: {{USER_NAME}}
 > **Service Target**: {{SERVICE_TARGET}}
 > **Interaction Style**: {{INTERACTION_STYLE}}
-> **Thinking Mode**: ultrathink - Three-layer traversal (Phenomenon -> Essence -> Philosophy -> Output)
-> **Default Runtime Profile**: Plan + Permissionless | Codex full access (`sandbox_mode=danger-full-access`, `approval_policy=never`) | Claude `--dangerously-skip-permissions` | Primary worktree warning + optional `.claude/.require-worktree` enforcement + atomic checkpoints
+> **Plan**: {{PLAN_TYPE}} · {{PLAN_NAME}} · tier={{PLAN_TIER}}
+> **Stack**: {{PLAN_STACK}}
+> **Default Runtime Profile**: {{RUNTIME_PROFILE}} | Primary worktree warning + optional `.claude/.require-worktree` enforcement + atomic checkpoints
 
 ---

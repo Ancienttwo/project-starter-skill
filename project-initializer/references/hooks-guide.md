@@ -11,7 +11,7 @@ Use this guide for **Q8: Configure Hooks** details.
 ## Hook Presets
 
 ### A) Standard + TDD + Doc Drift + Context Pressure (recommended)
-- Runtime profile: Plan + Permissionless.
+- Runtime profile: Plan-only (recommended), configurable to Permissionless/Standard.
 - `PreToolUse (Edit|Write)`: worktree guard (warn by default, opt-in hard block), TDD/BDD guard, asset-layer guard.
 - `PostToolUse (Edit|Write)`: anti-simplification, doc drift, atomic pending marker.
 - `PostToolUse (Bash)`: post-bash feedback, atomic checkpoint commit.

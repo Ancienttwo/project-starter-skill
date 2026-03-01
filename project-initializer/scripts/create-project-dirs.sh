@@ -44,6 +44,9 @@ touch docs/reference-configs/changelog-versioning.yaml.md
 touch docs/reference-configs/git-strategy.yaml.md
 touch docs/reference-configs/release-deploy.yaml.md
 touch docs/reference-configs/ai-workflows.yaml.md
+touch docs/reference-configs/coding-standards.md
+touch docs/reference-configs/development-protocol.md
+touch docs/reference-configs/workflow-orchestration.md
 
 cat > tasks/todo.md << 'TASK_TODO_EOF'
 # Task Execution Checklist (Primary)
@@ -198,6 +201,24 @@ cat > docs/reference-configs/ai-workflows.yaml.md << 'REF_AIWF_EOF'
 
 Use this file for extended AI workflow templates and session handoff protocols.
 REF_AIWF_EOF
+
+cat > docs/reference-configs/coding-standards.md << 'REF_CODING_STANDARDS_EOF'
+# Coding Standards Reference
+
+Use this file for detailed coding constraints and refactor thresholds.
+REF_CODING_STANDARDS_EOF
+
+cat > docs/reference-configs/development-protocol.md << 'REF_DEV_PROTOCOL_EOF'
+# Development Protocol Reference
+
+Use this file for detailed feature/bug flow playbooks and layer model rules.
+REF_DEV_PROTOCOL_EOF
+
+cat > docs/reference-configs/workflow-orchestration.md << 'REF_WORKFLOW_ORCH_EOF'
+# Workflow Orchestration Reference
+
+Use this file for advanced plan/execution orchestration patterns.
+REF_WORKFLOW_ORCH_EOF
 
 cat > scripts/regenerate.sh << 'REGENERATE_EOF'
 #!/bin/bash

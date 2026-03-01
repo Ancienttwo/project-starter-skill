@@ -1,73 +1,30 @@
-### 7. Development Protocol (Multi-Agent Philosophy)
+### 7. Development Protocol
 
-> **Core Philosophy**: Token unlimited = Manpower unlimited = Code is toilet paper = Rewrite over patch
+> **Core Philosophy**: Code is toilet paper when contracts change; rewrite over patch.
 
 #### The Layered Truth
 
-```
-+-----------------------------------------------------+
-|                 IMMUTABLE LAYER (Assets)            |
-|  +-----------+  +-----------+  +-----------+        |
-|  |   Spec    |  | Contract  |  |   Tests   |        |
-|  |  (What)   |  |(Interface)|  |  (Truth)  |        |
-|  +-----------+  +-----------+  +-----------+        |
-|----------------------------------------------------|
-|                 MUTABLE LAYER (Toilet Paper)        |
-|  +-------------------------------------------+      |
-|  |              Implementation               |      |
-|  |        (Code that can be deleted anytime) |      |
-|  +-------------------------------------------+      |
-+-----------------------------------------------------+
-```
+- **IMMUTABLE LAYER**: `specs/`, `contracts/`, `tests/`
+- **MUTABLE LAYER**: `src/`
+- Source of truth lives in the immutable layer.
 
-#### Single Source of Truth
-
-- The source of truth lives in the immutable layer: `specs/`, `contracts/`, `tests/`.
-- Implementation in `src/` is disposable and can be rewritten anytime.
-- If they diverge: update Spec -> Contract -> Tests -> rewrite Implementation.
-
-#### Response Protocol
+#### Response Protocol (Concise)
 
 ```yaml
 NEW_FEATURE_FLOW:
-  trigger: "new feature" / "new function"
-  steps:
-    1. Define Given-When-Then acceptance criteria (happy path, edge case, error path)
-    2. Output Spec first, then wait for confirmation
-    3. Output Interface Contract, then wait for confirmation
-    4. Write failing tests (Red)
-    5. Write minimal implementation (Green)
-    6. Refactor after all tests pass (Refactor)
-  rule: Test code quantity >= Implementation quantity
-
-MODIFICATION_FLOW:
-  trigger: "change" / "modify"
-  steps:
-    1. Ask: "Change Spec or only Implementation?"
-    2. Spec changed -> regenerate downstream from Spec
-    3. Impl-only -> delete and rewrite affected module
+  1. Define acceptance criteria
+  2. Define contract
+  3. Write failing tests
+  4. Implement and verify
 
 BUG_FIX_FLOW:
-  trigger: "bug"
-  steps:
-    1. Write test to reproduce bug first
-    2. Verify test fails
-    3. Delete affected module scope
-    4. Rewrite from scratch (never patch)
-    5. Verify all tests pass
+  1. Reproduce with test
+  2. Fix root cause
+  3. Re-run full verification
 ```
 
-#### Detailed Playbooks (On Demand)
-
-For full workflows and templates, read:
+Detailed playbooks:
 - `docs/reference-configs/ai-workflows.yaml.md`
-
-#### Forbidden Actions (Development Protocol)
-
-- No patching code to fix bugs (rewrite instead)
-- No changing interface without Spec update
-- No writing code without corresponding tests
-- No modifying tests to make buggy code pass
-- No implementing features not covered by acceptance criteria
+- `docs/reference-configs/development-protocol.md`
 
 ---

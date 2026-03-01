@@ -7,7 +7,7 @@ This document defines the order used to assemble `CLAUDE.md`.
 ```
 1. 01-header.partial.md
 2. 02-iron-rules.partial.md
-3. 03-philosophy.partial.md      ⭐ DO NOT SPLIT
+3. 03-philosophy.partial.md
 4. 04-project-structure.partial.md
 5. 05-workflow.partial.md
 6. {{#IF CLOUDFLARE_NATIVE}}06-cloudflare.partial.md{{/IF}}
@@ -18,12 +18,11 @@ This document defines the order used to assemble `CLAUDE.md`.
 ## Conditional Logic
 
 Cloudflare section is included when:
-- Plan A, C, C+, D
-- Plan G/H (partial Cloudflare support)
+- The selected plan has `cloudflareNative=true` in `assets/plan-map.json`
 - Or explicit `--cloudflare`
 
 It is excluded when:
-- Plan B, F, J
+- The selected plan has `cloudflareNative=false`
 - Or explicit `--no-cloudflare`
 
 ## Variable Substitution
@@ -37,4 +36,4 @@ It is excluded when:
 
 - Partials are flat files; no partial includes
 - One conceptual purpose per partial
-- Keep core rules concise and move details to references
+- Keep core rules concise and move details to `docs/reference-configs/*`
