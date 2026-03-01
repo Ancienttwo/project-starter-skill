@@ -27,6 +27,7 @@ mkdir -p docs/archives
 mkdir -p docs/reference-configs
 mkdir -p tasks
 mkdir -p scripts
+mkdir -p .claude/hooks
 mkdir -p .ops/database
 mkdir -p .ops/secrets
 mkdir -p artifacts
@@ -34,7 +35,6 @@ mkdir -p artifacts
 # ===== Initial Files =====
 touch docs/PROGRESS.md
 touch docs/CHANGELOG.md
-touch docs/TODO.md
 touch docs/plan.md
 touch docs/brief.md
 touch docs/tech-stack.md
@@ -73,19 +73,55 @@ cat > tasks/lessons.md << 'TASK_LESSONS_EOF'
 - Where to apply next time:
 TASK_LESSONS_EOF
 
-cat > docs/TODO.md << 'DOCS_TODO_EOF'
-# TODO List (Legacy Compatibility)
-
-This file is retained for backward compatibility.
-Primary execution checklist lives in `tasks/todo.md`.
-DOCS_TODO_EOF
-
 cat > docs/plan.md << 'DOCS_PLAN_EOF'
 # Deep Plan Notes (Compatibility)
 
 Use this file for detailed architecture/spec context.
 Primary execution checklist lives in `tasks/todo.md`.
 DOCS_PLAN_EOF
+
+cat > .claude/settings.json << 'PROJECT_SETTINGS_EOF'
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/worktree-guard.sh" },
+          { "type": "command", "command": "bash .claude/hooks/tdd-guard-hook.sh" },
+          { "type": "command", "command": "bash .claude/hooks/pre-code-change.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/anti-simplification.sh" },
+          { "type": "command", "command": "bash .claude/hooks/doc-drift-guard.sh" },
+          { "type": "command", "command": "bash .claude/hooks/atomic-pending.sh" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/post-bash.sh" },
+          { "type": "command", "command": "bash .claude/hooks/atomic-commit.sh" }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/context-pressure-hook.sh" }]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/prompt-guard.sh" }]
+      }
+    ]
+  }
+}
+PROJECT_SETTINGS_EOF
 
 cat > specs/overview.md << 'SPECS_OVERVIEW_EOF'
 # Project Specifications

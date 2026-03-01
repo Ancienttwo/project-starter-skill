@@ -2,12 +2,12 @@
 # Claude Code Plugin Auto-Setup Script
 # Part of project-initializer skill
 # Installs global plugins and configures global hooks in ~/.claude/settings.json.
-# Project-local hooks (.claude/settings.local.json in a repo) are configured separately.
+# Project-local hooks (.claude/settings.json in a repo) are configured separately.
 # Default runtime profile:
 #   - Plan + Permissionless
 #   - Codex full access (danger-full-access + approval_policy=never semantics)
 #   - Claude --dangerously-skip-permissions
-#   - Worktree-enforced mutations + atomic checkpoint commits
+#   - Worktree warning by default (opt-in enforcement) + atomic checkpoint commits
 
 set -e
 
@@ -136,6 +136,164 @@ install_ast_grep_skill() {
     fi
 }
 
+install_permissionless_policy_hooks() {
+    echo -e "${BLUE}Installing policy hooks (worktree + atomic commit)...${NC}"
+    mkdir -p "$HOOKS_DIR"
+
+    cat > "$HOOKS_DIR/worktree-guard.sh" << 'EOF'
+#!/bin/bash
+# Global Worktree Guard — warn by default, block only when marker exists.
+set -u
+
+REQUIRE_MARKER=".claude/.require-worktree"
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "[WorktreeGuard] Not a git repository. Skip worktree policy check."
+  exit 0
+fi
+
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || true)"
+if [[ "$GIT_DIR" == *".git/worktrees/"* ]]; then
+  exit 0
+fi
+
+if [[ -f "$REQUIRE_MARKER" ]]; then
+  echo "[WorktreeGuard] Mutation blocked: primary working tree detected ($GIT_DIR)."
+  echo "  Enforcement marker found: $REQUIRE_MARKER"
+  echo "  Use linked worktree for write operations."
+  exit 1
+fi
+
+echo "[WorktreeGuard] Warning: primary working tree detected ($GIT_DIR)."
+echo "  To enforce linked worktrees, create $REQUIRE_MARKER"
+exit 0
+EOF
+
+    cat > "$HOOKS_DIR/atomic-pending.sh" << 'EOF'
+#!/bin/bash
+# Global Atomic Pending Marker — marks pending checkpoint state.
+set -u
+mkdir -p ".claude" >/dev/null 2>&1 || true
+date "+%Y-%m-%d %H:%M:%S" > ".claude/.atomic_pending" 2>/dev/null || true
+exit 0
+EOF
+
+    cat > "$HOOKS_DIR/hook-input.sh" << 'EOF'
+#!/bin/bash
+# Shared input parsing helpers for hook scripts.
+# Prefers stdin JSON, with env/argv fallbacks for compatibility.
+
+hook_read_stdin_once() {
+  if [[ -n "${HOOK_STDIN_JSON+x}" ]]; then
+    return
+  fi
+
+  if [[ -t 0 ]]; then
+    HOOK_STDIN_JSON=""
+    return
+  fi
+
+  HOOK_STDIN_JSON="$(cat 2>/dev/null || true)"
+}
+
+hook_json_get() {
+  local path="$1"
+  local default_value="${2:-}"
+  local parsed=""
+
+  hook_read_stdin_once
+
+  if [[ -n "$HOOK_STDIN_JSON" ]] && command -v jq >/dev/null 2>&1; then
+    parsed="$(printf '%s' "$HOOK_STDIN_JSON" | jq -r "$path // empty" 2>/dev/null || true)"
+  fi
+
+  if [[ -n "$parsed" ]]; then
+    printf '%s' "$parsed"
+  else
+    printf '%s' "$default_value"
+  fi
+}
+EOF
+
+    cat > "$HOOKS_DIR/atomic-commit.sh" << 'EOF'
+#!/bin/bash
+# Global Atomic Commit Hook — commit after successful green checks.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+. "$SCRIPT_DIR/hook-input.sh"
+
+EXIT_CODE="${2:-${EXIT_CODE:-1}}"
+MARKER=".claude/.atomic_pending"
+
+get_tool_command() {
+  local parsed=""
+
+  parsed="$(hook_json_get '.tool_input.command' '')"
+  if [[ -n "$parsed" ]]; then
+    printf '%s' "$parsed"
+    return
+  fi
+
+  parsed="$(hook_json_get '.tool_input.raw_command' '')"
+  if [[ -n "$parsed" ]]; then
+    printf '%s' "$parsed"
+    return
+  fi
+
+  if [[ -n "${TOOL_INPUT:-}" ]] && command -v jq >/dev/null 2>&1 && printf '%s' "$TOOL_INPUT" | jq -e . >/dev/null 2>&1; then
+    parsed="$(printf '%s' "$TOOL_INPUT" | jq -r '.command // .raw_command // empty' 2>/dev/null || true)"
+  fi
+
+  if [[ -n "$parsed" ]]; then
+    printf '%s' "$parsed"
+    return
+  fi
+
+  printf '%s' "${TOOL_COMMAND:-}"
+}
+
+TOOL_COMMAND="$(get_tool_command)"
+
+if [[ "$EXIT_CODE" != "0" ]]; then
+  exit 0
+fi
+
+if ! echo "$TOOL_COMMAND" | grep -Eiq '(^|[[:space:]])(test|typecheck|lint|build)([[:space:]]|$)'; then
+  exit 0
+fi
+
+if [[ ! -f "$MARKER" ]]; then
+  exit 0
+fi
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  rm -f "$MARKER" >/dev/null 2>&1 || true
+  exit 0
+fi
+
+if git diff --quiet && git diff --cached --quiet; then
+  rm -f "$MARKER" >/dev/null 2>&1 || true
+  exit 0
+fi
+
+git add -A
+STAMP="$(date '+%Y-%m-%d %H:%M:%S')"
+if git commit -m "chore(atom): checkpoint $STAMP" >/dev/null 2>&1; then
+  echo "[AtomicCommit] Checkpoint committed: $STAMP"
+  rm -f "$MARKER" >/dev/null 2>&1 || true
+else
+  echo "[AtomicCommit] Checkpoint commit skipped (commit failed)."
+fi
+
+exit 0
+EOF
+
+    chmod +x "$HOOKS_DIR/worktree-guard.sh" "$HOOKS_DIR/atomic-pending.sh" "$HOOKS_DIR/hook-input.sh" "$HOOKS_DIR/atomic-commit.sh"
+    echo -e "  ${GREEN}✓${NC} Policy hooks installed to $HOOKS_DIR"
+}
+
 install_superpowers_plugin() {
     local settings_file="$CLAUDE_DIR/settings.json"
     local configured=false
@@ -172,88 +330,6 @@ install_superpowers_plugin() {
     "$SUPERPOWERS_PLUGIN_ID": true
   }
 }
-
-install_permissionless_policy_hooks() {
-    echo -e "${BLUE}Installing policy hooks (worktree + atomic commit)...${NC}"
-    mkdir -p "$HOOKS_DIR"
-
-    cat > "$HOOKS_DIR/worktree-guard.sh" << 'EOF'
-#!/bin/bash
-# Global Worktree Guard — block mutations outside linked worktrees.
-set -u
-
-if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  echo "❌ Mutation blocked: not a git repository."
-  echo "   Required policy: write operations must run in a linked git worktree."
-  exit 1
-fi
-
-GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || true)"
-if [[ "$GIT_DIR" != *".git/worktrees/"* ]]; then
-  echo "❌ Mutation blocked: primary working tree detected ($GIT_DIR)."
-  echo "   Use linked worktree for all write operations."
-  exit 1
-fi
-
-exit 0
-EOF
-
-    cat > "$HOOKS_DIR/atomic-pending.sh" << 'EOF'
-#!/bin/bash
-# Global Atomic Pending Marker — marks pending checkpoint state.
-set -u
-mkdir -p ".claude" >/dev/null 2>&1 || true
-date "+%Y-%m-%d %H:%M:%S" > ".claude/.atomic_pending" 2>/dev/null || true
-exit 0
-EOF
-
-    cat > "$HOOKS_DIR/atomic-commit.sh" << 'EOF'
-#!/bin/bash
-# Global Atomic Commit Hook — commit after successful green checks.
-set -u
-
-TOOL_OUTPUT="${1:-}"
-EXIT_CODE="${2:-1}"
-TOOL_INPUT="${3:-${TOOL_INPUT:-}}"
-MARKER=".claude/.atomic_pending"
-
-if [[ "$EXIT_CODE" != "0" ]]; then
-  exit 0
-fi
-
-if ! echo "$TOOL_INPUT" | grep -Eiq "(^|[[:space:]])(test|typecheck|lint|build)([[:space:]]|$)"; then
-  exit 0
-fi
-
-if [[ ! -f "$MARKER" ]]; then
-  exit 0
-fi
-
-if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  rm -f "$MARKER" >/dev/null 2>&1 || true
-  exit 0
-fi
-
-if git diff --quiet && git diff --cached --quiet; then
-  rm -f "$MARKER" >/dev/null 2>&1 || true
-  exit 0
-fi
-
-git add -A
-STAMP="$(date "+%Y-%m-%d %H:%M:%S")"
-if git commit -m "chore(atom): checkpoint $STAMP" >/dev/null 2>&1; then
-  echo "✅ Atomic checkpoint committed: $STAMP"
-  rm -f "$MARKER" >/dev/null 2>&1 || true
-else
-  echo "⚠️ Atomic checkpoint commit skipped (commit failed)."
-fi
-
-exit 0
-EOF
-
-    chmod +x "$HOOKS_DIR/worktree-guard.sh" "$HOOKS_DIR/atomic-pending.sh" "$HOOKS_DIR/atomic-commit.sh"
-    echo -e "  ${GREEN}✓${NC} Policy hooks installed to $HOOKS_DIR"
-}
 SETTINGS_EOF
         echo -e "  ${GREEN}✓${NC} Created settings and enabled: $SUPERPOWERS_PLUGIN_ID"
         configured=true
@@ -284,31 +360,41 @@ configure_hooks() {
   "hooks": {
     "UserPromptSubmit": [
       {
-        "command": "echo '\u001b[1;33m🛡️ Quality guard active...\u001b[0m'"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\u001b[1;33m[Guard] Quality guard active...\u001b[0m'"
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash ~/.claude/hooks/worktree-guard.sh"
-      },
-      {
-        "matcher": "Edit|Write",
-        "command": "echo '\u001b[0;34m📝 Code modification detected\u001b[0m'"
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/worktree-guard.sh" },
+          { "type": "command", "command": "echo '\u001b[0;34m[Guard] Code modification detected\u001b[0m'" }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash ~/.claude/hooks/atomic-pending.sh"
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/atomic-pending.sh" }
+        ]
       },
       {
         "matcher": "Bash\\(.*test.*\\)",
-        "command": "echo '\u001b[0;32m✅ Tests completed\u001b[0m'"
+        "hooks": [
+          { "type": "command", "command": "echo '\u001b[0;32m[Guard] Tests completed\u001b[0m'" }
+        ]
       },
       {
         "matcher": "Bash",
-        "command": "bash ~/.claude/hooks/atomic-commit.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\" \"$TOOL_INPUT\""
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/atomic-commit.sh" }
+        ]
       }
     ]
   }
@@ -321,7 +407,12 @@ HOOKS_EOF
   "hooks": {
     "UserPromptSubmit": [
       {
-        "command": "echo '\u001b[1;33m🛡️ Quality guard active...\u001b[0m'"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\u001b[1;33m[Guard] Quality guard active...\u001b[0m'"
+          }
+        ]
       }
     ]
   }
@@ -334,27 +425,40 @@ HOOKS_EOF
   "hooks": {
     "UserPromptSubmit": [
       {
-        "command": "echo '\u001b[1;33m🛡️ Quality guard + Biome active...\u001b[0m'"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\u001b[1;33m[Guard] Quality guard + Biome active...\u001b[0m'"
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash ~/.claude/hooks/worktree-guard.sh"
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/worktree-guard.sh" }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash ~/.claude/hooks/atomic-pending.sh"
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/atomic-pending.sh" }
+        ]
       },
       {
         "matcher": "Write\\(.*\\.(ts|tsx|js|jsx|json)\\)",
-        "command": "bunx biome check --write \"$CLAUDE_FILE_PATH\" 2>&1 | head -10"
+        "hooks": [
+          { "type": "command", "command": "bunx biome check --write \"$CLAUDE_FILE_PATH\" 2>&1 | head -10" }
+        ]
       },
       {
         "matcher": "Bash",
-        "command": "bash ~/.claude/hooks/atomic-commit.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\" \"$TOOL_INPUT\""
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/atomic-commit.sh" }
+        ]
       }
     ]
   }
@@ -367,27 +471,40 @@ HOOKS_EOF
   "hooks": {
     "UserPromptSubmit": [
       {
-        "command": "echo '\u001b[1;33m🛡️ Quality guard + Biome CI active...\u001b[0m'"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\u001b[1;33m[Guard] Quality guard + Biome CI active...\u001b[0m'"
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash ~/.claude/hooks/worktree-guard.sh"
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/worktree-guard.sh" }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash ~/.claude/hooks/atomic-pending.sh"
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/atomic-pending.sh" }
+        ]
       },
       {
         "matcher": "Write\\(.*\\.(ts|tsx|js|jsx)\\)",
-        "command": "bunx biome ci \"$CLAUDE_FILE_PATH\" 2>&1 | head -20"
+        "hooks": [
+          { "type": "command", "command": "bunx biome ci \"$CLAUDE_FILE_PATH\" 2>&1 | head -20" }
+        ]
       },
       {
         "matcher": "Bash",
-        "command": "bash ~/.claude/hooks/atomic-commit.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\" \"$TOOL_INPUT\""
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/atomic-commit.sh" }
+        ]
       }
     ]
   }
@@ -488,7 +605,7 @@ print_summary() {
     echo -e "  - Plan + Permissionless"
     echo -e "  - Codex: Full access semantics (danger-full-access + approval_policy=never)"
     echo -e "  - Claude: --dangerously-skip-permissions"
-    echo -e "  - Mutations: linked git worktree only"
+    echo -e "  - Mutations: primary tree warning; enforce via .claude/.require-worktree"
     echo -e "  - Commits: atomic checkpoints after green checks"
     echo ""
     echo -e "${BLUE}Available commands:${NC}"
@@ -545,7 +662,7 @@ main() {
                 echo ""
                 echo "Default behavior: installs essential plugins + enables $SUPERPOWERS_PLUGIN_ID"
                 echo "Runtime defaults: Plan + Permissionless, Codex full access semantics,"
-                echo "  Claude --dangerously-skip-permissions, worktree-enforced mutations,"
+                echo "  Claude --dangerously-skip-permissions, worktree-warning mutations (opt-in enforcement),"
                 echo "  atomic checkpoint commits after green checks."
                 echo ""
                 echo "Options:"
@@ -708,7 +825,7 @@ main() {
     # Configure hooks (global ~/.claude/settings.json)
     echo ""
     echo -e "${CYAN}ℹ${NC} Configuring global hooks in ~/.claude/settings.json"
-    echo -e "${CYAN}ℹ${NC} Project-local hooks are configured separately in each repo (.claude/settings.local.json)"
+    echo -e "${CYAN}ℹ${NC} Project-local hooks are configured separately in each repo (.claude/settings.json)"
     configure_hooks "$hook_type"
 
     # Add permissions

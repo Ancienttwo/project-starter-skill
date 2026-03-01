@@ -4,7 +4,11 @@
 
 set -euo pipefail
 
-FILE_PATH="${CLAUDE_FILE_PATH:-}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+. "$SCRIPT_DIR/hook-input.sh"
+
+FILE_PATH="$(hook_get_file_path "${1:-}")"
 [[ -z "$FILE_PATH" ]] && exit 0
 
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then

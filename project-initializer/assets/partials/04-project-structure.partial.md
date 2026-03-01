@@ -21,7 +21,7 @@ MODIFY FIRST PRINCIPLE:
   1. Check existing file structure first
   2. Prefer modifying/extending over creating new files
   3. Permissionless by default for file mutations
-  4. Mutate only in linked git worktrees and commit atomically after green checks
+  4. Primary worktree warns by default; enforce via `.claude/.require-worktree`; commit atomically after green checks
   5. Delete temporary files immediately after use
 
 DIRECTORY STRUCTURE:
@@ -72,8 +72,15 @@ DIRECTORY STRUCTURE:
       - guides/           # Developer guides
       - archives/         # Archived PROGRESS.md files
       - PROGRESS.md       # AI development log
-      - TODO.md           # Pending tasks
       - CHANGELOG.md      # Version history
+      - plan.md           # Deep compatibility planning notes
+      - reference-configs/ # Release/deploy/git workflow references
+
+  /tasks/:
+    PURPOSE: Execution contracts and lessons (commit to Git)
+    INCLUDES:
+      - todo.md           # Primary task checklist + review notes
+      - lessons.md        # Mistake patterns + prevention rules
 
   /scripts/:
     PURPOSE: Automation scripts

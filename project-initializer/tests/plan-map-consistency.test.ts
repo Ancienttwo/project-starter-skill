@@ -18,22 +18,20 @@ describe("Plan map consistency", () => {
 
   test("docs should not reference deprecated plan labels", () => {
     const skill = read("SKILL.md");
-    const readme = read("README.md");
+    const techStacks = read("references/tech-stacks.md");
 
     expect(skill).not.toContain("Plan C+");
     expect(skill).not.toContain("Plan L");
-    expect(readme).not.toContain("Plan C+");
-    expect(readme).not.toContain("Plan L");
+    expect(techStacks).not.toContain("Plan C+");
+    expect(techStacks).not.toContain("Plan L");
   });
 
   test("canonical plan labels should appear in docs", () => {
     const skill = read("SKILL.md");
-    const readme = read("README.md");
     const techStacks = read("references/tech-stacks.md");
 
     for (const plan of ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]) {
       expect(skill).toContain(`Plan ${plan}`);
-      expect(readme).toContain(`Plan ${plan}`);
       expect(techStacks).toContain(`Plan ${plan}`);
     }
   });

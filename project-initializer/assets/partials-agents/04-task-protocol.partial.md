@@ -16,7 +16,6 @@ RULES:
 
 COMPATIBILITY:
   - docs/plan.md can store deep architecture notes
-  - docs/TODO.md remains a legacy mirror for older workflows
 
 BLOCKERS:
   - Document blocker and attempted fix in docs/PROGRESS.md

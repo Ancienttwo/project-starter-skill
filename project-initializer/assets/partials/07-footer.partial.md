@@ -11,7 +11,6 @@ CLAUDE.md keeps concise rules. Read these files on demand.
 | Review architecture decisions | `docs/decisions.md` | ADR and trade-offs |
 | Understand tech stack | `docs/tech-stack.md` | Runtime and tooling choices |
 | Session history | `docs/PROGRESS.md` | Long-form execution history |
-| Legacy task mirror | `docs/TODO.md` | Compatibility with older workflows |
 | Review release history | `docs/CHANGELOG.md` | Versioned changes |
 
 Detailed workflow templates are stored in:

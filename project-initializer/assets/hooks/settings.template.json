@@ -6,7 +6,7 @@
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/worktree-guard.sh" },
           { "type": "command", "command": "bash .claude/hooks/tdd-guard-hook.sh" },
-          { "type": "command", "command": "bash .claude/hooks/pre-code-change.sh \"$TOOL_INPUT\"" }
+          { "type": "command", "command": "bash .claude/hooks/pre-code-change.sh" }
         ]
       }
     ],
@@ -22,8 +22,8 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/post-bash.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\"" },
-          { "type": "command", "command": "bash .claude/hooks/atomic-commit.sh \"$TOOL_OUTPUT\" \"$EXIT_CODE\" \"$TOOL_INPUT\"" }
+          { "type": "command", "command": "bash .claude/hooks/post-bash.sh" },
+          { "type": "command", "command": "bash .claude/hooks/atomic-commit.sh" }
         ]
       },
       {
@@ -33,7 +33,7 @@
     ],
     "UserPromptSubmit": [
       {
-        "hooks": [{ "type": "command", "command": "bash .claude/hooks/prompt-guard.sh \"$PROMPT\"" }]
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/prompt-guard.sh" }]
       }
     ]
   }

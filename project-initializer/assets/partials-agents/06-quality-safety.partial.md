@@ -9,8 +9,8 @@
 
 ### Safety Rules
 - Do not silently expand scope beyond approved plan.
-- Enforce safety through worktree isolation + atomic commits + easy rollback.
-- Block write operations in the primary working tree; mutate only in linked worktrees.
+- Enforce safety through worktree policy + atomic commits + easy rollback.
+- Warn on primary working tree by default; block only when `.claude/.require-worktree` exists.
 - If unexpected repo changes appear, stop and ask.
 - Prefer modifying existing files over unnecessary file creation.
 

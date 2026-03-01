@@ -5,7 +5,6 @@ Read these docs on demand:
 - `tasks/lessons.md`: self-improvement rules from corrections
 - `docs/plan.md`: detailed architecture/spec context (compatibility)
 - `docs/PROGRESS.md`: execution history and archived decisions
-- `docs/TODO.md`: legacy mirror for older workflows
 - `docs/decisions.md`: architecture decisions and trade-offs
 - `docs/architecture/`: architecture deep dives
 - `docs/tech-stack.md`: dependency and runtime constraints

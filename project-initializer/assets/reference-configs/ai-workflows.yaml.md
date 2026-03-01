@@ -126,7 +126,7 @@ SESSION_HANDOFF:
 
   CONTEXT_PRESERVATION:
     - Key decisions -> docs/architecture/decisions/
-    - Technical debt -> docs/TODO.md (Legacy Backlog Mirror)
+    - Technical debt -> tasks/todo.md (Backlog section)
     - Learnings -> docs/PROGRESS.md (Notes section)
 ```
 

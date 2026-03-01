@@ -1,6 +1,6 @@
 {
   "name": "project-initializer",
-  "version": "2.1.0",
+  "version": "2.2.1",
   "description": "AI-powered project scaffolding skill for Claude Code",
   "type": "module",
   "scripts": {

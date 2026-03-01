@@ -60,7 +60,7 @@ For rapid project initialization with minimal questions (5 questions only):
 | Runtime Profile | Plan + Permissionless |
 | Codex Policy | Full access (`sandbox_mode=danger-full-access`, `approval_policy=never`) |
 | Claude Policy | `--dangerously-skip-permissions` |
-| Mutation Safety | Linked git worktree required for write operations |
+| Mutation Safety | Primary-tree warning by default, optional `.claude/.require-worktree` enforcement |
 | Commit Policy | Atomic checkpoint after green checks |
 | Cloudflare Native | Auto-detected from Plan Type |
 | Team Size | Solo (1 person) |
@@ -265,55 +265,19 @@ Full plugin catalog with descriptions and installation: See `references/plugins-
 
 **Q8: Configure Hooks**
 
-`Q8` is for project-local hooks (`<project>/.claude/hooks/` + `<project>/.claude/settings.local.json`).
+`Q8` configures project-local hooks in `<project>/.claude/hooks/` with
+`<project>/.claude/settings.json` as the team source of truth.
 
-```
-A) Standard Hooks + TDD Guard + Doc Drift + Context Pressure (recommended)
-   → Runtime profile: Plan + Permissionless
-   → Worktree guard: blocks Edit/Write outside linked worktree
-   → Atomic commit: checkpoint commit after successful test/typecheck/lint/build
-   → UserPromptSubmit: Quality guard + TDD/BDD context injection
-   → PreToolUse (Edit|Write): TDD guard — checks test file exists before src modification
-   → PostToolUse (Edit|Write): Anti-simplification check + Doc drift guard
-   → PostToolUse (*): Performance monitoring + Context pressure tracking
+Supported presets:
+- `A` Standard + TDD + Doc Drift + Context Pressure (recommended)
+- `B` Standard + TDD + Doc Drift (no context pressure)
+- `C` Standard (no TDD guard)
+- `D` Minimal
+- `E` No hooks
+- `F` Custom
 
-B) Standard Hooks + TDD Guard + Doc Drift (no context pressure)
-   → Same as A without PostToolUse(*) context counter
-
-C) Standard Hooks (no TDD guard)
-   → UserPromptSubmit: Quality guard notification
-   → PostToolUse (Edit|Write): Anti-simplification check + Doc drift guard
-
-D) Minimal Hooks
-   → UserPromptSubmit only
-
-E) No Hooks
-   → Skip hook configuration
-
-F) Custom Hooks
-   → Specify custom hook configuration
-```
-
-**Hook files** — Copy from `assets/hooks/` into project's `.claude/hooks/`:
-
-| Asset File | Target | Trigger |
-|-----------|--------|---------|
-| `assets/hooks/tdd-guard-hook.sh` | `.claude/hooks/tdd-guard-hook.sh` | PreToolUse (Edit\|Write) |
-| `assets/hooks/worktree-guard.sh` | `.claude/hooks/worktree-guard.sh` | PreToolUse (Edit\|Write) |
-| `assets/hooks/pre-code-change.sh` | `.claude/hooks/pre-code-change.sh` | PreToolUse (Edit\|Write) |
-| `assets/hooks/anti-simplification.sh` | `.claude/hooks/anti-simplification.sh` | PostToolUse (Edit\|Write) |
-| `assets/hooks/atomic-pending.sh` | `.claude/hooks/atomic-pending.sh` | PostToolUse (Edit\|Write) |
-| `assets/hooks/post-bash.sh` | `.claude/hooks/post-bash.sh` | PostToolUse (Bash) |
-| `assets/hooks/atomic-commit.sh` | `.claude/hooks/atomic-commit.sh` | PostToolUse (Bash) |
-| `assets/hooks/prompt-guard.sh` | `.claude/hooks/prompt-guard.sh` | UserPromptSubmit (TDD/BDD + plan annotation detection) |
-| `assets/hooks/doc-drift-guard.sh` | `.claude/hooks/doc-drift-guard.sh` | PostToolUse (Edit\|Write) |
-| `assets/hooks/context-pressure-hook.sh` | `.claude/hooks/context-pressure-hook.sh` | PostToolUse (*) |
-| `assets/hooks/settings.template.json` | `.claude/settings.local.json` | — (config) |
-
-Customization notes for doc-drift-guard.sh:
-- For non-monorepo projects (Plans A/B/C/E/F without packages/), remove triggers #1 and #2
-- For non-Expo projects, remove the Metro config trigger (#4)
-- For non-Turborepo projects, remove trigger #5
+For full trigger matrix, file copy targets, and customization notes, read:
+- `references/hooks-guide.md`
 
 ---
 
@@ -452,40 +416,7 @@ Run `scripts/setup-plugins.sh` to:
 
 ### 12. Hook Configuration (if selected in Q8)
 
-Copy hook files from `assets/hooks/` to `.claude/hooks/` and merge `assets/hooks/settings.template.json` into `.claude/settings.local.json`. See hook files table in Q8 above.
-
----
-
-## CLAUDE.md Deep Docs Section
-
-The generated CLAUDE.md must include a **Deep Docs** index table (in `07-footer.partial.md`) that links to all generated documentation. This table tells the AI agent which doc to read for which scenario.
-
-```markdown
-## Deep Docs (按需阅读)
-
-CLAUDE.md 只放规则摘要。执行清单/复盘在 `tasks/`，详细设计与历史记录在 `docs/`，**碰到相关任务时去读**。
-
-| 触发场景 | 读哪个文件 |
-|----------|-----------|
-| 当前执行计划、任务勾选、完成评审 | `tasks/todo.md` |
-| 纠错复盘、预防规则、会话前复习 | `tasks/lessons.md` |
-| 目录结构、分层、依赖图、数据流 | `docs/architecture.md` |
-| Package API、exports、模块划分 | `docs/packages.md` |
-| 技术选型疑问、版本号确认 | `docs/tech-stack.md` |
-| 为什么选了 X 而不是 Y | `docs/decisions.md` (ADR) |
-{{#IF PLAN_F}}| Metro ESM 踩坑、SVG 跨平台 | `docs/guides/metro-esm-gotchas.md` |{{/IF}}
-{{#IF HAS_JOTAI}}| 写 Jotai 状态 / Agent UI 状态 | `docs/guides/jotai-agent-patterns.md` |{{/IF}}
-| 项目简介、产品定位 | `docs/brief.md` |
-| 历史进度、里程碑、长期日志 | `docs/PROGRESS.md` |
-| 兼容旧流程的待办镜像 | `docs/TODO.md` |
-| 版本变更历史 | `docs/CHANGELOG.md` |
-```
-
-**Generation instructions**:
-- Always include architecture.md, tech-stack.md, decisions.md, brief.md, PROGRESS.md, CHANGELOG.md
-- packages.md: only for monorepo (Plan D) or multi-package projects
-- guides/: only include rows for guides that were actually generated
-- This table is the primary way CLAUDE.md stays small (<500 lines) while detailed docs live in `docs/`
+Copy hook files from `assets/hooks/` to `.claude/hooks/` and merge `assets/hooks/settings.template.json` into `.claude/settings.json`. See `references/hooks-guide.md`.
 
 ---
 
@@ -518,6 +449,8 @@ When generating configurations, consult:
 - `references/tech-stacks.md` - Technology stack details and init commands
 - `references/best-practices.md` - Observability, testing, state management, engineering standards
 - `references/plugins-core.md` - Plugin sources, descriptions, hooks, and installation guide
+- `references/hooks-guide.md` - Q8 hook presets, target paths, and trigger matrix
+- `references/migration-guide.md` - Upgrade existing repositories to 2.2.0 conventions
 
 **Architecture References (by project type):**
 - `references/arch/mobile.md` - Mobile APP 架构 (Expo, KMP, Flutter)

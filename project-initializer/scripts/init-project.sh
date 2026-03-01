@@ -16,6 +16,8 @@ NC='\033[0m' # No Color
 PROJECT_NAME="${1:-my-project}"
 STACK="${2:-vite-tanstack}"
 PKG_MANAGER="${3:-bun}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ASSETS_REF_DIR="$SCRIPT_DIR/../assets/reference-configs"
 
 echo -e "${BLUE}=== Project Initializer ===${NC}"
 echo -e "Project: ${GREEN}$PROJECT_NAME${NC}"
@@ -139,6 +141,7 @@ create_structure() {
     mkdir -p docs/architecture
     mkdir -p docs/reference-configs
     mkdir -p tasks
+    mkdir -p .claude/hooks
     mkdir -p .ops
     mkdir -p artifacts
 
@@ -211,16 +214,6 @@ EOF
 *Updated: ${TODAY}*
 EOF
 
-    cat > docs/TODO.md << EOF
-# TODO List (Legacy Compatibility)
-
-Primary execution checklist has moved to `tasks/todo.md`.
-Keep this file only for legacy tools that still read docs/TODO.md.
-
----
-*Updated: ${TODAY}*
-EOF
-
     cat > docs/plan.md << EOF
 # Deep Plan Notes (Compatibility)
 
@@ -231,29 +224,76 @@ Primary execution checklist lives in `tasks/todo.md`.
 *Updated: ${TODAY}*
 EOF
 
-    cat > docs/reference-configs/changelog-versioning.yaml.md << 'EOF'
+    cat > .claude/settings.json << 'EOF'
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/worktree-guard.sh" },
+          { "type": "command", "command": "bash .claude/hooks/tdd-guard-hook.sh" },
+          { "type": "command", "command": "bash .claude/hooks/pre-code-change.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/anti-simplification.sh" },
+          { "type": "command", "command": "bash .claude/hooks/doc-drift-guard.sh" },
+          { "type": "command", "command": "bash .claude/hooks/atomic-pending.sh" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/post-bash.sh" },
+          { "type": "command", "command": "bash .claude/hooks/atomic-commit.sh" }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/context-pressure-hook.sh" }]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/prompt-guard.sh" }]
+      }
+    ]
+  }
+}
+EOF
+
+    if [ -d "$ASSETS_REF_DIR" ]; then
+        cp "$ASSETS_REF_DIR"/*.md docs/reference-configs/
+    else
+        cat > docs/reference-configs/changelog-versioning.yaml.md << 'EOF'
 # Changelog & Versioning Reference
 
 Use this file for detailed release-note and semantic-versioning rules.
 EOF
 
-    cat > docs/reference-configs/git-strategy.yaml.md << 'EOF'
+        cat > docs/reference-configs/git-strategy.yaml.md << 'EOF'
 # Git Strategy Reference
 
 Use this file for branch model and commit convention details.
 EOF
 
-    cat > docs/reference-configs/release-deploy.yaml.md << 'EOF'
+        cat > docs/reference-configs/release-deploy.yaml.md << 'EOF'
 # Release & Deployment Reference
 
 Use this file for release pipeline and deployment trigger details.
 EOF
 
-    cat > docs/reference-configs/ai-workflows.yaml.md << 'EOF'
+        cat > docs/reference-configs/ai-workflows.yaml.md << 'EOF'
 # AI Workflows Reference
 
 Use this file for extended AI workflow templates and session handoff protocols.
 EOF
+    fi
 
     # Update .gitignore
     cat >> .gitignore << 'EOF'

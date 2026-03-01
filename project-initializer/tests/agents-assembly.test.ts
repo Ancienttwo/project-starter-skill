@@ -36,7 +36,7 @@ describe("AGENTS Target Assembly", () => {
     expect(output).toContain("Default to **Plan + Permissionless**.");
     expect(output).toContain("Codex full access");
     expect(output).toContain("--dangerously-skip-permissions");
-    expect(output).toContain("linked worktrees");
+    expect(output).toContain(".claude/.require-worktree");
   });
 
   test("should preserve core governance semantics between CLAUDE and AGENTS", () => {

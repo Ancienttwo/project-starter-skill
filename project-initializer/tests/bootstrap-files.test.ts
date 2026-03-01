@@ -9,14 +9,22 @@ function read(relPath: string): string {
 }
 
 describe("Bootstrap Script Contracts", () => {
+  test("SKILL.md should stay within 500-line budget", () => {
+    const skill = read("SKILL.md");
+    expect(skill.split("\n").length).toBeLessThanOrEqual(500);
+  });
+
   test("create-project-dirs should create tasks primary files", () => {
     const content = read("scripts/create-project-dirs.sh");
 
     expect(content).toContain("mkdir -p tasks");
     expect(content).toContain("cat > tasks/todo.md");
     expect(content).toContain("cat > tasks/lessons.md");
-    expect(content).toContain("docs/TODO.md");
+    expect(content).not.toContain("docs/TODO.md");
     expect(content).toContain("docs/plan.md");
+    expect(content).toContain("cat > .claude/settings.json");
+    expect(content).not.toContain("\"$TOOL_INPUT\"");
+    expect(content).not.toContain("\"$PROMPT\"");
   });
 
   test("init-project should scaffold tasks primary workflow", () => {
@@ -25,8 +33,12 @@ describe("Bootstrap Script Contracts", () => {
     expect(content).toContain("mkdir -p tasks");
     expect(content).toContain("cat > tasks/todo.md");
     expect(content).toContain("cat > tasks/lessons.md");
-    expect(content).toContain("docs/TODO.md");
+    expect(content).not.toContain("docs/TODO.md");
     expect(content).toContain("docs/plan.md");
+    expect(content).toContain("cat > .claude/settings.json");
+    expect(content).not.toContain("\"$TOOL_INPUT\"");
+    expect(content).not.toContain("\"$PROMPT\"");
+    expect(content).toContain("cp \"$ASSETS_REF_DIR\"/*.md docs/reference-configs/");
   });
 
   test("prompt-guard should monitor tasks-first files", () => {
@@ -51,6 +63,8 @@ describe("Bootstrap Script Contracts", () => {
     expect(hookCommands).toContain("worktree-guard.sh");
     expect(hookCommands).toContain("atomic-pending.sh");
     expect(hookCommands).toContain("atomic-commit.sh");
+    expect(settings).not.toContain("\"$TOOL_INPUT\"");
+    expect(settings).not.toContain("\"$PROMPT\"");
   });
 
   test("setup script should install global policy hooks", () => {
@@ -58,6 +72,7 @@ describe("Bootstrap Script Contracts", () => {
     expect(setup).toContain("install_permissionless_policy_hooks");
     expect(setup).toContain("worktree-guard.sh");
     expect(setup).toContain("atomic-pending.sh");
+    expect(setup).toContain("hook-input.sh");
     expect(setup).toContain("atomic-commit.sh");
   });
 

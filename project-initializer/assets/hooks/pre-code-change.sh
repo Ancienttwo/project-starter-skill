@@ -2,8 +2,16 @@
 # Pre-Code Change Hook — PreToolUse on Edit|Write
 # Warns when modifying asset layer files (contracts, specs, tests)
 
-TOOL_INPUT="$1"
-if echo "$TOOL_INPUT" | grep -qE "(\.contract\.|\.spec\.md|/tests/)"; then
-  echo "⚠️  警告: 正在修改「资产层」文件"
-  echo "   根据开发协议，修改这些文件意味着下游实现需要重写。"
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+. "$SCRIPT_DIR/hook-input.sh"
+
+FILE_PATH="$(hook_get_file_path "${1:-}")"
+[[ -z "$FILE_PATH" ]] && exit 0
+
+if echo "$FILE_PATH" | grep -qE "(^|/)(contracts|specs|tests)(/|$)|(\.contract\.|\.spec\.)"; then
+  echo "[AssetLayer] Immutable file detected: $FILE_PATH"
+  echo "  资产层文件被修改，需同步重写下游实现。"
 fi
