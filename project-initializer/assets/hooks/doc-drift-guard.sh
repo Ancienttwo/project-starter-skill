@@ -2,7 +2,7 @@
 # Doc Drift Guard — PostToolUse on Edit|Write
 # Detects structural changes that may require docs update.
 
-set -euo pipefail
+set -eo pipefail
 export LC_ALL=C
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

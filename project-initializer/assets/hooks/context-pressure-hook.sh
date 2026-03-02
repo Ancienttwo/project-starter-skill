@@ -3,7 +3,17 @@
 # Tracks tool call count as a context proxy.
 # Uses stable session-id files to avoid cross-session accumulation.
 
-set -euo pipefail
+set -eo pipefail
+
+# Resolve repo root — hooks may run from any cwd
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+if [[ -z "$REPO_ROOT" ]]; then
+  REPO_ROOT="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)" || true
+fi
+if [[ -n "$REPO_ROOT" ]]; then
+  cd "$REPO_ROOT" 2>/dev/null || true
+fi
 
 COUNTER_DIR=".claude/.context-pressure"
 SESSION_ID_FILE=".claude/.session-id"

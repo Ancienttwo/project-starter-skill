@@ -2,6 +2,18 @@
 # Shared input parsing helpers for hook scripts.
 # Prefers stdin JSON, with env/argv fallbacks for compatibility.
 
+# Resolve repo root — hooks may run from any cwd
+if [[ -z "${HOOK_REPO_ROOT:-}" ]]; then
+  HOOK_REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+  if [[ -z "$HOOK_REPO_ROOT" ]]; then
+    HOOK_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)" || true
+  fi
+  if [[ -n "$HOOK_REPO_ROOT" ]]; then
+    cd "$HOOK_REPO_ROOT" 2>/dev/null || true
+  fi
+  export HOOK_REPO_ROOT
+fi
+
 hook_read_stdin_once() {
   if [[ -n "${HOOK_STDIN_JSON+x}" ]]; then
     return

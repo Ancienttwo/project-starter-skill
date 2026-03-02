@@ -145,6 +145,16 @@ install_permissionless_policy_hooks() {
 # Global Worktree Guard — warn by default, block only when marker exists.
 set -u
 
+# Resolve repo root — hooks may run from any cwd
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+if [ -z "$REPO_ROOT" ]; then
+  REPO_ROOT="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)" || true
+fi
+if [ -n "$REPO_ROOT" ]; then
+  cd "$REPO_ROOT" 2>/dev/null || true
+fi
+
 REQUIRE_MARKER=".claude/.require-worktree"
 
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -173,6 +183,17 @@ EOF
 #!/bin/bash
 # Global Atomic Pending Marker — marks pending checkpoint state.
 set -u
+
+# Resolve repo root — hooks may run from any cwd
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+if [ -z "$REPO_ROOT" ]; then
+  REPO_ROOT="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)" || true
+fi
+if [ -n "$REPO_ROOT" ]; then
+  cd "$REPO_ROOT" 2>/dev/null || true
+fi
+
 mkdir -p ".claude" >/dev/null 2>&1 || true
 date "+%Y-%m-%d %H:%M:%S" > ".claude/.atomic_pending" 2>/dev/null || true
 exit 0
@@ -182,6 +203,18 @@ EOF
 #!/bin/bash
 # Shared input parsing helpers for hook scripts.
 # Prefers stdin JSON, with env/argv fallbacks for compatibility.
+
+# Resolve repo root — hooks may run from any cwd
+if [[ -z "${HOOK_REPO_ROOT:-}" ]]; then
+  HOOK_REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+  if [[ -z "$HOOK_REPO_ROOT" ]]; then
+    HOOK_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)" || true
+  fi
+  if [[ -n "$HOOK_REPO_ROOT" ]]; then
+    cd "$HOOK_REPO_ROOT" 2>/dev/null || true
+  fi
+  export HOOK_REPO_ROOT
+fi
 
 hook_read_stdin_once() {
   if [[ -n "${HOOK_STDIN_JSON+x}" ]]; then
@@ -279,7 +312,7 @@ EOF
     cat > "$HOOKS_DIR/atomic-commit.sh" << 'EOF'
 #!/bin/bash
 # Global Atomic Commit Hook — commit after successful green checks.
-set -euo pipefail
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null

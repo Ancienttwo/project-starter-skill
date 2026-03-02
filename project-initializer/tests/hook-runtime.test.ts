@@ -1,10 +1,12 @@
 import { describe, test, expect } from "bun:test";
 import {
   appendFileSync,
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from "fs";
@@ -13,10 +15,19 @@ import { join } from "path";
 import { spawnSync } from "child_process";
 
 const ROOT = join(import.meta.dir, "..");
-const HOOKS_DIR = join(ROOT, "assets/hooks");
+const ASSETS_HOOKS_DIR = join(ROOT, "assets/hooks");
 
 function tmpWorkspace(prefix: string): string {
   return mkdtempSync(join(tmpdir(), `${prefix}-`));
+}
+
+function installHooks(cwd: string): string {
+  const hooksDir = join(cwd, ".claude", "hooks");
+  mkdirSync(hooksDir, { recursive: true });
+  for (const f of readdirSync(ASSETS_HOOKS_DIR)) {
+    copyFileSync(join(ASSETS_HOOKS_DIR, f), join(hooksDir, f));
+  }
+  return hooksDir;
 }
 
 function run(cmd: string, args: string[], cwd: string) {
@@ -32,7 +43,8 @@ function runHook(
     args?: string[];
   }
 ) {
-  return spawnSync("bash", [join(HOOKS_DIR, script), ...(options?.args ?? [])], {
+  const hooksDir = join(cwd, ".claude", "hooks");
+  return spawnSync("bash", [join(hooksDir, script), ...(options?.args ?? [])], {
     cwd,
     input: options?.stdin ?? "",
     encoding: "utf-8",
@@ -64,6 +76,7 @@ describe("Hook runtime behavior", () => {
     const cwd = tmpWorkspace("worktree-guard");
     try {
       initGitRepo(cwd);
+      installHooks(cwd);
 
       const warnRes = runHook("worktree-guard.sh", cwd);
       expect(warnRes.status).toBe(0);
@@ -84,6 +97,7 @@ describe("Hook runtime behavior", () => {
     const cwd = tmpWorkspace("atomic-commit");
     try {
       initGitRepo(cwd);
+      installHooks(cwd);
       mkdirSync(join(cwd, ".claude"), { recursive: true });
 
       appendFileSync(join(cwd, "tracked.txt"), "change-1\n");
@@ -121,6 +135,8 @@ describe("Hook runtime behavior", () => {
   test("doc-drift: detects apps/*/src direct files and wrangler variants", () => {
     const cwd = tmpWorkspace("doc-drift");
     try {
+      installHooks(cwd);
+
       const srcRes = runHook("doc-drift-guard.sh", cwd, {
         stdin: JSON.stringify({ tool_input: { file_path: "apps/web/src/main.tsx" } }),
       });
@@ -146,6 +162,7 @@ describe("Hook runtime behavior", () => {
   test("tdd-guard: extension heuristic + barrel-only skip behavior", () => {
     const cwd = tmpWorkspace("tdd-guard");
     try {
+      installHooks(cwd);
       mkdirSync(join(cwd, "apps/web/src/components"), { recursive: true });
       mkdirSync(join(cwd, "apps/api/src"), { recursive: true });
 
@@ -187,6 +204,8 @@ describe("Hook runtime behavior", () => {
   test("context-pressure: same-session increments, cross-session resets, warning once", () => {
     const cwd = tmpWorkspace("context-pressure");
     try {
+      initGitRepo(cwd);
+      installHooks(cwd);
       mkdirSync(join(cwd, ".claude/.context-pressure"), { recursive: true });
 
       const s1a = runHook("context-pressure-hook.sh", cwd, {
@@ -221,6 +240,29 @@ describe("Hook runtime behavior", () => {
       expect(warn2.stdout).not.toContain("Yellow zone");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("hooks resolve repo root when cwd drifts", () => {
+    const workspace = tmpWorkspace("cwd-drift");
+    try {
+      initGitRepo(workspace);
+      installHooks(workspace);
+
+      // Run atomic-pending from /tmp — hook should resolve to workspace via SCRIPT_DIR fallback
+      const res = spawnSync(
+        "bash",
+        [join(workspace, ".claude/hooks/atomic-pending.sh")],
+        {
+          cwd: tmpdir(),
+          input: "",
+          encoding: "utf-8",
+        }
+      );
+      expect(res.status).toBe(0);
+      expect(existsSync(join(workspace, ".claude/.atomic_pending"))).toBe(true);
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
     }
   });
 });

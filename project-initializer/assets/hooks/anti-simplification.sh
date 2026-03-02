@@ -2,7 +2,7 @@
 # Anti-Simplification Guard — PostToolUse on Edit|Write
 # Warns when changes suggest compatibility debt or unnecessary branch complexity.
 
-set -euo pipefail
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null

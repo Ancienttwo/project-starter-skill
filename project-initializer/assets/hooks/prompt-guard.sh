@@ -3,7 +3,7 @@
 # Detects bug-fix / feature requests and injects TDD/BDD context.
 # Detects plan/task annotation changes and enforces "don't implement yet".
 
-set -euo pipefail
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null

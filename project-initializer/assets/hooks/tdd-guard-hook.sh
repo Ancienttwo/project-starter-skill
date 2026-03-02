@@ -3,7 +3,7 @@
 # Warns when modifying source files without nearby test files.
 # Uses extension heuristic: JSX/TSX => BDD prompt, others => TDD prompt.
 
-set -euo pipefail
+set -eo pipefail
 export LC_ALL=C
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

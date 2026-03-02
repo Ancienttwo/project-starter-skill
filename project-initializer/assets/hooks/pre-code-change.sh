@@ -2,7 +2,7 @@
 # Pre-Code Change Hook — PreToolUse on Edit|Write
 # Warns when modifying asset layer files (contracts, specs, tests)
 
-set -euo pipefail
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null

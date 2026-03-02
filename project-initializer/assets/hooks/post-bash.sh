@@ -2,7 +2,7 @@
 # Post-Bash Hook — PostToolUse on Bash
 # Reminds to rewrite (not patch) when tests fail.
 
-set -euo pipefail
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
