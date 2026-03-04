@@ -1,7 +1,7 @@
 #!/bin/bash
 # Prompt Guard Hook — UserPromptSubmit
 # Detects bug-fix / feature requests and injects TDD/BDD context.
-# Detects plan/task annotation changes and enforces "don't implement yet".
+# Detects research/plan annotation changes and enforces "don't implement yet".
 
 set -eo pipefail
 
@@ -32,7 +32,92 @@ has_changes() {
   return 1
 }
 
-if ! echo "$PROMPT_TEXT" | grep -qEi "(implement|execute|build it|do it|实现|执行|开始写|动手)"; then
+has_changes_glob() {
+  local pattern="$1"
+  local changed
+
+  if ! is_git_repo; then
+    return 1
+  fi
+
+  changed="$(
+    {
+      git diff --name-only 2>/dev/null || true
+      git diff --name-only --cached 2>/dev/null || true
+    } | grep -E "$pattern" | head -1
+  )"
+
+  if [ -n "$changed" ]; then
+    printf '%s' "$changed"
+    return 0
+  fi
+  return 1
+}
+
+is_implement_intent() {
+  echo "$PROMPT_TEXT" | grep -qEi "(implement|execute|build it|do it|实现|执行|开始写|动手)"
+}
+
+get_active_plan_from_pointer() {
+  local pointer_file="docs/plan.md"
+  local candidate
+
+  if [ ! -f "$pointer_file" ]; then
+    return 1
+  fi
+
+  candidate="$(awk -F': ' '/^Current Active Plan:/ {print $2; exit}' "$pointer_file" | xargs)"
+  if [ -z "$candidate" ] || [ "$candidate" = "(none)" ] || [ "$candidate" = "none" ]; then
+    return 1
+  fi
+
+  if [ -f "$candidate" ]; then
+    printf '%s' "$candidate"
+    return 0
+  fi
+
+  return 1
+}
+
+get_latest_plan() {
+  local latest
+  latest="$(find plans -maxdepth 1 -type f -name 'plan-*.md' 2>/dev/null | sort | tail -1)"
+  if [ -n "$latest" ]; then
+    printf '%s' "$latest"
+    return 0
+  fi
+  return 1
+}
+
+get_active_plan() {
+  local active
+
+  active="$(get_active_plan_from_pointer || true)"
+  if [ -n "$active" ]; then
+    printf '%s' "$active"
+    return 0
+  fi
+
+  active="$(get_latest_plan || true)"
+  if [ -n "$active" ]; then
+    printf '%s' "$active"
+    return 0
+  fi
+
+  return 1
+}
+
+get_plan_status() {
+  local plan_file="$1"
+  awk '/\*\*Status\*\*:/ {sub(/^.*\*\*Status\*\*: */, ""); gsub(/\r/, ""); print; exit}' "$plan_file" | xargs
+}
+
+implement_intent=0
+if is_implement_intent; then
+  implement_intent=1
+fi
+
+if [ "$implement_intent" -eq 0 ]; then
   if [ -f "tasks/todo.md" ] && has_changes "tasks/todo.md"; then
     echo "[PlanGuard] tasks/todo.md has been modified. Read annotations and update the plan. Do not implement yet."
   fi
@@ -42,7 +127,27 @@ if ! echo "$PROMPT_TEXT" | grep -qEi "(implement|execute|build it|do it|实现|�
   fi
 
   if [ -f "docs/plan.md" ] && has_changes "docs/plan.md"; then
-    echo "[PlanGuard] docs/plan.md changed (compatibility deep notes). Sync with tasks/todo.md before implementing."
+    echo "[PlanGuard] docs/plan.md changed (compatibility pointer). Sync active plan before implementing."
+  fi
+
+  if [ -f "tasks/research.md" ] && has_changes "tasks/research.md"; then
+    echo "[ResearchGuard] tasks/research.md updated. Review research deeply before planning or implementation."
+  fi
+
+  changed_plan="$(has_changes_glob '^plans/plan-.*\.md$' || true)"
+  if [ -n "$changed_plan" ]; then
+    echo "[AnnotationGuard] ${changed_plan} has annotations. Process all notes and revise. Do not implement yet."
+  fi
+fi
+
+if [ "$implement_intent" -eq 1 ]; then
+  active_plan="$(get_active_plan || true)"
+  if [ -n "$active_plan" ] && [ -f "$active_plan" ]; then
+    plan_status="$(get_plan_status "$active_plan")"
+    if [ "$plan_status" = "Draft" ] || [ "$plan_status" = "Annotating" ]; then
+      echo "[PlanStatusGuard] Plan status is '$plan_status' in $active_plan. Complete annotation cycle first."
+      exit 1
+    fi
   fi
 fi
 

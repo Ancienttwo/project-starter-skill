@@ -1,23 +1,31 @@
 ## Workflow Orchestration
 
-### 1. Plan Node Default
+### 1. Research Before Planning
+- Deeply read relevant code paths and persist findings to `tasks/research.md`.
+- Capture hidden contracts, edge cases, and integration risks before proposing changes.
+
+### 2. Annotation Cycle
+- Iterate plan updates directly in `plans/plan-*.md` via inline notes.
+- Do not implement while plan status is `Draft` or `Annotating`.
+
+### 3. Plan Node Default
 - Enter plan mode for non-trivial tasks.
 - Re-plan when execution drifts.
 
-### 2. Subagent Strategy
+### 4. Subagent Strategy
 - Offload independent research tracks.
 - Keep one ownership boundary per subagent.
 
-### 3. Self-Improvement Loop
+### 5. Self-Improvement Loop
 - Append correction-derived rules to `tasks/lessons.md`.
 
-### 4. Verification Before Done
+### 6. Verification Before Done
 - No task completion without test/build evidence.
 
-### 5. Balanced Elegance
+### 7. Balanced Elegance
 - Redesign hacky non-trivial fixes before shipping.
 
-### 6. Autonomous Bug Fixing
+### 8. Autonomous Bug Fixing
 - Start fixing when logs/tests provide sufficient evidence.
 
 Detailed patterns:

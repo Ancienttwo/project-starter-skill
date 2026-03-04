@@ -1,9 +1,13 @@
 ## Deep Docs Index
 
 Read these docs on demand:
+- `tasks/research.md`: deep codebase analysis and hidden contracts
+- `plans/plan-*.md`: active timestamped plans
+- `plans/archive/`: archived plans and outcomes
 - `tasks/todo.md`: primary execution checklist + review section
+- `tasks/archive/`: archived todo snapshots
 - `tasks/lessons.md`: self-improvement rules from corrections
-- `docs/plan.md`: detailed architecture/spec context (compatibility)
+- `docs/plan.md`: compatibility pointer to the active plan
 - `docs/PROGRESS.md`: execution history and archived decisions
 - `docs/decisions.md`: architecture decisions and trade-offs
 - `docs/tech-stack.md`: dependency and runtime constraints

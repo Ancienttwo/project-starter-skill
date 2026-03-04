@@ -41,6 +41,10 @@ describe("Hook contracts", () => {
     expect(script).toContain("新功能");
     expect(script).toContain("实现");
     expect(script).toContain("执行");
+    expect(script).toContain("ResearchGuard");
+    expect(script).toContain("AnnotationGuard");
+    expect(script).toContain("PlanStatusGuard");
+    expect(script).toContain("has_changes_glob");
     expect(script).not.toContain("📋");
     expect(script).not.toContain("🧠");
     expect(script).not.toContain("📎");

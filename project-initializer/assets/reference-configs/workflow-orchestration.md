@@ -2,12 +2,56 @@
 
 Use this file for advanced orchestration and planning patterns.
 
-## Default Loop
+## 6-Phase Protocol
 
-1. Plan in `tasks/todo.md`.
-2. Execute in small verified slices.
-3. Record evidence in review section.
-4. Capture prevention rules in `tasks/lessons.md`.
+1. **Research** (`tasks/research.md`)
+2. **Plan** (`plans/plan-YYYYMMDD-HHMM-{slug}.md`)
+3. **Annotate** (inline notes in plan, 1-6 iterations)
+4. **Todo** (`tasks/todo.md`, archive previous todo first)
+5. **Implement** (verified slices, update checklist continuously)
+6. **Feedback** (`tasks/lessons.md`, archive completed/abandoned plan and todo)
+
+## Research Protocol
+
+- Trigger for new features, unfamiliar code, or architecture-sensitive refactors.
+- Read deeply before planning: deeply, in great details, intricacies, go through everything.
+- Output research into `tasks/research.md` (not chat-only summaries).
+- Guardrail: do not implement during Research.
+
+## Plan Protocol
+
+- Generate timestamped plan files in `plans/`.
+- Keep plan status explicit: `Draft | Annotating | Approved | Executing | Archived | Abandoned`.
+- `docs/plan.md` is compatibility pointer to active plan.
+
+## Annotation Cycle
+
+- Humans annotate plan inline with corrections/constraints.
+- Iterate plan updates 1-6 rounds until status becomes `Approved`.
+- Guardrail: no implementation while status is `Draft` or `Annotating`.
+
+## Todo Extraction Protocol
+
+- Extract `## Task Breakdown` from approved plan to `tasks/todo.md`.
+- Archive existing todo to `tasks/archive/` before writing new checklist.
+- Set plan status to `Executing` after extraction.
+
+## Implementation Protocol
+
+- Execute in small, verified slices.
+- Mark done only with verification evidence in review sections.
+- Keep plan/todo status synchronized as work advances.
+
+## Feedback & Archive Protocol
+
+- Capture correction-derived prevention rules in `tasks/lessons.md`.
+- On completion or abandonment, archive plan to `plans/archive/`.
+- Archive associated todo to `tasks/archive/` with outcome metadata.
+
+## Shortcut: Skip Research
+
+- Allowed only for familiar, low-risk areas.
+- Still require explicit rationale in plan before implementation.
 
 ## Multi-Track Execution
 

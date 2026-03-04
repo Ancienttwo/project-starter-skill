@@ -19,6 +19,7 @@ PKG_MANAGER="${3:-bun}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASSETS_REF_DIR="$SCRIPT_DIR/../assets/reference-configs"
 ASSETS_HOOKS_DIR="$SCRIPT_DIR/../assets/hooks"
+ASSETS_TEMPLATES_DIR="$SCRIPT_DIR/../assets/templates"
 
 echo -e "${BLUE}=== Project Initializer ===${NC}"
 echo -e "Project: ${GREEN}$PROJECT_NAME${NC}"
@@ -29,6 +30,177 @@ echo ""
 # Function to check if command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
+}
+
+ensure_runtime_gitignore_block() {
+    local file_path="$1"
+    local begin_marker="# BEGIN: claude-runtime-temp (managed by project-initializer)"
+    local end_marker="# END: claude-runtime-temp"
+
+    local block
+    block=$(cat <<'BLOCK_EOF'
+# BEGIN: claude-runtime-temp (managed by project-initializer)
+.claude/settings.local.json
+.claude/.atomic_pending
+.claude/.session-id
+.claude/.tool-call-count
+.claude/.session-handoff.md
+.claude/.context-pressure/
+.claude/*.tmp
+.claude/*.bak
+.claude/*.bak.*
+.claude/*.backup-*
+# END: claude-runtime-temp
+BLOCK_EOF
+)
+
+    if [ ! -f "$file_path" ]; then
+        touch "$file_path"
+    fi
+
+    if ! grep -Fq "$begin_marker" "$file_path"; then
+        printf "\n%s\n" "$block" >> "$file_path"
+        return
+    fi
+
+    local tmp_file
+    tmp_file="$(mktemp)"
+    awk -v begin="$begin_marker" -v end="$end_marker" -v repl="$block" '
+      $0 == begin {
+        print repl
+        skipping = 1
+        next
+      }
+      skipping && $0 == end {
+        skipping = 0
+        next
+      }
+      !skipping { print }
+    ' "$file_path" > "$tmp_file"
+    mv "$tmp_file" "$file_path"
+}
+
+ensure_gitignore_entry() {
+    local file_path="$1"
+    local entry="$2"
+    if ! grep -Fxq "$entry" "$file_path"; then
+        printf "%s\n" "$entry" >> "$file_path"
+    fi
+}
+
+write_plan_pointer() {
+    local active_plan="${1:-}"
+    cat > docs/plan.md << EOF
+# Plan Pointer (Compatibility)
+
+Active plans live in \`plans/\`. Create new plans with:
+  bash scripts/new-plan.sh --slug my-feature
+
+Current Active Plan: ${active_plan:-\\(none\\)}
+
+---
+*Updated: $(date '+%Y-%m-%d %H:%M')*
+EOF
+}
+
+install_workflow_templates() {
+    mkdir -p .claude/templates
+
+    if [ -d "$ASSETS_TEMPLATES_DIR" ] && [ -f "$ASSETS_TEMPLATES_DIR/research.template.md" ]; then
+        cp "$ASSETS_TEMPLATES_DIR/research.template.md" .claude/templates/research.template.md
+    else
+        cat > .claude/templates/research.template.md << 'EOF'
+# {{PROJECT_NAME}} — Research Notes
+
+> **Last Updated**: {{DATE}}
+> **Scope**: (what area of the codebase was researched)
+
+## Codebase Map
+| File | Purpose | Key Exports |
+|------|---------|-------------|
+
+## Architecture Observations
+### Patterns & Conventions
+### Implicit Contracts
+### Edge Cases & Intricacies
+
+## Technical Debt / Risks
+
+## Research Conclusions
+### What to Preserve
+### What to Change
+### Open Questions
+EOF
+    fi
+
+    if [ -d "$ASSETS_TEMPLATES_DIR" ] && [ -f "$ASSETS_TEMPLATES_DIR/plan.template.md" ]; then
+        cp "$ASSETS_TEMPLATES_DIR/plan.template.md" .claude/templates/plan.template.md
+    else
+        cat > .claude/templates/plan.template.md << 'EOF'
+# Plan: {{TITLE}}
+
+> **Status**: Draft
+> **Created**: {{TIMESTAMP}}
+> **Research**: See `tasks/research.md`
+
+## Approach
+### Strategy
+### Trade-offs
+| Option | Pros | Cons | Decision |
+|--------|------|------|----------|
+
+## Detailed Design
+### File Changes
+| File | Action | Description |
+|------|--------|-------------|
+
+### Code Snippets
+### Data Flow
+
+## Risk Assessment
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|------------|
+
+## Annotations
+<!-- [NOTE]: prefixed inline. Claude processes all and revises. -->
+
+## Task Breakdown
+- [ ] ...
+EOF
+    fi
+}
+
+install_workflow_helpers() {
+    mkdir -p scripts
+
+    if [ -d "$ASSETS_TEMPLATES_DIR/helpers" ]; then
+        cp "$ASSETS_TEMPLATES_DIR/helpers/"*.sh scripts/ 2>/dev/null || true
+        chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh 2>/dev/null || true
+        return
+    fi
+
+    cat > scripts/new-plan.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: new-plan.sh"
+exit 1
+EOF
+
+    cat > scripts/plan-to-todo.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: plan-to-todo.sh"
+exit 1
+EOF
+
+    cat > scripts/archive-workflow.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: archive-workflow.sh"
+exit 1
+EOF
+
+    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh
 }
 
 # Check package manager
@@ -137,12 +309,16 @@ create_project() {
 create_structure() {
     echo -e "${BLUE}Creating project structure...${NC}"
     local TODAY
+    local NOW
     TODAY="$(date +%Y-%m-%d)"
+    NOW="$(date '+%Y-%m-%d %H:%M')"
 
     mkdir -p docs/architecture
     mkdir -p docs/reference-configs
-    mkdir -p tasks
+    mkdir -p tasks/archive
+    mkdir -p plans/archive
     mkdir -p .claude/hooks
+    mkdir -p .claude/templates
     mkdir -p .ops
     mkdir -p artifacts
 
@@ -215,15 +391,40 @@ EOF
 *Updated: ${TODAY}*
 EOF
 
-    cat > docs/plan.md << EOF
-# Deep Plan Notes (Compatibility)
+    install_workflow_templates
 
-Use this file for detailed architecture/spec context.
-Primary execution checklist lives in `tasks/todo.md`.
+    if [ -f ".claude/templates/research.template.md" ]; then
+        sed \
+          -e "s/{{PROJECT_NAME}}/${PROJECT_NAME}/g" \
+          -e "s/{{DATE}}/${NOW}/g" \
+          .claude/templates/research.template.md > tasks/research.md
+    else
+        cat > tasks/research.md << EOF
+# ${PROJECT_NAME} — Research Notes
 
----
-*Updated: ${TODAY}*
+> **Last Updated**: ${NOW}
+> **Scope**: (what area of the codebase was researched)
+
+## Codebase Map
+| File | Purpose | Key Exports |
+|------|---------|-------------|
+
+## Architecture Observations
+### Patterns & Conventions
+### Implicit Contracts
+### Edge Cases & Intricacies
+
+## Technical Debt / Risks
+
+## Research Conclusions
+### What to Preserve
+### What to Change
+### Open Questions
 EOF
+    fi
+
+    write_plan_pointer ""
+    install_workflow_helpers
 
     cat > .claude/settings.json << 'EOF'
 {
@@ -325,23 +526,22 @@ Use this file for advanced plan/execution orchestration patterns.
 EOF
     fi
 
-    # Update .gitignore
-    cat >> .gitignore << 'EOF'
-
-# Project-specific
-.*/
-artifacts/
-*.tar.gz
-*.tgz
-
-# Environment
-.env
-.env.*
-!.env.example
-
-# OS metadata
-.DS_Store
-EOF
+    # Update .gitignore with explicit entries only
+    touch .gitignore
+    ensure_gitignore_entry .gitignore "# Project-specific"
+    ensure_gitignore_entry .gitignore "artifacts/"
+    ensure_gitignore_entry .gitignore "coverage/"
+    ensure_gitignore_entry .gitignore "*.tar.gz"
+    ensure_gitignore_entry .gitignore "*.tgz"
+    ensure_gitignore_entry .gitignore ""
+    ensure_gitignore_entry .gitignore "# Environment"
+    ensure_gitignore_entry .gitignore ".env"
+    ensure_gitignore_entry .gitignore ".env.*"
+    ensure_gitignore_entry .gitignore "!.env.example"
+    ensure_gitignore_entry .gitignore ""
+    ensure_gitignore_entry .gitignore "# OS metadata"
+    ensure_gitignore_entry .gitignore ".DS_Store"
+    ensure_runtime_gitignore_block .gitignore
 
     # Create .env.example
     cat > .env.example << 'EOF'
@@ -390,8 +590,8 @@ main() {
     echo "  1. cd $PROJECT_NAME"
     echo "  2. Copy .env.example to .env and configure"
     echo "  3. Run: $PKG_MANAGER run dev"
-    echo "  4. Add checklist to tasks/todo.md"
-    echo "  5. Capture corrections in tasks/lessons.md"
+    echo "  4. Run: bash scripts/new-plan.sh --slug first-feature"
+    echo "  5. Capture research in tasks/research.md and iterate plan annotations"
     echo ""
 }
 

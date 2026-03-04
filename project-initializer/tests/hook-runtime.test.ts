@@ -265,4 +265,75 @@ describe("Hook runtime behavior", () => {
       rmSync(workspace, { recursive: true, force: true });
     }
   });
+
+  test("prompt-guard: research and annotation warnings on non-implement prompts", () => {
+    const cwd = tmpWorkspace("prompt-guard-annotation");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "tasks"), { recursive: true });
+      mkdirSync(join(cwd, "plans"), { recursive: true });
+      mkdirSync(join(cwd, "docs"), { recursive: true });
+
+      writeFileSync(
+        join(cwd, "tasks/research.md"),
+        "# Research\n\nInitial notes\n"
+      );
+      writeFileSync(
+        join(cwd, "plans/plan-20260304-1200-test.md"),
+        "# Plan: test\n\n> **Status**: Draft\n"
+      );
+      writeFileSync(
+        join(cwd, "docs/plan.md"),
+        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1200-test.md\n"
+      );
+
+      expect(run("git", ["add", "."], cwd).status).toBe(0);
+      expect(run("git", ["commit", "-m", "seed workflow files"], cwd).status).toBe(0);
+
+      appendFileSync(join(cwd, "tasks/research.md"), "Updated insight\n");
+      appendFileSync(join(cwd, "plans/plan-20260304-1200-test.md"), "- [NOTE]: update\n");
+
+      const res = runHook("prompt-guard.sh", cwd, {
+        stdin: JSON.stringify({ user_message: "我更新了注释，请先分析" }),
+      });
+
+      expect(res.status).toBe(0);
+      expect(res.stdout).toContain("[ResearchGuard]");
+      expect(res.stdout).toContain("[AnnotationGuard]");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("prompt-guard: blocks implement intent when plan status is Draft", () => {
+    const cwd = tmpWorkspace("prompt-guard-status");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "plans"), { recursive: true });
+      mkdirSync(join(cwd, "docs"), { recursive: true });
+
+      writeFileSync(
+        join(cwd, "plans/plan-20260304-1300-demo.md"),
+        "# Plan: demo\n\n> **Status**: Draft\n"
+      );
+      writeFileSync(
+        join(cwd, "docs/plan.md"),
+        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1300-demo.md\n"
+      );
+
+      expect(run("git", ["add", "."], cwd).status).toBe(0);
+      expect(run("git", ["commit", "-m", "seed plan"], cwd).status).toBe(0);
+
+      const res = runHook("prompt-guard.sh", cwd, {
+        stdin: JSON.stringify({ user_message: "implement it all now" }),
+      });
+
+      expect(res.status).toBe(1);
+      expect(res.stdout).toContain("[PlanStatusGuard]");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
 });

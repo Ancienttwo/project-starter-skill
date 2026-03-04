@@ -18,10 +18,17 @@ describe("Bootstrap Script Contracts", () => {
     const content = read("scripts/create-project-dirs.sh");
 
     expect(content).toContain("mkdir -p tasks");
+    expect(content).toContain("mkdir -p tasks/archive");
+    expect(content).toContain("mkdir -p plans/archive");
     expect(content).toContain("cat > tasks/todo.md");
     expect(content).toContain("cat > tasks/lessons.md");
+    expect(content).toContain("cat > tasks/research.md");
     expect(content).not.toContain("docs/TODO.md");
     expect(content).toContain("docs/plan.md");
+    expect(content).toContain("Plan Pointer (Compatibility)");
+    expect(content).toContain("scripts/new-plan.sh");
+    expect(content).toContain("scripts/plan-to-todo.sh");
+    expect(content).toContain("scripts/archive-workflow.sh");
     expect(content).toContain("cat > .claude/settings.json");
     expect(content).not.toContain("\"$TOOL_INPUT\"");
     expect(content).not.toContain("\"$PROMPT\"");
@@ -31,11 +38,19 @@ describe("Bootstrap Script Contracts", () => {
     const content = read("scripts/init-project.sh");
 
     expect(content).toContain("mkdir -p tasks");
+    expect(content).toContain("mkdir -p tasks/archive");
+    expect(content).toContain("mkdir -p plans/archive");
     expect(content).toContain("cat > tasks/todo.md");
     expect(content).toContain("cat > tasks/lessons.md");
+    expect(content).toContain("tasks/research.md");
     expect(content).not.toContain("docs/TODO.md");
     expect(content).toContain("docs/plan.md");
+    expect(content).toContain("Plan Pointer (Compatibility)");
+    expect(content).toContain("install_workflow_helpers");
+    expect(content).toContain("install_workflow_templates");
     expect(content).toContain("cat > .claude/settings.json");
+    expect(content).not.toContain(".*/");
+    expect(content).toContain("ensure_runtime_gitignore_block");
     expect(content).not.toContain("\"$TOOL_INPUT\"");
     expect(content).not.toContain("\"$PROMPT\"");
     expect(content).toContain("cp \"$ASSETS_REF_DIR\"/*.md docs/reference-configs/");
@@ -47,6 +62,10 @@ describe("Bootstrap Script Contracts", () => {
     expect(content).toContain("tasks/todo.md");
     expect(content).toContain("tasks/lessons.md");
     expect(content).toContain("docs/plan.md");
+    expect(content).toContain("tasks/research.md");
+    expect(content).toContain("has_changes_glob");
+    expect(content).toContain("PlanStatusGuard");
+    expect(content).toContain("exit 1");
   });
 
   test("hook template should reference existing local hook scripts", () => {

@@ -4,9 +4,13 @@ CLAUDE.md keeps concise rules. Read these files on demand.
 
 | Task | Read This File | Purpose |
 |------|----------------|---------|
+| Deeply understand codebase | `tasks/research.md` | Persistent research notes and system intricacies |
 | Execute current plan | `tasks/todo.md` | Primary checklist + review section |
 | Prevent repeated mistakes | `tasks/lessons.md` | Self-improvement loop rules |
-| Deep architecture/spec details | `docs/plan.md` | Compatibility deep-spec narrative |
+| Review active plan | `plans/plan-*.md` | Timestamped implementation plans |
+| Review archived plans | `plans/archive/` | Historical plan decisions |
+| Review archived todos | `tasks/archive/` | Historical execution checklists |
+| Plan pointer compatibility | `docs/plan.md` | Pointer to current active plan |
 | Clarify product scope | `docs/brief.md` | Product and MVP scope |
 | Review architecture decisions | `docs/decisions.md` | ADR and trade-offs |
 | Understand tech stack | `docs/tech-stack.md` | Runtime and tooling choices |

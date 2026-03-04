@@ -19,8 +19,15 @@ bun.lockb
 .sisyphus/notepads/
 
 # Local Claude overrides/state
+# BEGIN: claude-runtime-temp (managed by project-initializer)
 .claude/settings.local.json
-.claude/.context-pressure/
+.claude/.atomic_pending
 .claude/.session-id
-.claude/.session-handoff.md
 .claude/.tool-call-count
+.claude/.session-handoff.md
+.claude/.context-pressure/
+.claude/*.tmp
+.claude/*.bak
+.claude/*.bak.*
+.claude/*.backup-*
+# END: claude-runtime-temp
