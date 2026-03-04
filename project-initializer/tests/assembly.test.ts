@@ -60,7 +60,7 @@ describe("Template Assembly", () => {
       "## Iron Rules",
       "## Project Structure",
       "### Plan Annotation Protocol",
-      "## Core Documentation Index",
+      "## Context Loading Rules",
       "## Workflow Orchestration",
     ];
 

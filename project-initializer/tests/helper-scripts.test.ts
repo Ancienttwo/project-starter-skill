@@ -32,8 +32,15 @@ function copyHelpers(cwd: string) {
   copyFileSync(join(HELPER_DIR, "new-plan.sh"), join(scriptsDir, "new-plan.sh"));
   copyFileSync(join(HELPER_DIR, "plan-to-todo.sh"), join(scriptsDir, "plan-to-todo.sh"));
   copyFileSync(join(HELPER_DIR, "archive-workflow.sh"), join(scriptsDir, "archive-workflow.sh"));
+  copyFileSync(join(HELPER_DIR, "verify-contract.sh"), join(scriptsDir, "verify-contract.sh"));
 
-  expect(run("chmod", ["+x", "scripts/new-plan.sh", "scripts/plan-to-todo.sh", "scripts/archive-workflow.sh"], cwd).status).toBe(0);
+  expect(
+    run(
+      "chmod",
+      ["+x", "scripts/new-plan.sh", "scripts/plan-to-todo.sh", "scripts/archive-workflow.sh", "scripts/verify-contract.sh"],
+      cwd
+    ).status
+  ).toBe(0);
 }
 
 describe("Workflow helper scripts", () => {
@@ -274,6 +281,90 @@ describe("Workflow helper scripts", () => {
       const archivedPlan = join(cwd, "plans/archive/plan-20260304-1510-demo.md");
       expect(existsSync(archivedPlan)).toBe(true);
       expect(readFileSync(archivedPlan, "utf-8")).toContain("**Status**: Abandoned");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("verify-contract should pass strict mode and set status to Fulfilled", () => {
+    const cwd = tmpWorkspace("helper-verify-contract-pass");
+    try {
+      mkdirSync(join(cwd, "scripts"), { recursive: true });
+      mkdirSync(join(cwd, "tests/unit"), { recursive: true });
+      mkdirSync(join(cwd, "src"), { recursive: true });
+      copyHelpers(cwd);
+
+      writeFileSync(join(cwd, "src/index.ts"), "export const value = 1;\n");
+      writeFileSync(
+        join(cwd, "tests/unit/contract-pass.test.ts"),
+        'import { test, expect } from "bun:test";\n' +
+          'test("contract pass", () => { expect(1).toBe(1); });\n'
+      );
+
+      const contractPath = join(cwd, "task.contract.md");
+      writeFileSync(
+        contractPath,
+        [
+          "# Task Contract: pass",
+          "",
+          "> **Status**: Pending",
+          "",
+          "```yaml",
+          "exit_criteria:",
+          "  files_exist:",
+          "    - src/index.ts",
+          "  tests_pass:",
+          "    - path: tests/unit/contract-pass.test.ts",
+          "  commands_succeed:",
+          "    - test -f src/index.ts",
+          "  files_contain:",
+          "    - path: src/index.ts",
+          "      pattern: \"export const value\"",
+          "```",
+          "",
+        ].join("\n")
+      );
+
+      const res = run("bash", ["scripts/verify-contract.sh", "--contract", "task.contract.md", "--strict"], cwd);
+      expect(res.status).toBe(0);
+      const updated = readFileSync(contractPath, "utf-8");
+      expect(updated).toContain("> **Status**: Fulfilled");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("verify-contract should fail strict mode and set status to Partial", () => {
+    const cwd = tmpWorkspace("helper-verify-contract-fail");
+    try {
+      mkdirSync(join(cwd, "scripts"), { recursive: true });
+      copyHelpers(cwd);
+
+      const contractPath = join(cwd, "task.contract.md");
+      writeFileSync(
+        contractPath,
+        [
+          "# Task Contract: fail",
+          "",
+          "> **Status**: Pending",
+          "",
+          "```yaml",
+          "exit_criteria:",
+          "  files_exist:",
+          "    - src/does-not-exist.ts",
+          "  tests_pass:",
+          "    - path: tests/unit/missing.test.ts",
+          "  commands_succeed:",
+          "    - false",
+          "```",
+          "",
+        ].join("\n")
+      );
+
+      const res = run("bash", ["scripts/verify-contract.sh", "--contract", "task.contract.md", "--strict"], cwd);
+      expect(res.status).toBe(1);
+      const updated = readFileSync(contractPath, "utf-8");
+      expect(updated).toContain("> **Status**: Partial");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }

@@ -19,6 +19,7 @@ describe("Bootstrap Script Contracts", () => {
 
     expect(content).toContain("mkdir -p tasks");
     expect(content).toContain("mkdir -p tasks/archive");
+    expect(content).toContain("mkdir -p tasks/contracts");
     expect(content).toContain("mkdir -p plans/archive");
     expect(content).toContain("cat > tasks/todo.md");
     expect(content).toContain("cat > tasks/lessons.md");
@@ -29,6 +30,9 @@ describe("Bootstrap Script Contracts", () => {
     expect(content).toContain("scripts/new-plan.sh");
     expect(content).toContain("scripts/plan-to-todo.sh");
     expect(content).toContain("scripts/archive-workflow.sh");
+    expect(content).toContain("scripts/verify-contract.sh");
+    expect(content).toContain("contract.template.md");
+    expect(content).toContain("spa-day-protocol.md");
     expect(content).toContain("cat > .claude/settings.json");
     expect(content).not.toContain("\"$TOOL_INPUT\"");
     expect(content).not.toContain("\"$PROMPT\"");
@@ -39,6 +43,7 @@ describe("Bootstrap Script Contracts", () => {
 
     expect(content).toContain("mkdir -p tasks");
     expect(content).toContain("mkdir -p tasks/archive");
+    expect(content).toContain("mkdir -p tasks/contracts");
     expect(content).toContain("mkdir -p plans/archive");
     expect(content).toContain("cat > tasks/todo.md");
     expect(content).toContain("cat > tasks/lessons.md");
@@ -48,6 +53,9 @@ describe("Bootstrap Script Contracts", () => {
     expect(content).toContain("Plan Pointer (Compatibility)");
     expect(content).toContain("install_workflow_helpers");
     expect(content).toContain("install_workflow_templates");
+    expect(content).toContain("contract.template.md");
+    expect(content).toContain("verify-contract.sh");
+    expect(content).toContain("spa-day-protocol.md");
     expect(content).toContain("cat > .claude/settings.json");
     expect(content).not.toContain(".*/");
     expect(content).toContain("ensure_runtime_gitignore_block");
@@ -80,6 +88,7 @@ describe("Bootstrap Script Contracts", () => {
     }
 
     expect(hookCommands).toContain("worktree-guard.sh");
+    expect(hookCommands).toContain("task-handoff.sh");
     expect(hookCommands).toContain("atomic-pending.sh");
     expect(hookCommands).toContain("atomic-commit.sh");
     expect(settings).not.toContain("\"$TOOL_INPUT\"");

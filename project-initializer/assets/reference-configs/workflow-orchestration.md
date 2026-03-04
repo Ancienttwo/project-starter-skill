@@ -2,14 +2,15 @@
 
 Use this file for advanced orchestration and planning patterns.
 
-## 6-Phase Protocol
+## 7-Phase Protocol
 
 1. **Research** (`tasks/research.md`)
 2. **Plan** (`plans/plan-YYYYMMDD-HHMM-{slug}.md`)
 3. **Annotate** (inline notes in plan, 1-6 iterations)
 4. **Todo** (`tasks/todo.md`, archive previous todo first)
 5. **Implement** (verified slices, update checklist continuously)
-6. **Feedback** (`tasks/lessons.md`, archive completed/abandoned plan and todo)
+6. **Verify** (`scripts/verify-contract.sh` against `tasks/contracts/{slug}.contract.md`)
+7. **Feedback** (`tasks/lessons.md`, archive completed/abandoned plan and todo)
 
 ## Research Protocol
 
@@ -35,6 +36,7 @@ Use this file for advanced orchestration and planning patterns.
 - Extract `## Task Breakdown` from approved plan to `tasks/todo.md`.
 - Archive existing todo to `tasks/archive/` before writing new checklist.
 - Set plan status to `Executing` after extraction.
+- Create `tasks/contracts/{slug}.contract.md` from `.claude/templates/contract.template.md`.
 
 ## Implementation Protocol
 
@@ -61,4 +63,9 @@ Use this file for advanced orchestration and planning patterns.
 
 ## Completion Gate
 
-A task is complete only when behavior is verified and risks are documented.
+A task is complete only when contract exit criteria pass and risks are documented.
+
+## Spa Day Protocol
+
+- Periodically consolidate stale rules, references, and old lessons.
+- Follow `docs/reference-configs/spa-day-protocol.md` on sprint cadence.

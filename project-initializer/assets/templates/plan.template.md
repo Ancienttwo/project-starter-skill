@@ -23,6 +23,11 @@
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
 
+## Task Contracts
+- Contract file: `tasks/contracts/{{SLUG}}.contract.md`
+- Template: `.claude/templates/contract.template.md`
+- Verification command: `bash scripts/verify-contract.sh --contract tasks/contracts/{{SLUG}}.contract.md --strict`
+
 ## Annotations
 <!-- [NOTE]: prefixed inline. Claude processes all and revises. -->
 

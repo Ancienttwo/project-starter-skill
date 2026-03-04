@@ -336,4 +336,108 @@ describe("Hook runtime behavior", () => {
       rmSync(cwd, { recursive: true, force: true });
     }
   });
+
+  test("prompt-guard: blocks done intent when task contract is missing", () => {
+    const cwd = tmpWorkspace("prompt-guard-contract-missing");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "plans"), { recursive: true });
+      mkdirSync(join(cwd, "docs"), { recursive: true });
+
+      writeFileSync(
+        join(cwd, "plans/plan-20260304-1400-demo.md"),
+        "# Plan: demo\n\n> **Status**: Approved\n"
+      );
+      writeFileSync(
+        join(cwd, "docs/plan.md"),
+        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1400-demo.md\n"
+      );
+
+      const res = runHook("prompt-guard.sh", cwd, {
+        stdin: JSON.stringify({ user_message: "mark done now" }),
+      });
+
+      expect(res.status).toBe(1);
+      expect(res.stdout).toContain("[ContractGuard]");
+      expect(res.stdout).toContain("Missing task contract");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("prompt-guard: allows done intent when contract verification passes", () => {
+    const cwd = tmpWorkspace("prompt-guard-contract-pass");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "plans"), { recursive: true });
+      mkdirSync(join(cwd, "docs"), { recursive: true });
+      mkdirSync(join(cwd, "tasks/contracts"), { recursive: true });
+      mkdirSync(join(cwd, "scripts"), { recursive: true });
+
+      writeFileSync(
+        join(cwd, "plans/plan-20260304-1410-demo.md"),
+        "# Plan: demo\n\n> **Status**: Approved\n"
+      );
+      writeFileSync(
+        join(cwd, "docs/plan.md"),
+        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1410-demo.md\n"
+      );
+      writeFileSync(join(cwd, "tasks/contracts/demo.contract.md"), "# contract\n");
+      writeFileSync(
+        join(cwd, "scripts/verify-contract.sh"),
+        "#!/bin/bash\nset -euo pipefail\necho \"[verify] ok\"\n"
+      );
+      expect(run("chmod", ["+x", "scripts/verify-contract.sh"], cwd).status).toBe(0);
+
+      const res = runHook("prompt-guard.sh", cwd, {
+        stdin: JSON.stringify({ user_message: "任务完成了，结束吧" }),
+      });
+
+      expect(res.status).toBe(0);
+      expect(res.stdout).toContain("[verify] ok");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("task-handoff: creates handoff summary when completed tasks increase", () => {
+    const cwd = tmpWorkspace("task-handoff");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "tasks"), { recursive: true });
+      mkdirSync(join(cwd, "docs"), { recursive: true });
+
+      writeFileSync(
+        join(cwd, "tasks/todo.md"),
+        [
+          "# Task Execution Checklist (Primary)",
+          "",
+          "- [x] finish first task",
+          "- [ ] second task",
+          "",
+        ].join("\n")
+      );
+      writeFileSync(
+        join(cwd, "docs/plan.md"),
+        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1410-demo.md\n"
+      );
+
+      const res = runHook("task-handoff.sh", cwd, {
+        stdin: JSON.stringify({ tool_input: { file_path: "tasks/todo.md" } }),
+      });
+
+      expect(res.status).toBe(0);
+      expect(res.stdout).toContain("[TaskHandoff]");
+      expect(existsSync(join(cwd, ".claude/.task-handoff.md"))).toBe(true);
+      expect(existsSync(join(cwd, ".claude/.task-state.json"))).toBe(true);
+      const handoff = readFileSync(join(cwd, ".claude/.task-handoff.md"), "utf-8");
+      expect(handoff).toContain("finish first task");
+      expect(handoff).toContain("Progress");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
 });

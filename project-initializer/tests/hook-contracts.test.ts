@@ -44,6 +44,11 @@ describe("Hook contracts", () => {
     expect(script).toContain("ResearchGuard");
     expect(script).toContain("AnnotationGuard");
     expect(script).toContain("PlanStatusGuard");
+    expect(script).toContain("ContractGuard");
+    expect(script).toContain("done");
+    expect(script).toContain("完成");
+    expect(script).toContain("scripts/verify-contract.sh");
+    expect(script).toContain("SpaDay");
     expect(script).toContain("has_changes_glob");
     expect(script).not.toContain("📋");
     expect(script).not.toContain("🧠");
@@ -72,6 +77,7 @@ describe("Hook contracts", () => {
 
   test("settings template should not inject TOOL_INPUT/PROMPT argv blobs", () => {
     const settings = read("assets/hooks/settings.template.json");
+    expect(settings).toContain("task-handoff.sh");
     expect(settings).not.toContain('"$TOOL_INPUT"');
     expect(settings).not.toContain('"$PROMPT"');
   });

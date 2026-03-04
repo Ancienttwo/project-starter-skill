@@ -45,6 +45,8 @@ ensure_runtime_gitignore_block() {
 .claude/.session-id
 .claude/.tool-call-count
 .claude/.session-handoff.md
+.claude/.task-state.json
+.claude/.task-handoff.md
 .claude/.context-pressure/
 .claude/*.tmp
 .claude/*.bak
@@ -141,6 +143,7 @@ EOF
 
 > **Status**: Draft
 > **Created**: {{TIMESTAMP}}
+> **Slug**: {{SLUG}}
 > **Research**: See `tasks/research.md`
 
 ## Approach
@@ -161,11 +164,59 @@ EOF
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
 
+## Task Contracts
+- Contract file: `tasks/contracts/{{SLUG}}.contract.md`
+- Template: `.claude/templates/contract.template.md`
+- Verification command: `bash scripts/verify-contract.sh --contract tasks/contracts/{{SLUG}}.contract.md --strict`
+
 ## Annotations
 <!-- [NOTE]: prefixed inline. Claude processes all and revises. -->
 
 ## Task Breakdown
 - [ ] ...
+EOF
+    fi
+
+    if [ -d "$ASSETS_TEMPLATES_DIR" ] && [ -f "$ASSETS_TEMPLATES_DIR/contract.template.md" ]; then
+        cp "$ASSETS_TEMPLATES_DIR/contract.template.md" .claude/templates/contract.template.md
+    else
+        cat > .claude/templates/contract.template.md << 'EOF'
+# Task Contract: {{TASK_SLUG}}
+
+> **Status**: Pending
+> **Plan**: plans/plan-YYYYMMDD-HHMM-{{TASK_SLUG}}.md
+> **Owner**: {{OWNER}}
+> **Last Updated**: {{TIMESTAMP}}
+
+## Goal
+
+Describe the exact outcome this task must deliver.
+
+## Exit Criteria (Machine Verifiable)
+
+```yaml
+exit_criteria:
+  files_exist:
+    - src/modules/{{TASK_SLUG}}/index.ts
+  tests_pass:
+    - path: tests/unit/{{TASK_SLUG}}.test.ts
+  commands_succeed:
+    - bun run typecheck
+  files_contain:
+    - path: src/modules/{{TASK_SLUG}}/index.ts
+      pattern: "export"
+```
+
+## Acceptance Notes (Human Review)
+
+- Functional behavior:
+- Edge cases:
+- Regression risks:
+
+## Optional Visual Checks
+
+- Screenshot path (optional):
+- What to verify visually:
 EOF
     fi
 }
@@ -175,7 +226,7 @@ install_workflow_helpers() {
 
     if [ -d "$ASSETS_TEMPLATES_DIR/helpers" ]; then
         cp "$ASSETS_TEMPLATES_DIR/helpers/"*.sh scripts/ 2>/dev/null || true
-        chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh 2>/dev/null || true
+        chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh 2>/dev/null || true
         return
     fi
 
@@ -200,7 +251,14 @@ echo "Missing helper template: archive-workflow.sh"
 exit 1
 EOF
 
-    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh
+    cat > scripts/verify-contract.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: verify-contract.sh"
+exit 1
+EOF
+
+    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh
 }
 
 # Check package manager
@@ -316,6 +374,7 @@ create_structure() {
     mkdir -p docs/architecture
     mkdir -p docs/reference-configs
     mkdir -p tasks/archive
+    mkdir -p tasks/contracts
     mkdir -p plans/archive
     mkdir -p .claude/hooks
     mkdir -p .claude/templates
@@ -445,6 +504,7 @@ EOF
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/anti-simplification.sh" },
           { "type": "command", "command": "bash .claude/hooks/doc-drift-guard.sh" },
+          { "type": "command", "command": "bash .claude/hooks/task-handoff.sh" },
           { "type": "command", "command": "bash .claude/hooks/atomic-pending.sh" }
         ]
       },
@@ -523,6 +583,36 @@ EOF
 # Workflow Orchestration Reference
 
 Use this file for advanced plan/execution orchestration patterns.
+EOF
+
+        cat > docs/reference-configs/spa-day-protocol.md << 'EOF'
+# Spa Day Protocol
+
+Periodic cleanup protocol to reduce context bloat and rule conflicts.
+
+## 1. Rule Consolidation
+- Merge overlapping rules in `docs/reference-configs/`.
+- Remove contradictory instructions and keep one canonical rule per topic.
+
+## 2. CLAUDE/AGENTS Routing Freshness
+- Verify all routed paths still exist.
+- Remove stale references from CLAUDE.md/AGENTS.md indexes.
+
+## 3. Lessons Graduation
+- Promote repeated lessons from `tasks/lessons.md` into durable rules.
+- Archive one-off or obsolete lessons.
+
+## 4. Research Pruning
+- Remove already-implemented investigation items from `tasks/research.md`.
+- Keep only unresolved findings and open questions.
+
+## 5. Docs Reality Check
+- Sync `docs/architecture.md` and `docs/tech-stack.md` with current codebase.
+- Flag drift for immediate correction.
+
+## 6. Contract Hygiene
+- Move fulfilled contracts from `tasks/contracts/` into an archive folder if needed.
+- Keep active contracts only for in-flight tasks.
 EOF
     fi
 

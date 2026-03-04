@@ -168,3 +168,6 @@ else
 fi
 
 echo "Archived plan to: $archive_plan_path"
+if [[ -f "docs/reference-configs/spa-day-protocol.md" ]]; then
+  echo "Next: run a periodic cleanup using docs/reference-configs/spa-day-protocol.md"
+fi

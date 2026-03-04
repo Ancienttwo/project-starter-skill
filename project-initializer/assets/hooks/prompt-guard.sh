@@ -58,6 +58,14 @@ is_implement_intent() {
   echo "$PROMPT_TEXT" | grep -qEi "(implement|execute|build it|do it|实现|执行|开始写|动手)"
 }
 
+is_done_intent() {
+  echo "$PROMPT_TEXT" | grep -qEi "(done|complete|completed|finished|mark done|完成|结束|收工)"
+}
+
+is_spa_day_intent() {
+  echo "$PROMPT_TEXT" | grep -qEi "(spa day|audit rules|consolidate|cleanup rules|规则清理|规则审计|合并规则|瘦身)"
+}
+
 get_active_plan_from_pointer() {
   local pointer_file="docs/plan.md"
   local candidate
@@ -112,9 +120,28 @@ get_plan_status() {
   awk '/\*\*Status\*\*:/ {sub(/^.*\*\*Status\*\*: */, ""); gsub(/\r/, ""); print; exit}' "$plan_file" | xargs
 }
 
+derive_contract_path() {
+  local plan_file="$1"
+  local base slug
+
+  base="$(basename "$plan_file")"
+  slug="$(printf '%s' "$base" | sed -E 's/^plan-[0-9]{8}-[0-9]{4}-//; s/\.md$//')"
+
+  if [ -z "$slug" ] || [ "$slug" = "$base" ]; then
+    return 1
+  fi
+
+  printf 'tasks/contracts/%s.contract.md' "$slug"
+}
+
 implement_intent=0
 if is_implement_intent; then
   implement_intent=1
+fi
+
+done_intent=0
+if is_done_intent; then
+  done_intent=1
 fi
 
 if [ "$implement_intent" -eq 0 ]; then
@@ -148,6 +175,42 @@ if [ "$implement_intent" -eq 1 ]; then
       echo "[PlanStatusGuard] Plan status is '$plan_status' in $active_plan. Complete annotation cycle first."
       exit 1
     fi
+  fi
+fi
+
+if [ "$done_intent" -eq 1 ]; then
+  active_plan="$(get_active_plan || true)"
+  if [ -z "$active_plan" ] || [ ! -f "$active_plan" ]; then
+    echo "[ContractGuard] Done intent detected, but no active plan found. Complete plan workflow first."
+    exit 1
+  fi
+
+  contract_file="$(derive_contract_path "$active_plan" || true)"
+  if [ -z "$contract_file" ]; then
+    echo "[ContractGuard] Could not derive contract path from plan: $active_plan"
+    exit 1
+  fi
+
+  if [ ! -f "$contract_file" ]; then
+    echo "[ContractGuard] Missing task contract: $contract_file"
+    exit 1
+  fi
+
+  if [ -f "scripts/verify-contract.sh" ]; then
+    if ! bash "scripts/verify-contract.sh" --contract "$contract_file" --strict; then
+      echo "[ContractGuard] Contract verification failed: $contract_file"
+      exit 1
+    fi
+  else
+    echo "[ContractGuard] verify-contract.sh not found at scripts/verify-contract.sh (degraded mode: skipping strict verification)."
+  fi
+fi
+
+if is_spa_day_intent; then
+  if [ -f "docs/reference-configs/spa-day-protocol.md" ]; then
+    echo "[SpaDay] Follow docs/reference-configs/spa-day-protocol.md for consolidation."
+  else
+    echo "[SpaDay] spa-day protocol missing. Add docs/reference-configs/spa-day-protocol.md."
   fi
 fi
 

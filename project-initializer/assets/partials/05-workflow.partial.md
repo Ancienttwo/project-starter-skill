@@ -5,15 +5,17 @@ Use `tasks/research.md` for deep codebase understanding, `plans/` for timestampe
 ```yaml
 PLAN_LOOP:
   MODE: {{RUNTIME_PROFILE}}
-  PHASES: research -> plan -> annotate -> todo -> implement -> feedback
+  PHASES: research -> plan -> annotate -> todo -> implement -> verify -> feedback
   RESEARCH_FILE: tasks/research.md
   PLAN_DIR: plans/
   PLAN_ARCHIVE: plans/archive/
   PRIMARY_FILE: tasks/todo.md
   TODO_ARCHIVE: tasks/archive/
+  CONTRACT_DIR: tasks/contracts/
   LESSONS_FILE: tasks/lessons.md
   DEEP_SPEC_FILE: docs/plan.md  # compatibility pointer only
   ANNOTATION_GUARD: do not implement until plan Status is "Approved"
+  CONTRACT_GUARD: do not mark done until contract exit criteria pass
   EXECUTION_CONTEXT: primary worktree warning by default; enforce via .claude/.require-worktree
   COMMIT_POLICY: atomic checkpoint after green checks
 ```
@@ -24,6 +26,7 @@ PLAN_LOOP:
 - Plan in `plans/plan-YYYYMMDD-HHMM-{slug}.md` with explicit trade-offs and task breakdown.
 - Process all annotation notes before implementation.
 - Extract approved plan tasks into `tasks/todo.md`, archiving prior todo to `tasks/archive/`.
+- Create `tasks/contracts/{slug}.contract.md` with machine-verifiable exit criteria.
 - Mark done only with verification evidence.
 - Convert user corrections into prevention rules in `tasks/lessons.md`.
 

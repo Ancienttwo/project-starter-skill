@@ -25,6 +25,8 @@ write_runtime_gitignore_block() {
 .claude/.session-id
 .claude/.tool-call-count
 .claude/.session-handoff.md
+.claude/.task-state.json
+.claude/.task-handoff.md
 .claude/.context-pressure/
 .claude/*.tmp
 .claude/*.bak
@@ -121,6 +123,7 @@ RESEARCH_TEMPLATE_EOF
 
 > **Status**: Draft
 > **Created**: {{TIMESTAMP}}
+> **Slug**: {{SLUG}}
 > **Research**: See `tasks/research.md`
 
 ## Approach
@@ -141,12 +144,56 @@ RESEARCH_TEMPLATE_EOF
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
 
+## Task Contracts
+- Contract file: `tasks/contracts/{{SLUG}}.contract.md`
+- Template: `.claude/templates/contract.template.md`
+- Verification command: `bash scripts/verify-contract.sh --contract tasks/contracts/{{SLUG}}.contract.md --strict`
+
 ## Annotations
 <!-- [NOTE]: prefixed inline. Claude processes all and revises. -->
 
 ## Task Breakdown
 - [ ] ...
 PLAN_TEMPLATE_EOF
+
+  cat > .claude/templates/contract.template.md <<'CONTRACT_TEMPLATE_EOF'
+# Task Contract: {{TASK_SLUG}}
+
+> **Status**: Pending
+> **Plan**: plans/plan-YYYYMMDD-HHMM-{{TASK_SLUG}}.md
+> **Owner**: {{OWNER}}
+> **Last Updated**: {{TIMESTAMP}}
+
+## Goal
+
+Describe the exact outcome this task must deliver.
+
+## Exit Criteria (Machine Verifiable)
+
+```yaml
+exit_criteria:
+  files_exist:
+    - src/modules/{{TASK_SLUG}}/index.ts
+  tests_pass:
+    - path: tests/unit/{{TASK_SLUG}}.test.ts
+  commands_succeed:
+    - bun run typecheck
+  files_contain:
+    - path: src/modules/{{TASK_SLUG}}/index.ts
+      pattern: "export"
+```
+
+## Acceptance Notes (Human Review)
+
+- Functional behavior:
+- Edge cases:
+- Regression risks:
+
+## Optional Visual Checks
+
+- Screenshot path (optional):
+- What to verify visually:
+CONTRACT_TEMPLATE_EOF
 }
 
 install_workflow_helpers() {
@@ -154,7 +201,7 @@ install_workflow_helpers() {
 
   if [[ -d "$ASSETS_TEMPLATES_DIR/helpers" ]]; then
     cp "$ASSETS_TEMPLATES_DIR/helpers/"*.sh scripts/ 2>/dev/null || true
-    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh 2>/dev/null || true
+    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh 2>/dev/null || true
     return
   fi
 
@@ -179,7 +226,14 @@ echo "Missing helper template: archive-workflow.sh"
 exit 1
 ARCHIVE_WORKFLOW_STUB_EOF
 
-  chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh
+  cat > scripts/verify-contract.sh <<'VERIFY_CONTRACT_STUB_EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: verify-contract.sh"
+exit 1
+VERIFY_CONTRACT_STUB_EOF
+
+  chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh
 }
 
 # ===== IMMUTABLE LAYER (资产层) =====
@@ -199,6 +253,7 @@ mkdir -p docs/guides
 mkdir -p docs/archives
 mkdir -p docs/reference-configs
 mkdir -p tasks/archive
+mkdir -p tasks/contracts
 mkdir -p plans/archive
 mkdir -p scripts
 mkdir -p .claude/hooks
@@ -220,6 +275,35 @@ touch docs/reference-configs/ai-workflows.yaml.md
 touch docs/reference-configs/coding-standards.md
 touch docs/reference-configs/development-protocol.md
 touch docs/reference-configs/workflow-orchestration.md
+cat > docs/reference-configs/spa-day-protocol.md <<'SPA_DAY_EOF'
+# Spa Day Protocol
+
+Periodic cleanup protocol to reduce context bloat and rule conflicts.
+
+## 1. Rule Consolidation
+- Merge overlapping rules in `docs/reference-configs/`.
+- Remove contradictory instructions and keep one canonical rule per topic.
+
+## 2. CLAUDE/AGENTS Routing Freshness
+- Verify all routed paths still exist.
+- Remove stale references from CLAUDE.md/AGENTS.md indexes.
+
+## 3. Lessons Graduation
+- Promote repeated lessons from `tasks/lessons.md` into durable rules.
+- Archive one-off or obsolete lessons.
+
+## 4. Research Pruning
+- Remove already-implemented investigation items from `tasks/research.md`.
+- Keep only unresolved findings and open questions.
+
+## 5. Docs Reality Check
+- Sync `docs/architecture.md` and `docs/tech-stack.md` with current codebase.
+- Flag drift for immediate correction.
+
+## 6. Contract Hygiene
+- Move fulfilled contracts from `tasks/contracts/` into an archive folder if needed.
+- Keep active contracts only for in-flight tasks.
+SPA_DAY_EOF
 
 cat > tasks/todo.md << 'TASK_TODO_EOF'
 # Task Execution Checklist (Primary)
@@ -295,6 +379,7 @@ cat > .claude/settings.json << 'PROJECT_SETTINGS_EOF'
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/anti-simplification.sh" },
           { "type": "command", "command": "bash .claude/hooks/doc-drift-guard.sh" },
+          { "type": "command", "command": "bash .claude/hooks/task-handoff.sh" },
           { "type": "command", "command": "bash .claude/hooks/atomic-pending.sh" }
         ]
       },

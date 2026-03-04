@@ -22,10 +22,18 @@
 ### 6. Verification Before Done
 - No completion without verification evidence.
 
+### 6b. Contract Verification
+- Use task contracts in `tasks/contracts/` as completion gates.
+- Validate exit criteria before any done/completed response.
+
 ### 7. Balanced Elegance
 - Redesign hacky non-trivial fixes before shipping.
 
 ### 8. Autonomous Bug Fixing
 - Start fixes when logs/errors/tests are sufficient.
+
+### 9. Spa Day
+- Consolidate conflicting rules and stale references on a cadence.
+- Follow `docs/reference-configs/spa-day-protocol.md`.
 
 ---

@@ -65,6 +65,8 @@ ensure_runtime_gitignore_block() {
 .claude/.session-id
 .claude/.tool-call-count
 .claude/.session-handoff.md
+.claude/.task-state.json
+.claude/.task-handoff.md
 .claude/.context-pressure/
 .claude/*.tmp
 .claude/*.bak
@@ -165,6 +167,9 @@ install_templates() {
   if [[ -f "$TEMPLATE_ASSETS_DIR/plan.template.md" ]]; then
     run_or_echo "cp \"$TEMPLATE_ASSETS_DIR/plan.template.md\" \"$templates_dir/plan.template.md\""
   fi
+  if [[ -f "$TEMPLATE_ASSETS_DIR/contract.template.md" ]]; then
+    run_or_echo "cp \"$TEMPLATE_ASSETS_DIR/contract.template.md\" \"$templates_dir/contract.template.md\""
+  fi
 }
 
 install_helpers() {
@@ -177,8 +182,9 @@ install_helpers() {
     run_or_echo "cp \"$HELPER_ASSETS_DIR/new-plan.sh\" \"$scripts_dir/new-plan.sh\""
     run_or_echo "cp \"$HELPER_ASSETS_DIR/plan-to-todo.sh\" \"$scripts_dir/plan-to-todo.sh\""
     run_or_echo "cp \"$HELPER_ASSETS_DIR/archive-workflow.sh\" \"$scripts_dir/archive-workflow.sh\""
+    run_or_echo "cp \"$HELPER_ASSETS_DIR/verify-contract.sh\" \"$scripts_dir/verify-contract.sh\""
     if [[ "$MODE" == "apply" ]]; then
-      chmod +x "$scripts_dir/new-plan.sh" "$scripts_dir/plan-to-todo.sh" "$scripts_dir/archive-workflow.sh" || true
+      chmod +x "$scripts_dir/new-plan.sh" "$scripts_dir/plan-to-todo.sh" "$scripts_dir/archive-workflow.sh" "$scripts_dir/verify-contract.sh" || true
     fi
   else
     log "Helper assets not found at $HELPER_ASSETS_DIR"
@@ -349,6 +355,8 @@ migrate_workflow() {
 
   run_or_echo "mkdir -p \"$repo/plans/archive\""
   run_or_echo "mkdir -p \"$repo/tasks/archive\""
+  run_or_echo "mkdir -p \"$repo/tasks/contracts\""
+  run_or_echo "mkdir -p \"$repo/docs/reference-configs\""
 
   install_templates "$repo"
   install_helpers "$repo"
@@ -380,6 +388,20 @@ migrate_workflow() {
   ensure_gitignore_entry "$repo_gitignore" "# OS metadata"
   ensure_gitignore_entry "$repo_gitignore" ".DS_Store"
   ensure_runtime_gitignore_block "$repo_gitignore"
+
+  local spa_protocol_repo="$repo/docs/reference-configs/spa-day-protocol.md"
+  local spa_protocol_asset="$SKILL_ROOT/assets/reference-configs/spa-day-protocol.md"
+  if [[ -f "$spa_protocol_asset" ]]; then
+    run_or_echo "cp \"$spa_protocol_asset\" \"$spa_protocol_repo\""
+  elif [[ "$MODE" == "apply" && ! -f "$spa_protocol_repo" ]]; then
+    cat > "$spa_protocol_repo" <<'SPA_DAY_EOF'
+# Spa Day Protocol
+
+Periodic cleanup protocol to reduce context bloat and rule conflicts.
+SPA_DAY_EOF
+  else
+    echo "[dry-run] ensure spa-day protocol at \"$spa_protocol_repo\""
+  fi
 }
 
 print_report() {

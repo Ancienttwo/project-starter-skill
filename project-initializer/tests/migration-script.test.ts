@@ -46,6 +46,9 @@ describe("Migration script contract", () => {
     expect(script).toContain("new-plan.sh");
     expect(script).toContain("plan-to-todo.sh");
     expect(script).toContain("archive-workflow.sh");
+    expect(script).toContain("verify-contract.sh");
+    expect(script).toContain("tasks/contracts");
+    expect(script).toContain("spa-day-protocol.md");
     expect(script).toContain("claude-runtime-temp");
   });
 
@@ -77,10 +80,14 @@ describe("Migration script contract", () => {
       expect(existsSync(join(repo, "tasks/archive"))).toBe(true);
       expect(existsSync(join(repo, ".claude/templates/research.template.md"))).toBe(true);
       expect(existsSync(join(repo, ".claude/templates/plan.template.md"))).toBe(true);
+      expect(existsSync(join(repo, ".claude/templates/contract.template.md"))).toBe(true);
       expect(existsSync(join(repo, "scripts/new-plan.sh"))).toBe(true);
       expect(existsSync(join(repo, "scripts/plan-to-todo.sh"))).toBe(true);
       expect(existsSync(join(repo, "scripts/archive-workflow.sh"))).toBe(true);
+      expect(existsSync(join(repo, "scripts/verify-contract.sh"))).toBe(true);
       expect(existsSync(join(repo, "tasks/research.md"))).toBe(true);
+      expect(existsSync(join(repo, "tasks/contracts"))).toBe(true);
+      expect(existsSync(join(repo, "docs/reference-configs/spa-day-protocol.md"))).toBe(true);
 
       const pointer = readFileSync(join(repo, "docs/plan.md"), "utf-8");
       expect(pointer).toContain("Current Active Plan: plans/plan-20260304-1000-beta.md");

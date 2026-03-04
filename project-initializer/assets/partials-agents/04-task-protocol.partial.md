@@ -4,11 +4,12 @@
 TASK_SOURCES:
   - tasks/research.md
   - tasks/todo.md
+  - tasks/contracts/
   - tasks/lessons.md
   - plans/
   - docs/PROGRESS.md
 
-PHASES: research -> plan -> annotate -> todo -> implement -> feedback
+PHASES: research -> plan -> annotate -> todo -> implement -> verify -> feedback
 
 ARCHIVE:
   PLAN: plans/archive/
@@ -19,6 +20,8 @@ RULES:
   - Plan with trade-offs in plans/plan-{timestamp}-{slug}.md
   - Process annotation notes before implementing
   - Extract approved plan tasks into tasks/todo.md
+  - Define task contracts in tasks/contracts/{slug}.contract.md
+  - Verify contracts before claiming completion
   - Track progress with verification evidence
   - Record correction-derived prevention rules in tasks/lessons.md
   - Archive completed/abandoned plans and todos with metadata

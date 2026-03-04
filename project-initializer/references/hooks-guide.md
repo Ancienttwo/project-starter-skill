@@ -13,7 +13,7 @@ Use this guide for **Q8: Configure Hooks** details.
 ### A) Standard + TDD + Doc Drift + Context Pressure (recommended)
 - Runtime profile: Plan-only (recommended), configurable to Permissionless/Standard.
 - `PreToolUse (Edit|Write)`: worktree guard (warn by default, opt-in hard block), TDD/BDD guard, asset-layer guard.
-- `PostToolUse (Edit|Write)`: anti-simplification, doc drift, atomic pending marker.
+- `PostToolUse (Edit|Write)`: anti-simplification, doc drift, task handoff summary, atomic pending marker.
 - `PostToolUse (Bash)`: post-bash feedback, atomic checkpoint commit.
 - `PostToolUse (*)`: context pressure tracking.
 - `UserPromptSubmit`: prompt guard (plan sync + TDD/BDD reminders).
@@ -43,6 +43,7 @@ Use this guide for **Q8: Configure Hooks** details.
 | `assets/hooks/pre-code-change.sh` | `.claude/hooks/pre-code-change.sh` |
 | `assets/hooks/anti-simplification.sh` | `.claude/hooks/anti-simplification.sh` |
 | `assets/hooks/doc-drift-guard.sh` | `.claude/hooks/doc-drift-guard.sh` |
+| `assets/hooks/task-handoff.sh` | `.claude/hooks/task-handoff.sh` |
 | `assets/hooks/atomic-pending.sh` | `.claude/hooks/atomic-pending.sh` |
 | `assets/hooks/post-bash.sh` | `.claude/hooks/post-bash.sh` |
 | `assets/hooks/atomic-commit.sh` | `.claude/hooks/atomic-commit.sh` |

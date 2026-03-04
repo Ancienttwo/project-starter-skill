@@ -22,11 +22,20 @@
 ### 6. Verification Before Done
 - No task completion without test/build evidence.
 
+### 6b. Contract Verification
+- Define per-task contract files in `tasks/contracts/`.
+- Verify contract exit criteria before claiming completion.
+- Use `scripts/verify-contract.sh --contract tasks/contracts/{slug}.contract.md --strict`.
+
 ### 7. Balanced Elegance
 - Redesign hacky non-trivial fixes before shipping.
 
 ### 8. Autonomous Bug Fixing
 - Start fixing when logs/tests provide sufficient evidence.
+
+### 9. Spa Day
+- Periodically consolidate conflicting rules and stale references.
+- Follow `docs/reference-configs/spa-day-protocol.md` for cleanup cadence.
 
 Detailed patterns:
 - `docs/reference-configs/workflow-orchestration.md`

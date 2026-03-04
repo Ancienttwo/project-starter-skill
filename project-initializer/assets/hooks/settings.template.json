@@ -16,6 +16,7 @@
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/anti-simplification.sh" },
           { "type": "command", "command": "bash .claude/hooks/doc-drift-guard.sh" },
+          { "type": "command", "command": "bash .claude/hooks/task-handoff.sh" },
           { "type": "command", "command": "bash .claude/hooks/atomic-pending.sh" }
         ]
       },
