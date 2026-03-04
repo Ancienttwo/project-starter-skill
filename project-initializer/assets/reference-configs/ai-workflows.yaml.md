@@ -113,16 +113,18 @@ SESSION_HANDOFF:
   BEFORE_END:
     1. Update tasks/todo.md review section with completion evidence
     2. Append new patterns to tasks/lessons.md after corrections
-    3. Update docs/PROGRESS.md with current state
-    4. Document any blockers or decisions needed
-    5. Create checkpoint commit
+    3. Update plan status in plans/ (Executing -> Archived on completion)
+    4. Update docs/PROGRESS.md with current state
+    5. Document any blockers or decisions needed
+    6. Create checkpoint commit
 
   NEXT_SESSION_START:
     1. AI reads tasks/todo.md for active execution checklist
     2. AI reads tasks/lessons.md for prevention rules
-    3. AI reads docs/PROGRESS.md (latest 200 lines)
-    4. AI checks git status for uncommitted changes
-    5. Resume from last checkpoint
+    3. AI reads tasks/research.md (if exists)
+    4. AI checks latest plan status in plans/
+    5. AI reads docs/PROGRESS.md (latest 200 lines)
+    6. AI checks git status for uncommitted changes
 
   CONTEXT_PRESERVATION:
     - Key decisions -> docs/architecture/decisions/

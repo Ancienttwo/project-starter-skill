@@ -1,8 +1,9 @@
 #!/bin/bash
-# Migrate an existing project to project-initializer 2.2.0 conventions.
+# Migrate an existing project to project-initializer workflow conventions.
 # - Project hooks source of truth: .claude/settings.json
 # - Hook scripts synced from assets/hooks
 # - docs/TODO.md removed (tasks/todo.md is canonical)
+# - 6-phase workflow files and helpers installed
 #
 # Usage:
 #   bash scripts/migrate-project-template.sh --repo /path/to/repo --dry-run
@@ -13,12 +14,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 HOOK_ASSETS_DIR="$SKILL_ROOT/assets/hooks"
+TEMPLATE_ASSETS_DIR="$SKILL_ROOT/assets/templates"
+HELPER_ASSETS_DIR="$TEMPLATE_ASSETS_DIR/helpers"
 
 MODE="dry-run"
 TARGET_REPO=""
 
 usage() {
-  cat <<'EOF'
+  cat <<'USAGE_EOF'
 Usage: migrate-project-template.sh --repo <path> [--dry-run|--apply]
 
 Options:
@@ -26,7 +29,7 @@ Options:
   --dry-run      Print planned changes only (default)
   --apply        Apply changes
   --help         Show help
-EOF
+USAGE_EOF
 }
 
 log() {
@@ -47,6 +50,188 @@ backup_if_exists() {
   if [[ -f "$path" ]]; then
     run_or_echo "cp \"$path\" \"$path.bak.$(date +%Y%m%d%H%M%S)\""
   fi
+}
+
+ensure_runtime_gitignore_block() {
+  local file_path="$1"
+  local begin_marker="# BEGIN: claude-runtime-temp (managed by project-initializer)"
+  local end_marker="# END: claude-runtime-temp"
+
+  local block
+  block=$(cat <<'BLOCK_EOF'
+# BEGIN: claude-runtime-temp (managed by project-initializer)
+.claude/settings.local.json
+.claude/.atomic_pending
+.claude/.session-id
+.claude/.tool-call-count
+.claude/.session-handoff.md
+.claude/.context-pressure/
+.claude/*.tmp
+.claude/*.bak
+.claude/*.bak.*
+.claude/*.backup-*
+# END: claude-runtime-temp
+BLOCK_EOF
+)
+
+  if [[ "$MODE" != "apply" ]]; then
+    echo "[dry-run] ensure managed runtime block in $file_path"
+    return
+  fi
+
+  mkdir -p "$(dirname "$file_path")"
+  if [[ ! -f "$file_path" ]]; then
+    touch "$file_path"
+  fi
+
+  if ! grep -Fq "$begin_marker" "$file_path"; then
+    printf "\n%s\n" "$block" >> "$file_path"
+    return
+  fi
+
+  local tmp_file
+  tmp_file="$(mktemp)"
+  awk -v begin="$begin_marker" -v end="$end_marker" -v repl="$block" '
+    $0 == begin {
+      print repl
+      skipping = 1
+      next
+    }
+    skipping && $0 == end {
+      skipping = 0
+      next
+    }
+    !skipping { print }
+  ' "$file_path" > "$tmp_file"
+  mv "$tmp_file" "$file_path"
+}
+
+ensure_gitignore_entry() {
+  local file_path="$1"
+  local entry="$2"
+
+  if [[ "$MODE" != "apply" ]]; then
+    echo "[dry-run] ensure .gitignore entry: $entry"
+    return
+  fi
+
+  if ! grep -Fxq "$entry" "$file_path"; then
+    printf "%s\n" "$entry" >> "$file_path"
+  fi
+}
+
+write_plan_pointer() {
+  local file_path="$1"
+  local active_plan="$2"
+
+  if [[ "$MODE" != "apply" ]]; then
+    echo "[dry-run] write plan pointer: $file_path (active=${active_plan:-none})"
+    return
+  fi
+
+  mkdir -p "$(dirname "$file_path")"
+  cat > "$file_path" <<EOF_POINTER
+# Plan Pointer (Compatibility)
+
+Active plans live in \`plans/\`. Create new plans with:
+  bash scripts/new-plan.sh --slug my-feature
+
+Current Active Plan: ${active_plan:-\(none\)}
+EOF_POINTER
+}
+
+is_plan_pointer_file() {
+  local file_path="$1"
+  if [[ ! -f "$file_path" ]]; then
+    return 1
+  fi
+
+  if grep -Fq "# Plan Pointer (Compatibility)" "$file_path" && \
+     grep -Fq "Current Active Plan:" "$file_path"; then
+    return 0
+  fi
+  return 1
+}
+
+install_templates() {
+  local repo="$1"
+  local templates_dir="$repo/.claude/templates"
+
+  run_or_echo "mkdir -p \"$templates_dir\""
+
+  if [[ -f "$TEMPLATE_ASSETS_DIR/research.template.md" ]]; then
+    run_or_echo "cp \"$TEMPLATE_ASSETS_DIR/research.template.md\" \"$templates_dir/research.template.md\""
+  fi
+  if [[ -f "$TEMPLATE_ASSETS_DIR/plan.template.md" ]]; then
+    run_or_echo "cp \"$TEMPLATE_ASSETS_DIR/plan.template.md\" \"$templates_dir/plan.template.md\""
+  fi
+}
+
+install_helpers() {
+  local repo="$1"
+  local scripts_dir="$repo/scripts"
+
+  run_or_echo "mkdir -p \"$scripts_dir\""
+
+  if [[ -d "$HELPER_ASSETS_DIR" ]]; then
+    run_or_echo "cp \"$HELPER_ASSETS_DIR/new-plan.sh\" \"$scripts_dir/new-plan.sh\""
+    run_or_echo "cp \"$HELPER_ASSETS_DIR/plan-to-todo.sh\" \"$scripts_dir/plan-to-todo.sh\""
+    run_or_echo "cp \"$HELPER_ASSETS_DIR/archive-workflow.sh\" \"$scripts_dir/archive-workflow.sh\""
+    if [[ "$MODE" == "apply" ]]; then
+      chmod +x "$scripts_dir/new-plan.sh" "$scripts_dir/plan-to-todo.sh" "$scripts_dir/archive-workflow.sh" || true
+    fi
+  else
+    log "Helper assets not found at $HELPER_ASSETS_DIR"
+  fi
+}
+
+create_research_file_if_missing() {
+  local repo="$1"
+  local research_file="$repo/tasks/research.md"
+  local now
+  now="$(date '+%Y-%m-%d %H:%M')"
+
+  if [[ -f "$research_file" ]]; then
+    return
+  fi
+
+  if [[ "$MODE" != "apply" ]]; then
+    echo "[dry-run] create $research_file"
+    return
+  fi
+
+  mkdir -p "$repo/tasks"
+
+  if [[ -f "$repo/.claude/templates/research.template.md" ]]; then
+    sed \
+      -e "s/{{PROJECT_NAME}}/Project/g" \
+      -e "s/{{DATE}}/${now}/g" \
+      "$repo/.claude/templates/research.template.md" > "$research_file"
+    return
+  fi
+
+  cat > "$research_file" <<EOF_RESEARCH
+# Project — Research Notes
+
+> **Last Updated**: ${now}
+> **Scope**: (what area of the codebase was researched)
+
+## Codebase Map
+| File | Purpose | Key Exports |
+|------|---------|-------------|
+
+## Architecture Observations
+### Patterns & Conventions
+### Implicit Contracts
+### Edge Cases & Intricacies
+
+## Technical Debt / Risks
+
+## Research Conclusions
+### What to Preserve
+### What to Change
+### Open Questions
+EOF_RESEARCH
 }
 
 parse_args() {
@@ -158,6 +343,45 @@ migrate_docs() {
   fi
 }
 
+migrate_workflow() {
+  local repo="$1"
+  local plan_file="$repo/docs/plan.md"
+
+  run_or_echo "mkdir -p \"$repo/plans/archive\""
+  run_or_echo "mkdir -p \"$repo/tasks/archive\""
+
+  install_templates "$repo"
+  install_helpers "$repo"
+  create_research_file_if_missing "$repo"
+
+  if [[ -f "$plan_file" ]] && ! is_plan_pointer_file "$plan_file"; then
+    backup_if_exists "$plan_file"
+  fi
+
+  local latest_active_plan=""
+  latest_active_plan="$(find "$repo/plans" -maxdepth 1 -type f -name 'plan-*.md' 2>/dev/null | sort | tail -1 || true)"
+  if [[ -n "$latest_active_plan" ]]; then
+    latest_active_plan="plans/$(basename "$latest_active_plan")"
+  fi
+
+  write_plan_pointer "$plan_file" "$latest_active_plan"
+
+  local repo_gitignore="$repo/.gitignore"
+  run_or_echo "touch \"$repo_gitignore\""
+  ensure_gitignore_entry "$repo_gitignore" "# Project-specific"
+  ensure_gitignore_entry "$repo_gitignore" "artifacts/"
+  ensure_gitignore_entry "$repo_gitignore" "coverage/"
+  ensure_gitignore_entry "$repo_gitignore" "*.tar.gz"
+  ensure_gitignore_entry "$repo_gitignore" "*.tgz"
+  ensure_gitignore_entry "$repo_gitignore" "# Environment"
+  ensure_gitignore_entry "$repo_gitignore" ".env"
+  ensure_gitignore_entry "$repo_gitignore" ".env.*"
+  ensure_gitignore_entry "$repo_gitignore" "!.env.example"
+  ensure_gitignore_entry "$repo_gitignore" "# OS metadata"
+  ensure_gitignore_entry "$repo_gitignore" ".DS_Store"
+  ensure_runtime_gitignore_block "$repo_gitignore"
+}
+
 print_report() {
   local repo="$1"
   echo
@@ -167,7 +391,8 @@ print_report() {
   echo "- Project hooks synced from: $HOOK_ASSETS_DIR"
   echo "- Team hook config target: .claude/settings.json"
   echo "- Legacy docs/TODO.md: removed when present"
-  echo "- If jq is installed, hooks in settings.local.json are merged then removed"
+  echo "- Workflow migration: plans/archive + tasks/archive + research + helpers + plan pointer"
+  echo "- Runtime temporary ignore block synced to .gitignore"
 }
 
 main() {
@@ -179,6 +404,7 @@ main() {
 
   migrate_hooks "$TARGET_REPO"
   migrate_docs "$TARGET_REPO"
+  migrate_workflow "$TARGET_REPO"
   print_report "$TARGET_REPO"
 }
 
