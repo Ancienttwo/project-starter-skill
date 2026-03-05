@@ -183,11 +183,128 @@ install_helpers() {
     run_or_echo "cp \"$HELPER_ASSETS_DIR/plan-to-todo.sh\" \"$scripts_dir/plan-to-todo.sh\""
     run_or_echo "cp \"$HELPER_ASSETS_DIR/archive-workflow.sh\" \"$scripts_dir/archive-workflow.sh\""
     run_or_echo "cp \"$HELPER_ASSETS_DIR/verify-contract.sh\" \"$scripts_dir/verify-contract.sh\""
+    run_or_echo "cp \"$HELPER_ASSETS_DIR/check-task-sync.sh\" \"$scripts_dir/check-task-sync.sh\""
     if [[ "$MODE" == "apply" ]]; then
-      chmod +x "$scripts_dir/new-plan.sh" "$scripts_dir/plan-to-todo.sh" "$scripts_dir/archive-workflow.sh" "$scripts_dir/verify-contract.sh" || true
+      chmod +x "$scripts_dir/new-plan.sh" "$scripts_dir/plan-to-todo.sh" "$scripts_dir/archive-workflow.sh" "$scripts_dir/verify-contract.sh" "$scripts_dir/check-task-sync.sh" || true
     fi
   else
     log "Helper assets not found at $HELPER_ASSETS_DIR"
+  fi
+}
+
+ensure_task_sync_package_script() {
+  local repo="$1"
+  local package_file="$repo/package.json"
+
+  if [[ ! -f "$package_file" ]]; then
+    if [[ "$MODE" == "apply" ]]; then
+      log "package.json missing; skipped check:task-sync injection"
+    else
+      echo "[dry-run] package.json missing; skip check:task-sync injection"
+    fi
+    return
+  fi
+
+  if [[ "$MODE" != "apply" ]]; then
+    echo "[dry-run] inject check:task-sync into $package_file"
+    return
+  fi
+
+  if command -v node >/dev/null 2>&1; then
+    node -e '
+const fs = require("fs");
+const file = process.argv[1];
+const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+pkg.private ??= true;
+pkg.scripts ??= {};
+pkg.scripts["check:task-sync"] = "bash scripts/check-task-sync.sh";
+fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
+' "$package_file"
+    log "Injected check:task-sync into $package_file"
+    return
+  fi
+
+  log "Warning: node not found. Could not inject check:task-sync into $package_file"
+}
+
+create_task_files_if_missing() {
+  local repo="$1"
+
+  if [[ "$MODE" != "apply" ]]; then
+    echo "[dry-run] ensure tasks/todo.md, tasks/lessons.md, docs/PROGRESS.md exist with tasks-first guidance"
+    return
+  fi
+
+  mkdir -p "$repo/tasks" "$repo/docs"
+
+  if [[ ! -f "$repo/tasks/todo.md" ]]; then
+    cat > "$repo/tasks/todo.md" <<'TODO_EOF'
+# Task Execution Checklist (Primary)
+
+> Update this file for every non-chat task that changes the repo.
+> Keep verification evidence and follow-up notes here.
+
+## Plan
+- [ ] Define scope and acceptance criteria
+- [ ] Break down into checkable tasks
+
+## Execution
+- [ ] Implement task 1
+
+## Review Section
+- Verification evidence:
+- Behavior diff notes:
+- Risks / follow-ups:
+TODO_EOF
+  fi
+
+  if [[ ! -f "$repo/tasks/lessons.md" ]]; then
+    cat > "$repo/tasks/lessons.md" <<'LESSONS_EOF'
+# Lessons Learned (Self-Improvement Loop)
+
+> Capture correction-derived prevention rules here.
+> Promote repeated patterns into durable project rules during spa day.
+
+## Template
+- Date:
+- Triggered by correction:
+- Mistake pattern:
+- Prevention rule:
+- Where to apply next time:
+LESSONS_EOF
+  fi
+
+  if [[ ! -f "$repo/docs/PROGRESS.md" ]]; then
+    cat > "$repo/docs/PROGRESS.md" <<'PROGRESS_EOF'
+# Project Milestones
+
+> Use this file for milestone checkpoints only.
+> Active execution belongs in `tasks/todo.md`, `tasks/lessons.md`, and `tasks/research.md`.
+
+## Milestones
+
+- [ ] First migration milestone
+
+## Notes
+
+- Record releases, migrations, and major checkpoints here.
+PROGRESS_EOF
+  elif ! grep -Fq "Use this file for milestone checkpoints only." "$repo/docs/PROGRESS.md"; then
+    cp "$repo/docs/PROGRESS.md" "$repo/docs/PROGRESS.md.bak.$(date +%Y%m%d%H%M%S)"
+    cat > "$repo/docs/PROGRESS.md" <<'PROGRESS_EOF'
+# Project Milestones
+
+> Use this file for milestone checkpoints only.
+> Active execution belongs in `tasks/todo.md`, `tasks/lessons.md`, and `tasks/research.md`.
+
+## Milestones
+
+- [ ] Preserve or restore milestone history here after migration review
+
+## Notes
+
+- This file was normalized during migration. Re-add historical milestones if needed.
+PROGRESS_EOF
   fi
 }
 
@@ -361,6 +478,8 @@ migrate_workflow() {
   install_templates "$repo"
   install_helpers "$repo"
   create_research_file_if_missing "$repo"
+  create_task_files_if_missing "$repo"
+  ensure_task_sync_package_script "$repo"
 
   if [[ -f "$plan_file" ]] && ! is_plan_pointer_file "$plan_file"; then
     backup_if_exists "$plan_file"
@@ -413,7 +532,7 @@ print_report() {
   echo "- Project hooks synced from: $HOOK_ASSETS_DIR"
   echo "- Team hook config target: .claude/settings.json"
   echo "- Legacy docs/TODO.md: removed when present"
-  echo "- Workflow migration: plans/archive + tasks/archive + research + helpers + plan pointer"
+  echo "- Workflow migration: plans/archive + tasks/archive + research + helpers + plan pointer + task-sync contract"
   echo "- Runtime temporary ignore block synced to .gitignore"
 }
 

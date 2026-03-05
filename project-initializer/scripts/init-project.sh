@@ -116,6 +116,7 @@ install_workflow_templates() {
 
 > **Last Updated**: {{DATE}}
 > **Scope**: (what area of the codebase was researched)
+> **Usage**: Store deep codebase findings and hidden contracts here, not in chat-only summaries.
 
 ## Codebase Map
 | File | Purpose | Key Exports |
@@ -226,7 +227,7 @@ install_workflow_helpers() {
 
     if [ -d "$ASSETS_TEMPLATES_DIR/helpers" ]; then
         cp "$ASSETS_TEMPLATES_DIR/helpers/"*.sh scripts/ 2>/dev/null || true
-        chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh 2>/dev/null || true
+        chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh 2>/dev/null || true
         return
     fi
 
@@ -258,7 +259,37 @@ echo "Missing helper template: verify-contract.sh"
 exit 1
 EOF
 
-    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh
+    cat > scripts/check-task-sync.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: check-task-sync.sh"
+exit 1
+EOF
+
+    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh
+}
+
+ensure_task_sync_package_script() {
+    local package_file="package.json"
+
+    if [ ! -f "$package_file" ]; then
+        return
+    fi
+
+    if command_exists node; then
+        node -e '
+const fs = require("fs");
+const file = process.argv[1];
+const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+pkg.private ??= true;
+pkg.scripts ??= {};
+pkg.scripts["check:task-sync"] = "bash scripts/check-task-sync.sh";
+fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
+' "$package_file"
+        return
+    fi
+
+    echo -e "${YELLOW}Warning: node not found. Could not inject check:task-sync into package.json.${NC}"
 }
 
 # Check package manager
@@ -383,20 +414,19 @@ create_structure() {
 
     # Create documentation files
     cat > docs/PROGRESS.md << EOF
-# Development Progress
+# Project Milestones
 
-## Current Sprint
+> Use this file for milestone checkpoints only.
+> Active execution belongs in \`tasks/todo.md\`, \`tasks/lessons.md\`, and \`tasks/research.md\`.
 
-### In Progress
-- [ ] Initial project setup
+## Milestones
 
-### Completed
-- [x] Project initialized
+- [x] Repository scaffolded
+- [ ] First feature milestone shipped
 
-## Next Steps
-1. Configure environment variables
-2. Set up database schema
-3. Implement first feature
+## Notes
+
+- Record releases, migrations, and major checkpoints here.
 
 ---
 *Last updated: ${TODAY}*
@@ -419,6 +449,9 @@ EOF
     cat > tasks/todo.md << EOF
 # Task Execution Checklist (Primary)
 
+> Update this file for every non-chat task that changes the repo.
+> Keep verification evidence and follow-up notes here.
+
 ## Plan
 - [ ] Define scope and acceptance criteria
 - [ ] Break down into checkable tasks
@@ -438,6 +471,9 @@ EOF
 
     cat > tasks/lessons.md << EOF
 # Lessons Learned (Self-Improvement Loop)
+
+> Capture correction-derived prevention rules here.
+> Promote repeated patterns into durable project rules during spa day.
 
 ## Template
 - Date:
@@ -463,6 +499,7 @@ EOF
 
 > **Last Updated**: ${NOW}
 > **Scope**: (what area of the codebase was researched)
+> **Usage**: Store deep codebase findings and hidden contracts here, not in chat-only summaries.
 
 ## Codebase Map
 | File | Purpose | Key Exports |
@@ -484,6 +521,7 @@ EOF
 
     write_plan_pointer ""
     install_workflow_helpers
+    ensure_task_sync_package_script
 
     cat > .claude/settings.json << 'EOF'
 {
@@ -565,7 +603,7 @@ EOF
         cat > docs/reference-configs/ai-workflows.md << 'EOF'
 # AI Workflows Reference
 
-Use this file for extended AI workflow templates and session handoff protocols.
+Use this file for extended AI workflow templates, tasks-first session handoff, and milestone-only progress guidance.
 EOF
 
         cat > docs/reference-configs/coding-standards.md << 'EOF'
@@ -577,7 +615,7 @@ EOF
         cat > docs/reference-configs/development-protocol.md << 'EOF'
 # Development Protocol Reference
 
-Use this file for detailed feature/bug flow playbooks and layer model rules.
+Use this file for detailed feature/bug flow playbooks, repo-local task sync rules, and final response requirements.
 EOF
 
         cat > docs/reference-configs/workflow-orchestration.md << 'EOF'

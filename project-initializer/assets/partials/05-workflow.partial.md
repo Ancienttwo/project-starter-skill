@@ -22,6 +22,8 @@ PLAN_LOOP:
 
 ### Task Management Protocol
 
+- Treat `tasks/` as the primary cross-agent contract; hooks are enhancements, not the only enforcement layer.
+- For non-chat tasks, sync `tasks/` whenever substantive repo changes are made.
 - Research deeply first for unfamiliar areas and persist findings in `tasks/research.md`.
 - Plan in `plans/plan-YYYYMMDD-HHMM-{slug}.md` with explicit trade-offs and task breakdown.
 - Process all annotation notes before implementation.
@@ -29,6 +31,7 @@ PLAN_LOOP:
 - Create `tasks/contracts/{slug}.contract.md` with machine-verifiable exit criteria.
 - Mark done only with verification evidence.
 - Convert user corrections into prevention rules in `tasks/lessons.md`.
+- Use `docs/PROGRESS.md` for milestone updates only, not the active execution log.
 
 ### Release, Git, and Deployment References
 

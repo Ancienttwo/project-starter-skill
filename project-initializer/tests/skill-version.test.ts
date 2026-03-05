@@ -2,10 +2,7 @@ import { describe, test, expect } from "bun:test";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { assembleTemplate, loadSkillVersion } from "../scripts/assemble-template";
-import {
-  checkConsistency,
-  extractSkillMdVersion,
-} from "../scripts/check-skill-version";
+import { checkConsistency } from "../scripts/check-skill-version";
 
 const REPO_ROOT = join(import.meta.dir, "..");
 
@@ -16,16 +13,26 @@ describe("Skill Version Consistency", () => {
     expect(pkg.version).toBe(sv.version);
   });
 
-  test("SKILL.md frontmatter version matches package.json", () => {
-    const pkg = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf-8"));
-    const skillMdVersion = extractSkillMdVersion();
-    expect(skillMdVersion).toBe(pkg.version);
+  test("SKILL.md frontmatter follows the new skill-creator contract", () => {
+    const skill = readFileSync(join(REPO_ROOT, "SKILL.md"), "utf-8");
+    const frontmatterMatch = skill.match(/^---\n([\s\S]*?)\n---/);
+    expect(frontmatterMatch).not.toBeNull();
+    expect(frontmatterMatch?.[1]).toContain("name:");
+    expect(frontmatterMatch?.[1]).toContain("description:");
+    expect(frontmatterMatch?.[1]).not.toContain("version:");
   });
 
   test("checkConsistency returns consistent=true for current repo", () => {
     const result = checkConsistency();
     expect(result.consistent).toBe(true);
     expect(result.errors).toEqual([]);
+  });
+
+  test("checkConsistency reports only package and skill-version sources", () => {
+    const result = checkConsistency();
+    expect(result.packageJsonVersion).toBeDefined();
+    expect(result.skillVersionJsonVersion).toBeDefined();
+    expect("skillMdVersion" in result).toBe(false);
   });
 });
 

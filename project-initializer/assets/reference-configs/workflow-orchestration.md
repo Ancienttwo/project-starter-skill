@@ -43,6 +43,8 @@ Use this file for advanced orchestration and planning patterns.
 - Execute in small, verified slices.
 - Mark done only with verification evidence in review sections.
 - Keep plan/todo status synchronized as work advances.
+- For non-chat work, update `tasks/` in the same change-set as substantive repo changes.
+- Use `docs/PROGRESS.md` only for milestone checkpoints.
 
 ## Feedback & Archive Protocol
 

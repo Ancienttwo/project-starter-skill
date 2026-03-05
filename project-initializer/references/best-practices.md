@@ -257,7 +257,7 @@ jobs:
 - `CLAUDE.md` - AI development guide
 - `docs/brief.md` - Product brief
 - `docs/tech-stack.md` - Tech stack decisions
-- `docs/PROGRESS.md` - Development progress
+- `docs/PROGRESS.md` - Milestone log
 - `docs/CHANGELOG.md` - Version history
 
 ### Code Comments

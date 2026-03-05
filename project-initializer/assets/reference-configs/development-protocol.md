@@ -2,6 +2,15 @@
 
 This guide contains detailed protocol steps that do not need to stay in the always-loaded prompt.
 
+## Source of Execution Truth
+
+- Active execution lives in `tasks/todo.md`.
+- Correction-derived prevention rules live in `tasks/lessons.md`.
+- Deep investigation notes live in `tasks/research.md`.
+- Milestones live in `docs/PROGRESS.md`.
+
+For any non-chat task that changes the repo in a substantive way, update `tasks/` as part of the same unit of work.
+
 ## Layer Model
 
 - Immutable: `specs/`, `contracts/`, `tests/`
@@ -14,8 +23,10 @@ If immutable artifacts and implementation diverge, update immutable artifacts fi
 1. Define acceptance criteria.
 2. Define contract/types.
 3. Add or update tests.
-4. Implement minimal change.
-5. Verify and refactor.
+4. Update `tasks/todo.md` with the execution checklist.
+5. Implement minimal change.
+6. Verify and refactor.
+7. Record evidence in `tasks/todo.md`.
 
 ## Bug Flow
 
@@ -23,3 +34,13 @@ If immutable artifacts and implementation diverge, update immutable artifacts fi
 2. Fix root cause.
 3. Re-run impacted checks.
 4. Add prevention note to `tasks/lessons.md`.
+5. Update `tasks/todo.md` with verification evidence if the repo changed.
+
+## Final Response Rule
+
+Every final delivery response should state:
+
+1. What changed
+2. What was verified
+3. Which `tasks/*.md` files were updated
+4. Remaining risks or follow-ups

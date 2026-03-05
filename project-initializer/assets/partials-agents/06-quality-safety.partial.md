@@ -12,7 +12,8 @@
 ### Final Response Contract
 1. What changed
 2. Verification evidence
-3. Known risks/gaps
-4. Optional next steps
+3. Which `tasks/*.md` files were updated
+4. Known risks/gaps
+5. Optional next steps
 
 ---

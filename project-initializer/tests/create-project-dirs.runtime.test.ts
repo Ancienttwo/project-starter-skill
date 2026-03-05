@@ -20,12 +20,18 @@ describe("create-project-dirs runtime smoke", () => {
       expect(existsSync(join(cwd, ".claude/templates/contract.template.md"))).toBe(true);
       expect(existsSync(join(cwd, "docs/reference-configs/spa-day-protocol.md"))).toBe(true);
       expect(existsSync(join(cwd, "scripts/verify-contract.sh"))).toBe(true);
+      expect(existsSync(join(cwd, "scripts/check-task-sync.sh"))).toBe(true);
 
       const settings = readFileSync(join(cwd, ".claude/settings.json"), "utf-8");
       expect(settings).toContain("task-handoff.sh");
+
+      const progress = readFileSync(join(cwd, "docs/PROGRESS.md"), "utf-8");
+      expect(progress).toContain("milestone checkpoints only");
+
+      const pkg = JSON.parse(readFileSync(join(cwd, "package.json"), "utf-8"));
+      expect(pkg.scripts["check:task-sync"]).toBe("bash scripts/check-task-sync.sh");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }
   });
 });
-

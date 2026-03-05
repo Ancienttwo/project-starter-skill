@@ -17,7 +17,7 @@
 - `docs/reference-configs/release-deploy.md`: deployment flow
 - `docs/reference-configs/workflow-orchestration.md`: orchestration playbook
 - `docs/reference-configs/spa-day-protocol.md`: periodic cleanup protocol
-- `docs/PROGRESS.md`: execution history and archived decisions
+- `docs/PROGRESS.md`: milestone ledger and archived decisions
 - `docs/decisions.md`: architecture decisions and trade-offs
 - `docs/tech-stack.md`: dependency and runtime constraints
 

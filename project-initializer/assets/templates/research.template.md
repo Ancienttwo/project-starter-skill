@@ -2,6 +2,7 @@
 
 > **Last Updated**: {{DATE}}
 > **Scope**: (what area of the codebase was researched)
+> **Usage**: Store deep codebase findings and hidden contracts here, not in chat-only summaries.
 
 ## Codebase Map
 | File | Purpose | Key Exports |

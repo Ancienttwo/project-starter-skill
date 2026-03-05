@@ -205,12 +205,12 @@ describe("Output Quality Gates", () => {
     expect(claude).toContain("tasks/lessons.md");
     expect(agents).toContain("tasks/todo.md");
     expect(agents).toContain("tasks/lessons.md");
+    expect(claude).toContain("sync `tasks/`");
+    expect(agents).toContain("sync tasks/");
     expect(claude).toContain("Self-Improvement Loop");
     expect(agents).toContain("Self-Improvement Loop");
-
-    // Compatibility references should still exist.
-    expect(claude).toContain("docs/PROGRESS.md");
-    expect(agents).toContain("docs/PROGRESS.md");
+    expect(claude.toLowerCase()).toContain("milestone");
+    expect(agents.toLowerCase()).toContain("milestone");
   });
 
   test("should stay within line-count budgets", () => {

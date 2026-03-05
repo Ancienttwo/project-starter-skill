@@ -100,6 +100,7 @@ write_templates() {
 
 > **Last Updated**: {{DATE}}
 > **Scope**: (what area of the codebase was researched)
+> **Usage**: Store deep codebase findings and hidden contracts here, not in chat-only summaries.
 
 ## Codebase Map
 | File | Purpose | Key Exports |
@@ -201,7 +202,7 @@ install_workflow_helpers() {
 
   if [[ -d "$ASSETS_TEMPLATES_DIR/helpers" ]]; then
     cp "$ASSETS_TEMPLATES_DIR/helpers/"*.sh scripts/ 2>/dev/null || true
-    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh 2>/dev/null || true
+    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh 2>/dev/null || true
     return
   fi
 
@@ -233,7 +234,49 @@ echo "Missing helper template: verify-contract.sh"
 exit 1
 VERIFY_CONTRACT_STUB_EOF
 
-  chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh
+  cat > scripts/check-task-sync.sh <<'CHECK_TASK_SYNC_STUB_EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: check-task-sync.sh"
+exit 1
+CHECK_TASK_SYNC_STUB_EOF
+
+  chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh
+}
+
+ensure_task_sync_package_script() {
+  local package_file="package.json"
+  local project_name
+  project_name="$(basename "$PWD" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9-' '-')"
+  project_name="${project_name:-project}"
+
+  if [[ ! -f "$package_file" ]]; then
+    cat > "$package_file" <<EOF_PACKAGE
+{
+  "name": "$project_name",
+  "private": true,
+  "scripts": {
+    "check:task-sync": "bash scripts/check-task-sync.sh"
+  }
+}
+EOF_PACKAGE
+    return
+  fi
+
+  if command -v node >/dev/null 2>&1; then
+    node -e '
+const fs = require("fs");
+const file = process.argv[1];
+const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+pkg.private ??= true;
+pkg.scripts ??= {};
+pkg.scripts["check:task-sync"] = "bash scripts/check-task-sync.sh";
+fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
+' "$package_file"
+    return
+  fi
+
+  echo "[warn] node not found; unable to inject check:task-sync into package.json" >&2
 }
 
 # ===== IMMUTABLE LAYER (资产层) =====
@@ -262,7 +305,6 @@ mkdir -p .ops/secrets
 mkdir -p artifacts
 
 # ===== Initial Files =====
-touch docs/PROGRESS.md
 touch docs/CHANGELOG.md
 touch docs/brief.md
 touch docs/tech-stack.md
@@ -305,8 +347,27 @@ Periodic cleanup protocol to reduce context bloat and rule conflicts.
 - Keep active contracts only for in-flight tasks.
 SPA_DAY_EOF
 
+cat > docs/PROGRESS.md << 'PROGRESS_EOF'
+# Project Milestones
+
+> Use this file for milestone checkpoints only.
+> Active execution belongs in `tasks/todo.md`, `tasks/lessons.md`, and `tasks/research.md`.
+
+## Milestones
+
+- [x] Repository scaffolded
+- [ ] First feature milestone shipped
+
+## Notes
+
+- Record releases, migrations, and major checkpoints here.
+PROGRESS_EOF
+
 cat > tasks/todo.md << 'TASK_TODO_EOF'
 # Task Execution Checklist (Primary)
+
+> Update this file for every non-chat task that changes the repo.
+> Keep verification evidence and follow-up notes here.
 
 ## Plan
 - [ ] Define scope and acceptance criteria
@@ -325,6 +386,9 @@ TASK_TODO_EOF
 cat > tasks/lessons.md << 'TASK_LESSONS_EOF'
 # Lessons Learned (Self-Improvement Loop)
 
+> Capture correction-derived prevention rules here.
+> Promote repeated patterns into durable project rules during spa day.
+
 ## Template
 - Date:
 - Triggered by correction:
@@ -338,6 +402,7 @@ cat > tasks/research.md << 'TASK_RESEARCH_EOF'
 
 > **Last Updated**: TBD
 > **Scope**: (what area of the codebase was researched)
+> **Usage**: Store deep codebase findings and hidden contracts here, not in chat-only summaries.
 
 ## Codebase Map
 | File | Purpose | Key Exports |
@@ -358,6 +423,8 @@ TASK_RESEARCH_EOF
 
 write_plan_pointer ""
 write_templates
+install_workflow_helpers
+ensure_task_sync_package_script
 write_runtime_gitignore_block
 
 cat > .claude/settings.json << 'PROJECT_SETTINGS_EOF'
@@ -478,7 +545,7 @@ REF_RELEASE_EOF
 cat > docs/reference-configs/ai-workflows.md << 'REF_AIWF_EOF'
 # AI Workflows Reference
 
-Use this file for extended AI workflow templates and session handoff protocols.
+Use this file for extended AI workflow templates, tasks-first session handoff, and milestone-only progress guidance.
 REF_AIWF_EOF
 
 cat > docs/reference-configs/coding-standards.md << 'REF_CODING_STANDARDS_EOF'
@@ -490,7 +557,7 @@ REF_CODING_STANDARDS_EOF
 cat > docs/reference-configs/development-protocol.md << 'REF_DEV_PROTOCOL_EOF'
 # Development Protocol Reference
 
-Use this file for detailed feature/bug flow playbooks and layer model rules.
+Use this file for detailed feature/bug flow playbooks, repo-local task sync rules, and final response requirements.
 REF_DEV_PROTOCOL_EOF
 
 cat > docs/reference-configs/workflow-orchestration.md << 'REF_WORKFLOW_ORCH_EOF'
@@ -530,8 +597,6 @@ echo "  - tests/unit/$MODULE/"
 echo "  - tests/integration/$MODULE/"
 REGENERATE_EOF
 chmod +x scripts/regenerate.sh
-
-install_workflow_helpers
 
 touch .ops/.gitkeep
 echo "# This folder contains sensitive operations files - DO NOT COMMIT" > .ops/README.md

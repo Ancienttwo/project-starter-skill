@@ -31,9 +31,13 @@ describe("Bootstrap Script Contracts", () => {
     expect(content).toContain("scripts/plan-to-todo.sh");
     expect(content).toContain("scripts/archive-workflow.sh");
     expect(content).toContain("scripts/verify-contract.sh");
+    expect(content).toContain("scripts/check-task-sync.sh");
+    expect(content).toContain("check:task-sync");
     expect(content).toContain("contract.template.md");
     expect(content).toContain("spa-day-protocol.md");
     expect(content).toContain("cat > .claude/settings.json");
+    expect(content).toContain("Project Milestones");
+    expect(content).toContain("milestone checkpoints only");
     expect(content).not.toContain("\"$TOOL_INPUT\"");
     expect(content).not.toContain("\"$PROMPT\"");
   });
@@ -55,8 +59,12 @@ describe("Bootstrap Script Contracts", () => {
     expect(content).toContain("install_workflow_templates");
     expect(content).toContain("contract.template.md");
     expect(content).toContain("verify-contract.sh");
+    expect(content).toContain("check-task-sync.sh");
+    expect(content).toContain("check:task-sync");
     expect(content).toContain("spa-day-protocol.md");
     expect(content).toContain("cat > .claude/settings.json");
+    expect(content).toContain("Project Milestones");
+    expect(content).toContain("milestone checkpoints only");
     expect(content).not.toContain(".*/");
     expect(content).toContain("ensure_runtime_gitignore_block");
     expect(content).not.toContain("\"$TOOL_INPUT\"");

@@ -24,7 +24,7 @@ CLAUDE.md is a routing card. Keep context minimal and load only what the current
 | AI workflow playbooks | `docs/reference-configs/ai-workflows.md` |
 | Periodic consolidation | `docs/reference-configs/spa-day-protocol.md` |
 | Product and architecture context | `docs/brief.md`, `docs/decisions.md`, `docs/tech-stack.md` |
-| Long-form execution history | `docs/PROGRESS.md`, `docs/CHANGELOG.md` |
+| Milestones and release history | `docs/PROGRESS.md`, `docs/CHANGELOG.md` |
 
 ### First Principles
 

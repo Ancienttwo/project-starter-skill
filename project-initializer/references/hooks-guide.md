@@ -4,9 +4,12 @@ Use this guide for **Q8: Configure Hooks** details.
 
 ## Project Hook Source of Truth
 
+- Repo-local `tasks/` files are the primary cross-agent contract.
 - Team-configurable hooks: `.claude/settings.json` (committable).
 - Personal overrides only: `.claude/settings.local.json` (optional).
 - Hook scripts directory: `.claude/hooks/`.
+
+Use hooks as Claude-specific accelerators, not as the only source of workflow enforcement.
 
 ## Hook Presets
 

@@ -33,9 +33,11 @@ describe("AGENTS Target Assembly", () => {
     expect(output).toContain("Self-Improvement Loop");
     expect(output).toContain("tasks/todo.md");
     expect(output).toContain("tasks/lessons.md");
+    expect(output).toContain("sync tasks/");
     expect(output).toContain("Default to **Plan-only**.");
     expect(output).toContain("Runtime profile: Plan-only (recommended).");
     expect(output).toContain(".claude/.require-worktree");
+    expect(output).toContain("Which `tasks/*.md` files were updated");
   });
 
   test("should preserve core governance semantics between CLAUDE and AGENTS", () => {

@@ -1,6 +1,6 @@
 {
-  "version": "2.3.0",
-  "templateVersion": "2.5.0",
+  "version": "2.4.0",
+  "templateVersion": "2.6.0",
   "compatibility": {
     "minClaudeCodeVersion": "1.0.0",
     "minBunVersion": "1.0.0"
@@ -13,6 +13,10 @@
     {
       "version": "2.3.0",
       "description": "Added lifecycle hook system and version stamp in generated projects"
+    },
+    {
+      "version": "2.4.0",
+      "description": "Promoted cross-agent task-sync contracts, skill eval assets, and milestone-only progress tracking"
     }
   ],
   "generatedProjectStamp": {

@@ -5,7 +5,6 @@
  * Validates that version numbers are consistent across:
  * - package.json
  * - assets/skill-version.json
- * - SKILL.md frontmatter
  *
  * Also checks if a generated project needs migration.
  */
@@ -22,7 +21,6 @@ export interface ConsistencyResult {
   consistent: boolean;
   packageJsonVersion: string;
   skillVersionJsonVersion: string;
-  skillMdVersion: string;
   errors: string[];
 }
 
@@ -34,29 +32,7 @@ export interface MigrationCheckResult {
 }
 
 /**
- * Extract version from SKILL.md frontmatter.
- */
-export function extractSkillMdVersion(skillMdPath: string = join(REPO_ROOT, "SKILL.md")): string {
-  if (!existsSync(skillMdPath)) {
-    throw new Error(`SKILL.md not found at ${skillMdPath}`);
-  }
-
-  const content = readFileSync(skillMdPath, "utf-8");
-  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!frontmatterMatch) {
-    throw new Error("SKILL.md missing frontmatter");
-  }
-
-  const versionMatch = frontmatterMatch[1].match(/^version:\s*(.+)$/m);
-  if (!versionMatch) {
-    throw new Error("SKILL.md frontmatter missing version field");
-  }
-
-  return versionMatch[1].trim();
-}
-
-/**
- * Check version consistency across all sources.
+ * Check version consistency across the version sources this repo owns.
  */
 export function checkConsistency(repoRoot: string = REPO_ROOT): ConsistencyResult {
   const errors: string[] = [];
@@ -77,9 +53,6 @@ export function checkConsistency(repoRoot: string = REPO_ROOT): ConsistencyResul
   const sv = JSON.parse(readFileSync(svPath, "utf-8"));
   const skillVersionJsonVersion = sv.version as string;
 
-  // Read SKILL.md
-  const skillMdVersion = extractSkillMdVersion(join(repoRoot, "SKILL.md"));
-
   // Check consistency
   if (packageJsonVersion !== skillVersionJsonVersion) {
     errors.push(
@@ -87,23 +60,10 @@ export function checkConsistency(repoRoot: string = REPO_ROOT): ConsistencyResul
     );
   }
 
-  if (packageJsonVersion !== skillMdVersion) {
-    errors.push(
-      `package.json (${packageJsonVersion}) != SKILL.md (${skillMdVersion})`
-    );
-  }
-
-  if (skillVersionJsonVersion !== skillMdVersion) {
-    errors.push(
-      `skill-version.json (${skillVersionJsonVersion}) != SKILL.md (${skillMdVersion})`
-    );
-  }
-
   return {
     consistent: errors.length === 0,
     packageJsonVersion,
     skillVersionJsonVersion,
-    skillMdVersion,
     errors,
   };
 }

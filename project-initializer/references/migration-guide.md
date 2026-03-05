@@ -1,14 +1,16 @@
-# Migration Guide (to 2.3.x)
+# Migration Guide (to 2.4.x)
 
 This guide upgrades existing repositories to current project-initializer conventions.
 
-## Key Changes in 2.3.x
+## Key Changes in 2.4.x
 
 - **Version control**: Single source of truth at `assets/skill-version.json`; version stamped into generated projects at `.claude/.skill-version`.
 - **Lifecycle hooks**: 7 hook events (`pre-init`, `post-init`, `pre-assemble`, `post-assemble`, `pre-migrate`, `post-migrate`, `on-version-change`) configured in `assets/skill-hooks.json`.
-- **Version consistency checker**: `bun scripts/check-skill-version.ts` validates version sync across `package.json`, `skill-version.json`, and `SKILL.md`.
+- **Version consistency checker**: `bun scripts/check-skill-version.ts` validates version sync across `package.json` and `assets/skill-version.json`.
 - Team hooks move to `.claude/settings.json`.
 - `docs/TODO.md` is removed; `tasks/todo.md` is the only task contract.
+- `docs/PROGRESS.md` is milestone-only; active execution lives in `tasks/`.
+- `scripts/check-task-sync.sh` and `check:task-sync` enforce repo-local task sync.
 - Hook input parsing is hybrid (stdin JSON + env/argv fallback).
 - BDD/TDD reminders now route by path.
 - Runtime mode is configurable via template variables:
@@ -33,14 +35,16 @@ bash scripts/migrate-project-template.sh --repo /path/to/project --apply
 2. Creates or merges `<repo>/.claude/settings.json` from `settings.template.json`.
 3. If `jq` exists, moves `hooks` from `settings.local.json` into `settings.json`.
 4. Removes legacy `docs/TODO.md` if present.
-5. Prints a migration report.
-6. Keeps hooks references valid by copying available scripts from `assets/hooks/`, with warning when missing.
+5. Ensures tasks-first workflow files exist and normalizes `docs/PROGRESS.md` to milestone-only guidance.
+6. Installs `scripts/check-task-sync.sh` and injects `check:task-sync` into `package.json` when present.
+7. Prints a migration report.
+8. Keeps hooks references valid by copying available scripts from `assets/hooks/`, with warning when missing.
 
 ## Manual Follow-up
 
 1. Review `<repo>/.claude/settings.json` for project-specific command exceptions.
 2. Confirm `.claude/settings.local.json` only contains personal overrides.
-3. Run project smoke checks and basic hook trigger scenarios.
+3. Run project smoke checks, `check:task-sync`, and basic hook trigger scenarios.
 4. Commit migration in one isolated change-set.
 5. If your old docs referenced `governance/` contracts or skill-audit scripts, remove those references and use `assets/initializer-question-pack.v1.json` as the Q&A source of truth.
 

@@ -1,33 +1,32 @@
-<!-- Generation: Phase 1 from Q1.6 MVP Scope, Phase 2-4 from iteration plan -->
-# {{PROJECT_NAME}} — Progress & Roadmap
+<!-- Generation: milestone-only ledger -->
+# {{PROJECT_NAME}} — Milestones
 
 > **Last Updated**: {{DATE}}
+> Use this file for milestone checkpoints only.
+> Active execution belongs in `tasks/todo.md`, `tasks/lessons.md`, and `tasks/research.md`.
 
-## Phase 0: Scaffold ✅
+## Milestones
 
 - [x] Project scaffold ({{FRAMEWORK}})
-- [x] Shared packages configured
-- [x] Documentation & CLAUDE.md
-- [x] Claude hooks configured
+- [x] Documentation and AI routing files generated
+- [ ] MVP milestone shipped
 
 {{#IF HAS_ALGORITHM_MIGRATION}}
-## Phase 0.5: 算法核心迁移
+## Pending Migration Milestones
 
 - [ ] {{ALGORITHM_PACKAGES}}
 {{/IF}}
 
-## Phase 1: MVP Core (进行中)
+## Planned Milestone Phases
 
+### Phase 1
 {{MVP_PHASE_TASKS}}
 
-## Phase 2: Core Features
-
+### Phase 2
 {{PHASE_2_TASKS}}
 
-## Phase 3: Advanced
-
+### Phase 3
 {{PHASE_3_TASKS}}
 
-## Phase 4: Polish
-
+### Phase 4
 {{PHASE_4_TASKS}}

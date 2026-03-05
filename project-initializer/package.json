@@ -1,7 +1,7 @@
 {
   "name": "project-initializer",
-  "version": "2.3.0",
-  "description": "AI-powered project scaffolding skill for Claude Code",
+  "version": "2.4.0",
+  "description": "Cross-agent project scaffolding skill for Claude and Codex",
   "type": "module",
   "scripts": {
     "test": "bun test",
