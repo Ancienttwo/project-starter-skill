@@ -4,6 +4,9 @@ This guide upgrades existing repositories to current project-initializer convent
 
 ## Key Changes in 2.3.x
 
+- **Version control**: Single source of truth at `assets/skill-version.json`; version stamped into generated projects at `.claude/.skill-version`.
+- **Lifecycle hooks**: 7 hook events (`pre-init`, `post-init`, `pre-assemble`, `post-assemble`, `pre-migrate`, `post-migrate`, `on-version-change`) configured in `assets/skill-hooks.json`.
+- **Version consistency checker**: `bun scripts/check-skill-version.ts` validates version sync across `package.json`, `skill-version.json`, and `SKILL.md`.
 - Team hooks move to `.claude/settings.json`.
 - `docs/TODO.md` is removed; `tasks/todo.md` is the only task contract.
 - Hook input parsing is hybrid (stdin JSON + env/argv fallback).

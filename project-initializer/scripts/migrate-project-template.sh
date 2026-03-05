@@ -417,6 +417,50 @@ print_report() {
   echo "- Runtime temporary ignore block synced to .gitignore"
 }
 
+run_skill_hook() {
+  local event="$1"
+  local hook_script="$SCRIPT_DIR/run-skill-hook.ts"
+
+  if command -v bun >/dev/null 2>&1 && [[ -f "$hook_script" ]]; then
+    bun "$hook_script" "$event" --context "{\"repo\":\"$TARGET_REPO\",\"mode\":\"$MODE\"}" 2>&1 || {
+      if [[ "$event" == pre-* ]]; then
+        log "Pre-hook $event failed, aborting."
+        return 1
+      else
+        log "Post-hook $event warning (non-fatal)."
+      fi
+    }
+  fi
+}
+
+update_version_stamp() {
+  local repo="$1"
+  local stamp_file="$repo/.claude/.skill-version"
+  local skill_version_file="$SKILL_ROOT/assets/skill-version.json"
+  local sv_version="unknown"
+  local sv_template_version="unknown"
+
+  if [[ -f "$skill_version_file" ]] && command -v bun >/dev/null 2>&1; then
+    sv_version=$(bun -e "console.log(JSON.parse(require('fs').readFileSync('$skill_version_file','utf-8')).version)")
+    sv_template_version=$(bun -e "console.log(JSON.parse(require('fs').readFileSync('$skill_version_file','utf-8')).templateVersion)")
+  elif [[ -f "$skill_version_file" ]] && command -v node >/dev/null 2>&1; then
+    sv_version=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$skill_version_file','utf-8')).version)")
+    sv_template_version=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$skill_version_file','utf-8')).templateVersion)")
+  fi
+
+  if [[ "$MODE" == "apply" ]]; then
+    mkdir -p "$(dirname "$stamp_file")"
+    cat > "$stamp_file" <<STAMP_EOF
+skill_version=$sv_version
+template_version=$sv_template_version
+migrated_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+STAMP_EOF
+    log "Version stamp updated: $stamp_file"
+  else
+    echo "[dry-run] update version stamp at $stamp_file (skill=$sv_version, template=$sv_template_version)"
+  fi
+}
+
 main() {
   parse_args "$@"
   require_repo
@@ -424,10 +468,15 @@ main() {
   TARGET_REPO="$(cd "$TARGET_REPO" && pwd)"
   log "Starting migration ($MODE) for $TARGET_REPO"
 
+  run_skill_hook "pre-migrate" || exit 1
+
   migrate_hooks "$TARGET_REPO"
   migrate_docs "$TARGET_REPO"
   migrate_workflow "$TARGET_REPO"
+  update_version_stamp "$TARGET_REPO"
   print_report "$TARGET_REPO"
+
+  run_skill_hook "post-migrate"
 }
 
 main "$@"
