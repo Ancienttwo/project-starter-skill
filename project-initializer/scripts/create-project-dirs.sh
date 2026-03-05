@@ -268,10 +268,10 @@ touch docs/brief.md
 touch docs/tech-stack.md
 touch docs/decisions.md
 
-touch docs/reference-configs/changelog-versioning.yaml.md
-touch docs/reference-configs/git-strategy.yaml.md
-touch docs/reference-configs/release-deploy.yaml.md
-touch docs/reference-configs/ai-workflows.yaml.md
+touch docs/reference-configs/changelog-versioning.md
+touch docs/reference-configs/git-strategy.md
+touch docs/reference-configs/release-deploy.md
+touch docs/reference-configs/ai-workflows.md
 touch docs/reference-configs/coding-standards.md
 touch docs/reference-configs/development-protocol.md
 touch docs/reference-configs/workflow-orchestration.md
@@ -387,7 +387,8 @@ cat > .claude/settings.json << 'PROJECT_SETTINGS_EOF'
         "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/post-bash.sh" },
-          { "type": "command", "command": "bash .claude/hooks/atomic-commit.sh" }
+          { "type": "command", "command": "bash .claude/hooks/atomic-commit.sh" },
+          { "type": "command", "command": "bash .claude/hooks/changelog-guard.sh" }
         ]
       },
       {
@@ -456,25 +457,25 @@ bun test --watch      # Watch mode
 ```
 TESTS_README_EOF
 
-cat > docs/reference-configs/changelog-versioning.yaml.md << 'REF_CHANGELOG_EOF'
+cat > docs/reference-configs/changelog-versioning.md << 'REF_CHANGELOG_EOF'
 # Changelog & Versioning Reference
 
 Use this file for detailed release-note and semantic-versioning rules.
 REF_CHANGELOG_EOF
 
-cat > docs/reference-configs/git-strategy.yaml.md << 'REF_GIT_EOF'
+cat > docs/reference-configs/git-strategy.md << 'REF_GIT_EOF'
 # Git Strategy Reference
 
 Use this file for branch model and commit convention details.
 REF_GIT_EOF
 
-cat > docs/reference-configs/release-deploy.yaml.md << 'REF_RELEASE_EOF'
+cat > docs/reference-configs/release-deploy.md << 'REF_RELEASE_EOF'
 # Release & Deployment Reference
 
 Use this file for release pipeline and deployment trigger details.
 REF_RELEASE_EOF
 
-cat > docs/reference-configs/ai-workflows.yaml.md << 'REF_AIWF_EOF'
+cat > docs/reference-configs/ai-workflows.md << 'REF_AIWF_EOF'
 # AI Workflows Reference
 
 Use this file for extended AI workflow templates and session handoff protocols.

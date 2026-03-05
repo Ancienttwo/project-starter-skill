@@ -266,6 +266,101 @@ describe("Hook runtime behavior", () => {
     }
   });
 
+  test("changelog-guard: warns when unreleased section is empty on release command", () => {
+    const cwd = tmpWorkspace("changelog-guard");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "docs"), { recursive: true });
+
+      // Create a changelog with empty [Unreleased] section
+      writeFileSync(
+        join(cwd, "docs/CHANGELOG.md"),
+        [
+          "# Changelog",
+          "",
+          "## [Unreleased]",
+          "",
+          "---",
+          "*Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)*",
+          "",
+        ].join("\n")
+      );
+
+      // Simulate npm version command — should warn
+      const warnRes = runHook("changelog-guard.sh", cwd, {
+        stdin: JSON.stringify({ tool_input: { command: "npm version patch" } }),
+      });
+      expect(warnRes.status).toBe(0);
+      expect(warnRes.stdout).toContain("[ChangelogGuard]");
+      expect(warnRes.stdout).toContain("appears empty");
+
+      // Non-release command — should be silent
+      const silentRes = runHook("changelog-guard.sh", cwd, {
+        stdin: JSON.stringify({ tool_input: { command: "bun run test" } }),
+      });
+      expect(silentRes.status).toBe(0);
+      expect(silentRes.stdout).not.toContain("[ChangelogGuard]");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("changelog-guard: silent when unreleased section has content", () => {
+    const cwd = tmpWorkspace("changelog-guard-content");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "docs"), { recursive: true });
+
+      writeFileSync(
+        join(cwd, "docs/CHANGELOG.md"),
+        [
+          "# Changelog",
+          "",
+          "## [Unreleased]",
+          "",
+          "### Added",
+          "- New changelog guard hook",
+          "",
+          "---",
+        ].join("\n")
+      );
+
+      const res = runHook("changelog-guard.sh", cwd, {
+        stdin: JSON.stringify({ tool_input: { command: "npm version minor" } }),
+      });
+      expect(res.status).toBe(0);
+      expect(res.stdout).not.toContain("[ChangelogGuard]");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("changelog-guard: detects git tag and other version commands", () => {
+    const cwd = tmpWorkspace("changelog-guard-variants");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "docs"), { recursive: true });
+
+      writeFileSync(
+        join(cwd, "docs/CHANGELOG.md"),
+        ["# Changelog", "", "## [Unreleased]", "", "---"].join("\n")
+      );
+
+      for (const cmd of ["git tag v1.0.0", "bun version patch", "pnpm version major", "yarn version --minor"]) {
+        const res = runHook("changelog-guard.sh", cwd, {
+          stdin: JSON.stringify({ tool_input: { command: cmd } }),
+        });
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain("[ChangelogGuard]");
+      }
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   test("prompt-guard: research and annotation warnings on non-implement prompts", () => {
     const cwd = tmpWorkspace("prompt-guard-annotation");
     try {

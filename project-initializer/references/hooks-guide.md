@@ -14,7 +14,7 @@ Use this guide for **Q8: Configure Hooks** details.
 - Runtime profile: Plan-only (recommended), configurable to Permissionless/Standard.
 - `PreToolUse (Edit|Write)`: worktree guard (warn by default, opt-in hard block), TDD/BDD guard, asset-layer guard.
 - `PostToolUse (Edit|Write)`: anti-simplification, doc drift, task handoff summary, atomic pending marker.
-- `PostToolUse (Bash)`: post-bash feedback, atomic checkpoint commit.
+- `PostToolUse (Bash)`: post-bash feedback, atomic checkpoint commit, changelog guard.
 - `PostToolUse (*)`: context pressure tracking.
 - `UserPromptSubmit`: prompt guard (plan sync + TDD/BDD reminders).
 
@@ -47,6 +47,7 @@ Use this guide for **Q8: Configure Hooks** details.
 | `assets/hooks/atomic-pending.sh` | `.claude/hooks/atomic-pending.sh` |
 | `assets/hooks/post-bash.sh` | `.claude/hooks/post-bash.sh` |
 | `assets/hooks/atomic-commit.sh` | `.claude/hooks/atomic-commit.sh` |
+| `assets/hooks/changelog-guard.sh` | `.claude/hooks/changelog-guard.sh` |
 | `assets/hooks/context-pressure-hook.sh` | `.claude/hooks/context-pressure-hook.sh` |
 | `assets/hooks/prompt-guard.sh` | `.claude/hooks/prompt-guard.sh` |
 | `assets/hooks/settings.template.json` | `.claude/settings.json` |

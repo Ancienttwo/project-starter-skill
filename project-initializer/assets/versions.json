@@ -3,7 +3,7 @@
   "$comment": "Centralized version configuration for project-initializer. Format: 'package': 'version' (use .x for major version tracking)",
   
   "core": {
-    "vite": "6.x",
+    "vite": "7.x",
     "react": "19",
     "typescript": "5.x",
     "bun": "1.x"
@@ -70,8 +70,8 @@
   },
 
   "tools": {
-    "biome": "1.x",
-    "vitest": "2.x",
+    "biome": "2.x",
+    "vitest": "4.x",
     "playwright": "1.x"
   }
 }

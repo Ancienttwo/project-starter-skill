@@ -104,7 +104,7 @@
       "name": "Web3 DApp (EVM Chains)",
       "stack": "Astro Landing + Vite DApp + Wagmi",
       "tier": "preset",
-      "cloudflareNative": false,
+      "cloudflareNative": true,
       "defaultLsp": "typescript-lsp",
       "defaultTemplateVariables": {
         "TECH_STACK_TABLE": "| Landing | Astro + Starwind UI |\\n| DApp Frontend | Vite + React + Wagmi + Viem |\\n| Contracts | Hardhat + Solidity |\\n| Wallet | ConnectKit / RainbowKit |"

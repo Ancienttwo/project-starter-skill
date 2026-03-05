@@ -24,7 +24,8 @@
         "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/post-bash.sh" },
-          { "type": "command", "command": "bash .claude/hooks/atomic-commit.sh" }
+          { "type": "command", "command": "bash .claude/hooks/atomic-commit.sh" },
+          { "type": "command", "command": "bash .claude/hooks/changelog-guard.sh" }
         ]
       },
       {
