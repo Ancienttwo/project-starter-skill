@@ -182,10 +182,10 @@ describe("Output Quality Gates", () => {
       variables: { PROJECT_NAME: "Test" },
     });
 
-    expect(output).toContain("docs/reference-configs/changelog-versioning.yaml.md");
-    expect(output).toContain("docs/reference-configs/git-strategy.yaml.md");
-    expect(output).toContain("docs/reference-configs/release-deploy.yaml.md");
-    expect(output).toContain("docs/reference-configs/ai-workflows.yaml.md");
+    expect(output).toContain("docs/reference-configs/changelog-versioning.md");
+    expect(output).toContain("docs/reference-configs/git-strategy.md");
+    expect(output).toContain("docs/reference-configs/release-deploy.md");
+    expect(output).toContain("docs/reference-configs/ai-workflows.md");
     expect(output).not.toContain("assets/reference-configs/");
   });
 

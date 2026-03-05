@@ -24,7 +24,7 @@ BUG_FIX_FLOW:
 ```
 
 Detailed playbooks:
-- `docs/reference-configs/ai-workflows.yaml.md`
+- `docs/reference-configs/ai-workflows.md`
 - `docs/reference-configs/development-protocol.md`
 
 ---

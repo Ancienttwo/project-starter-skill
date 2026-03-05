@@ -12,9 +12,9 @@
 - `docs/plan.md`: compatibility pointer to the active plan
 - `docs/reference-configs/coding-standards.md`: coding constraints
 - `docs/reference-configs/development-protocol.md`: delivery protocol
-- `docs/reference-configs/git-strategy.yaml.md`: branching and commits
-- `docs/reference-configs/changelog-versioning.yaml.md`: release notes policy
-- `docs/reference-configs/release-deploy.yaml.md`: deployment flow
+- `docs/reference-configs/git-strategy.md`: branching and commits
+- `docs/reference-configs/changelog-versioning.md`: release notes policy
+- `docs/reference-configs/release-deploy.md`: deployment flow
 - `docs/reference-configs/workflow-orchestration.md`: orchestration playbook
 - `docs/reference-configs/spa-day-protocol.md`: periodic cleanup protocol
 - `docs/PROGRESS.md`: execution history and archived decisions

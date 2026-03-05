@@ -32,6 +32,6 @@ PLAN_LOOP:
 
 ### Release, Git, and Deployment References
 
-- `docs/reference-configs/changelog-versioning.yaml.md`
-- `docs/reference-configs/git-strategy.yaml.md`
-- `docs/reference-configs/release-deploy.yaml.md`
+- `docs/reference-configs/changelog-versioning.md`
+- `docs/reference-configs/git-strategy.md`
+- `docs/reference-configs/release-deploy.md`

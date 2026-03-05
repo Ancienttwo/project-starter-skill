@@ -12,6 +12,6 @@ Recommended combinations:
 - AI app: `Workers + AI Gateway + Workers AI + Vectorize`
 
 Deep docs:
-- `docs/reference-configs/release-deploy.yaml.md`
-- `docs/reference-configs/git-strategy.yaml.md`
-- `docs/reference-configs/ai-workflows.yaml.md`
+- `docs/reference-configs/release-deploy.md`
+- `docs/reference-configs/git-strategy.md`
+- `docs/reference-configs/ai-workflows.md`

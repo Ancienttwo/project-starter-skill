@@ -17,11 +17,11 @@ CLAUDE.md is a routing card. Keep context minimal and load only what the current
 | Historical implementation context | `plans/archive/` and `tasks/archive/` |
 | Coding/refactor standards | `docs/reference-configs/coding-standards.md` |
 | Test and delivery protocol | `docs/reference-configs/development-protocol.md` |
-| Git strategy | `docs/reference-configs/git-strategy.yaml.md` |
-| Release/changelog process | `docs/reference-configs/changelog-versioning.yaml.md` |
-| Deployment decisions | `docs/reference-configs/release-deploy.yaml.md` |
+| Git strategy | `docs/reference-configs/git-strategy.md` |
+| Release/changelog process | `docs/reference-configs/changelog-versioning.md` |
+| Deployment decisions | `docs/reference-configs/release-deploy.md` |
 | Workflow orchestration | `docs/reference-configs/workflow-orchestration.md` |
-| AI workflow playbooks | `docs/reference-configs/ai-workflows.yaml.md` |
+| AI workflow playbooks | `docs/reference-configs/ai-workflows.md` |
 | Periodic consolidation | `docs/reference-configs/spa-day-protocol.md` |
 | Product and architecture context | `docs/brief.md`, `docs/decisions.md`, `docs/tech-stack.md` |
 | Long-form execution history | `docs/PROGRESS.md`, `docs/CHANGELOG.md` |
