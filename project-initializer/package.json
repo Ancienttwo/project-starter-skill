@@ -4,6 +4,7 @@
   "description": "Cross-agent project scaffolding skill for Claude and Codex",
   "type": "module",
   "scripts": {
+    "benchmark:skills": "bun scripts/run-skill-evals.ts",
     "test": "bun test",
     "test:coverage": "bun test --coverage"
   },

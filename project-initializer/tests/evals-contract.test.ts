@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
 const ROOT = join(import.meta.dir, "..");
@@ -9,9 +9,10 @@ describe("Skill eval assets", () => {
     skill_name: string;
     evals: Array<{
       id: number;
+      slug: string;
       prompt: string;
       expected_output: string;
-      files?: string[];
+      files: string[];
       expectations: string[];
     }>;
   };
@@ -29,14 +30,22 @@ describe("Skill eval assets", () => {
     expect(prompts).toContain("Audit this AI-assisted coding setup");
   });
 
-  test("eval ids are unique and outputs are non-empty", () => {
+  test("eval ids and slugs are unique and outputs are non-empty", () => {
     const ids = new Set<number>();
+    const slugs = new Set<string>();
 
     for (const entry of evals.evals) {
       expect(ids.has(entry.id)).toBe(false);
+      expect(slugs.has(entry.slug)).toBe(false);
       ids.add(entry.id);
+      slugs.add(entry.slug);
+      expect(entry.slug.length).toBeGreaterThan(3);
       expect(entry.prompt.length).toBeGreaterThan(20);
       expect(entry.expected_output.length).toBeGreaterThan(20);
+      expect(entry.files.length).toBeGreaterThan(0);
+      for (const file of entry.files) {
+        expect(existsSync(join(ROOT, file))).toBe(true);
+      }
       expect(entry.expectations.length).toBeGreaterThan(0);
       for (const expectation of entry.expectations) {
         expect(expectation.length).toBeGreaterThan(10);

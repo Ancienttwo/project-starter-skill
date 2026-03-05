@@ -24,6 +24,12 @@ Project scaffolding skill for Claude/Codex workflows.
 # explicit template assembly
 bun scripts/assemble-template.ts --plan C --name "MyProject"
 bun scripts/assemble-template.ts --target agents --plan C --name "MyProject"
+
+# local benchmark skeleton
+bun run benchmark:skills --dry-run
+
+# run one eval across both Claude and Codex
+bun run benchmark:skills --eval repair-agents-task-sync
 ```
 
 ## Key Files
@@ -54,5 +60,5 @@ Configured in `assets/initializer-question-pack.v1.json` and consumed by `script
 
 ```bash
 bun test
+bun run benchmark:skills --dry-run
 ```
-

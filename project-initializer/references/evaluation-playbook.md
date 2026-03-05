@@ -1,6 +1,6 @@
 # Evaluation Playbook
 
-Use this guide when iterating on `project-initializer` with the upstream `skill-creator` workflow.
+Use this guide when iterating on `project-initializer` with the local benchmark runner or an upstream `skill-creator` workflow.
 
 ## When to run evals
 
@@ -17,8 +17,25 @@ If the change only affects wording in a non-routing reference file, a full eval 
 ## Canonical eval asset
 
 - Prompt set: `evals/evals.json`
+- Runner config: `evals/benchmark.config.json`
 
 Keep the prompt set realistic. Favor prompts that a user would actually type, not synthetic low-signal phrases.
+
+## Local runner
+
+Use the repo-owned runner when you want a lightweight local benchmark pass:
+
+```bash
+bun run benchmark:skills --dry-run
+bun run benchmark:skills --eval repair-agents-task-sync
+```
+
+The runner:
+
+- creates isolated iteration workspaces under the configured workspace root
+- seeds each eval with tracked fixture repos from `evals/fixtures/`
+- runs the selected agent/profile matrix
+- writes raw artifacts outside the repo and refreshes `evals/benchmark.md`
 
 ## Workspace layout
 

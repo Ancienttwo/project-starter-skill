@@ -162,7 +162,12 @@ Benchmark conventions, iteration directories, and review flow live in:
 
 - `references/evaluation-playbook.md`
 
-Do not vendor the upstream `skill-creator` runner or viewer into this repo. Instead, keep this repo ready to be driven by an external skill evaluation workflow.
+Use the local runner for lightweight repo-owned benchmark passes:
+
+- `bun run benchmark:skills --dry-run`
+- `bun run benchmark:skills --eval repair-agents-task-sync`
+
+Do not vendor the upstream `skill-creator` runner or viewer into this repo. Keep this repo ready to work with external evaluation workflows while owning only the minimal local orchestration needed for iteration.
 
 ## Bundled resources
 
