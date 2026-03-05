@@ -1,5 +1,6 @@
 ---
 name: project-initializer
+version: 2.3.0
 description: |
   Initialize new projects with comprehensive tech stack configuration and vibe coding setup.
   Generates CLAUDE.md/AGENTS.md (AI development guides), project structure, and initialization scripts
@@ -199,6 +200,8 @@ Guiding policy:
 - `scripts/setup-plugins.sh`
 - `scripts/migrate-project-template.sh`
 - `scripts/check-versions.ts`
+- `scripts/check-skill-version.ts` — version consistency checker
+- `scripts/run-skill-hook.ts` — lifecycle hook executor
 ## Reference Files
 
 ### Core

@@ -9,6 +9,7 @@
 import { readFileSync, existsSync, readdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { runHooks } from "./run-skill-hook";
 
 // ============================================================================
 // Types
@@ -47,6 +48,23 @@ export interface PlanMap {
   plans: Record<string, PlanConfig>;
 }
 
+export interface SkillVersionManifest {
+  version: string;
+  templateVersion: string;
+  compatibility: {
+    minClaudeCodeVersion: string;
+    minBunVersion: string;
+  };
+  breakingChanges: Array<{
+    version: string;
+    description: string;
+  }>;
+  generatedProjectStamp: {
+    format: string;
+    location: string;
+  };
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -58,6 +76,7 @@ const ASSETS_DIR = join(REPO_ROOT, "assets");
 const PARTIALS_DIR = join(ASSETS_DIR, "partials");
 const PARTIALS_AGENTS_DIR = join(ASSETS_DIR, "partials-agents");
 const VERSIONS_FILE = join(ASSETS_DIR, "versions.json");
+const SKILL_VERSION_FILE = join(ASSETS_DIR, "skill-version.json");
 const PLAN_MAP_FILE = join(ASSETS_DIR, "plan-map.json");
 
 const TARGET_DIRS: Record<TemplateTarget, string> = {
@@ -175,6 +194,33 @@ export function loadVersions(versionsFilePath: string = VERSIONS_FILE): Record<s
   }
 
   return versions;
+}
+
+/**
+ * Load skill version manifest from skill-version.json.
+ */
+export function loadSkillVersion(
+  skillVersionFilePath: string = SKILL_VERSION_FILE
+): SkillVersionManifest {
+  if (!existsSync(skillVersionFilePath)) {
+    throw new Error(`skill-version.json not found at ${skillVersionFilePath}`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(skillVersionFilePath, "utf-8"));
+  } catch (error) {
+    throw new Error(
+      `Failed to parse skill-version.json: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  const manifest = parsed as SkillVersionManifest;
+  if (!manifest.version || !manifest.templateVersion) {
+    throw new Error("skill-version.json missing required version or templateVersion field");
+  }
+
+  return manifest;
 }
 
 /**
@@ -492,6 +538,7 @@ export function assembleTemplate(options: AssemblyOptions): string {
 
   // Load version variables
   const versions = loadVersions();
+  const skillVersion = loadSkillVersion();
 
   // Merge all variables (user variables take precedence)
   const allVariables: Record<string, string> = {
@@ -499,6 +546,8 @@ export function assembleTemplate(options: AssemblyOptions): string {
     ...getDefaultTemplateVariables(resolvedPlanType, planMap, quickMode),
     ...variables,
     PLAN_TYPE: resolvedPlanType,
+    SKILL_VERSION: skillVersion.version,
+    TEMPLATE_VERSION: skillVersion.templateVersion,
   };
 
   // Get partials
@@ -535,6 +584,31 @@ export function assembleTemplate(options: AssemblyOptions): string {
   assertNoUnresolvedVariables(assembled);
 
   return assembled;
+}
+
+/**
+ * Async wrapper that runs lifecycle hooks around assembleTemplate().
+ * Use this from CLI or scripts that support async. Tests can use sync assembleTemplate().
+ */
+export async function assembleTemplateWithHooks(options: AssemblyOptions): Promise<string> {
+  const hookContext = {
+    planType: options.planType,
+    target: options.target ?? "claude",
+    quickMode: options.quickMode ?? false,
+  };
+
+  // Pre-assemble hook (sync — failure aborts)
+  const preResult = await runHooks("pre-assemble", hookContext);
+  if (!preResult.success) {
+    throw new Error("pre-assemble hook failed, aborting assembly");
+  }
+
+  const output = assembleTemplate(options);
+
+  // Post-assemble hook (advisory — failure is warning only)
+  await runHooks("post-assemble", { ...hookContext, outputLength: output.length });
+
+  return output;
 }
 
 // ============================================================================
@@ -658,7 +732,7 @@ if (import.meta.main) {
       cloudflareNative: parsed.cloudflare,
     };
 
-    const output = assembleTemplate(options);
+    const output = await assembleTemplateWithHooks(options);
     console.log(output);
   } catch (error) {
     console.error("Error:", error instanceof Error ? error.message : error);
