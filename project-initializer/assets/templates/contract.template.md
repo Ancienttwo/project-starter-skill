@@ -1,7 +1,7 @@
 # Task Contract: {{TASK_SLUG}}
 
 > **Status**: Pending
-> **Plan**: plans/plan-YYYYMMDD-HHMM-{{TASK_SLUG}}.md
+> **Plan**: {{PLAN_FILE}}
 > **Owner**: {{OWNER}}
 > **Last Updated**: {{TIMESTAMP}}
 
@@ -34,4 +34,3 @@ exit_criteria:
 
 - Screenshot path (optional):
 - What to verify visually:
-

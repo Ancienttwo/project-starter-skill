@@ -21,6 +21,8 @@ describe("create-project-dirs runtime smoke", () => {
       expect(existsSync(join(cwd, "docs/reference-configs/spa-day-protocol.md"))).toBe(true);
       expect(existsSync(join(cwd, "scripts/verify-contract.sh"))).toBe(true);
       expect(existsSync(join(cwd, "scripts/check-task-sync.sh"))).toBe(true);
+      expect(existsSync(join(cwd, "scripts/ensure-task-workflow.sh"))).toBe(true);
+      expect(existsSync(join(cwd, "scripts/check-task-workflow.sh"))).toBe(true);
 
       const settings = readFileSync(join(cwd, ".claude/settings.json"), "utf-8");
       expect(settings).toContain("task-handoff.sh");
@@ -30,6 +32,7 @@ describe("create-project-dirs runtime smoke", () => {
 
       const pkg = JSON.parse(readFileSync(join(cwd, "package.json"), "utf-8"));
       expect(pkg.scripts["check:task-sync"]).toBe("bash scripts/check-task-sync.sh");
+      expect(pkg.scripts["check:task-workflow"]).toBe("bash scripts/check-task-workflow.sh --strict");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }

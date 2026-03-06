@@ -29,26 +29,18 @@ function copyHelpers(cwd: string) {
   const scriptsDir = join(cwd, "scripts");
   mkdirSync(scriptsDir, { recursive: true });
 
-  copyFileSync(join(HELPER_DIR, "new-plan.sh"), join(scriptsDir, "new-plan.sh"));
-  copyFileSync(join(HELPER_DIR, "plan-to-todo.sh"), join(scriptsDir, "plan-to-todo.sh"));
-  copyFileSync(join(HELPER_DIR, "archive-workflow.sh"), join(scriptsDir, "archive-workflow.sh"));
-  copyFileSync(join(HELPER_DIR, "verify-contract.sh"), join(scriptsDir, "verify-contract.sh"));
+  for (const file of readdirSync(HELPER_DIR).filter((name) => name.endsWith(".sh"))) {
+    copyFileSync(join(HELPER_DIR, file), join(scriptsDir, file));
+  }
 
-  expect(
-    run(
-      "chmod",
-      ["+x", "scripts/new-plan.sh", "scripts/plan-to-todo.sh", "scripts/archive-workflow.sh", "scripts/verify-contract.sh"],
-      cwd
-    ).status
-  ).toBe(0);
+  expect(run("bash", ["-lc", "chmod +x scripts/*.sh"], cwd).status).toBe(0);
 }
 
 describe("Workflow helper scripts", () => {
-  test("new-plan should create timestamped plan and update pointer", () => {
+  test("new-plan should create timestamped plan without compatibility pointer", () => {
     const cwd = tmpWorkspace("helper-new-plan");
     try {
       mkdirSync(join(cwd, "plans"), { recursive: true });
-      mkdirSync(join(cwd, "docs"), { recursive: true });
       mkdirSync(join(cwd, ".claude/templates"), { recursive: true });
       copyHelpers(cwd);
 
@@ -62,10 +54,7 @@ describe("Workflow helper scripts", () => {
 
       const plans = readdirSync(join(cwd, "plans")).filter((name) => /^plan-\d{8}-\d{4}-my-feature\.md$/.test(name));
       expect(plans.length).toBe(1);
-
-      const pointer = readFileSync(join(cwd, "docs/plan.md"), "utf-8");
-      expect(pointer).toContain("Plan Pointer (Compatibility)");
-      expect(pointer).toContain(`plans/${plans[0]}`);
+      expect(existsSync(join(cwd, "docs/plan.md"))).toBe(false);
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }
@@ -76,7 +65,6 @@ describe("Workflow helper scripts", () => {
     try {
       mkdirSync(join(cwd, "plans"), { recursive: true });
       mkdirSync(join(cwd, "tasks/archive"), { recursive: true });
-      mkdirSync(join(cwd, "docs"), { recursive: true });
       copyHelpers(cwd);
 
       const planFile = join(cwd, "plans/plan-20260304-1400-demo.md");
@@ -104,7 +92,9 @@ describe("Workflow helper scripts", () => {
 
       const todo = readFileSync(join(cwd, "tasks/todo.md"), "utf-8");
       expect(todo).toContain("**Source Plan**: plans/plan-20260304-1400-demo.md");
+      expect(todo).toContain("**Status**: Executing");
       expect(todo).toContain("- [ ] Step one");
+      expect(existsSync(join(cwd, "tasks/contracts/demo.contract.md"))).toBe(true);
 
       const updatedPlan = readFileSync(planFile, "utf-8");
       expect(updatedPlan).toContain("**Status**: Executing");
@@ -138,7 +128,6 @@ describe("Workflow helper scripts", () => {
     try {
       mkdirSync(join(cwd, "plans"), { recursive: true });
       mkdirSync(join(cwd, "tasks/archive"), { recursive: true });
-      mkdirSync(join(cwd, "docs"), { recursive: true });
       copyHelpers(cwd);
 
       writeFileSync(
@@ -176,7 +165,6 @@ describe("Workflow helper scripts", () => {
     const cwd = tmpWorkspace("helper-plan-collision");
     try {
       mkdirSync(join(cwd, "plans"), { recursive: true });
-      mkdirSync(join(cwd, "docs"), { recursive: true });
       mkdirSync(join(cwd, ".claude/templates"), { recursive: true });
       copyHelpers(cwd);
 
@@ -220,7 +208,6 @@ describe("Workflow helper scripts", () => {
     try {
       mkdirSync(join(cwd, "plans/archive"), { recursive: true });
       mkdirSync(join(cwd, "tasks/archive"), { recursive: true });
-      mkdirSync(join(cwd, "docs"), { recursive: true });
       copyHelpers(cwd);
 
       writeFileSync(
@@ -247,10 +234,10 @@ describe("Workflow helper scripts", () => {
 
       const resetTodo = readFileSync(join(cwd, "tasks/todo.md"), "utf-8");
       expect(resetTodo).toContain("# Task Execution Checklist (Primary)");
-      expect(resetTodo).toContain("## Plan");
-      expect(resetTodo).toContain("- [ ] Define scope and acceptance criteria");
+      expect(resetTodo).toContain("**Source Plan**: (none)");
+      expect(resetTodo).toContain("**Status**: Idle");
       expect(resetTodo).toContain("## Execution");
-      expect(resetTodo).toContain("- [ ] Implement task 1");
+      expect(resetTodo).toContain("- [ ] No active execution checklist");
       expect(resetTodo).toContain("## Review Section");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
@@ -365,6 +352,57 @@ describe("Workflow helper scripts", () => {
       expect(res.status).toBe(1);
       const updated = readFileSync(contractPath, "utf-8");
       expect(updated).toContain("> **Status**: Partial");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("ensure-task-workflow should create a draft plan when none exists", () => {
+    const cwd = tmpWorkspace("helper-ensure-workflow");
+    try {
+      copyHelpers(cwd);
+
+      const res = run(
+        "bash",
+        ["scripts/ensure-task-workflow.sh", "--slug", "alpha-feature", "--title", "Alpha Feature"],
+        cwd
+      );
+
+      expect(res.status).toBe(0);
+      const plans = readdirSync(join(cwd, "plans")).filter((name) => /^plan-\d{8}-\d{4}-alpha-feature\.md$/.test(name));
+      expect(plans.length).toBe(1);
+
+      const todo = readFileSync(join(cwd, "tasks/todo.md"), "utf-8");
+      expect(todo).toContain("**Source Plan**: (none)");
+      expect(todo).toContain("**Status**: Idle");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("check-task-workflow should fail strict mode for legacy todo content", () => {
+    const cwd = tmpWorkspace("helper-check-workflow");
+    try {
+      copyHelpers(cwd);
+      mkdirSync(join(cwd, "plans"), { recursive: true });
+      mkdirSync(join(cwd, "plans/archive"), { recursive: true });
+      mkdirSync(join(cwd, "tasks/archive"), { recursive: true });
+      mkdirSync(join(cwd, "tasks/contracts"), { recursive: true });
+      mkdirSync(join(cwd, ".claude/templates"), { recursive: true });
+      mkdirSync(join(cwd, "docs"), { recursive: true });
+
+      copyFileSync(join(TEMPLATE_DIR, "plan.template.md"), join(cwd, ".claude/templates/plan.template.md"));
+      copyFileSync(join(TEMPLATE_DIR, "research.template.md"), join(cwd, ".claude/templates/research.template.md"));
+      copyFileSync(join(TEMPLATE_DIR, "contract.template.md"), join(cwd, ".claude/templates/contract.template.md"));
+
+      writeFileSync(join(cwd, "tasks/todo.md"), "# Legacy Todo\n\n- [ ] old item\n");
+      writeFileSync(join(cwd, "tasks/lessons.md"), "# Lessons\n");
+      writeFileSync(join(cwd, "tasks/research.md"), "# Research\n");
+      writeFileSync(join(cwd, "docs/PROGRESS.md"), "# Project Milestones\n");
+
+      const res = run("bash", ["scripts/check-task-workflow.sh", "--strict"], cwd);
+      expect(res.status).toBe(1);
+      expect(res.stdout).toContain("Legacy tasks/todo.md detected");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }

@@ -6,10 +6,12 @@
 
 ### 2. Annotation Cycle
 - Iterate plan updates directly in `plans/plan-*.md` via inline notes.
+- Treat the latest non-archived `plans/plan-*.md` file as active.
 - Do not implement while plan status is `Draft` or `Annotating`.
 
 ### 3. Plan Node Default
 - Enter plan mode for non-trivial tasks.
+- If no active plan exists, run `bash scripts/ensure-task-workflow.sh --slug <slug> --title <title>`.
 - Re-plan when execution drifts.
 
 ### 4. Subagent Strategy

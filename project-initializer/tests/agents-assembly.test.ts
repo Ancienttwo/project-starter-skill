@@ -37,6 +37,8 @@ describe("AGENTS Target Assembly", () => {
     expect(output).toContain("Default to **Plan-only**.");
     expect(output).toContain("Runtime profile: Plan-only (recommended).");
     expect(output).toContain(".claude/.require-worktree");
+    expect(output).toContain("single source of truth for the current active plan");
+    expect(output).toContain("ensure-task-workflow.sh");
     expect(output).toContain("Which `tasks/*.md` files were updated");
   });
 

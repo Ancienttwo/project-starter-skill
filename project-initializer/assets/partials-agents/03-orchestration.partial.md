@@ -6,10 +6,12 @@
 
 ### 2. Annotation Cycle
 - Keep active plans in `plans/plan-*.md` and iterate with inline notes.
+- Treat the latest non-archived plan file as the active plan.
 - Resolve annotations before implementation.
 
 ### 3. Plan Node Default
 - Enter plan mode for non-trivial tasks.
+- If no active plan exists, run `bash scripts/ensure-task-workflow.sh --slug <slug> --title <title>` before implementation.
 - Keep active checklist items in `tasks/todo.md`.
 
 ### 4. Subagent Strategy

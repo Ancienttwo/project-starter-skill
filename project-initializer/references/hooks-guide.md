@@ -5,6 +5,7 @@ Use this guide for **Q8: Configure Hooks** details.
 ## Project Hook Source of Truth
 
 - Repo-local `tasks/` files are the primary cross-agent contract.
+- Repo-local `plans/` files are the sole source of truth for the active plan.
 - Team-configurable hooks: `.claude/settings.json` (committable).
 - Personal overrides only: `.claude/settings.local.json` (optional).
 - Hook scripts directory: `.claude/hooks/`.

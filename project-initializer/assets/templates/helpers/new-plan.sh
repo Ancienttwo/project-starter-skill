@@ -18,19 +18,6 @@ escape_sed_replacement() {
   printf '%s' "$1" | sed -e 's/[\/&]/\\&/g'
 }
 
-write_pointer() {
-  local active_plan="$1"
-  mkdir -p docs
-  cat > docs/plan.md <<EOF_POINTER
-# Plan Pointer (Compatibility)
-
-Active plans live in \`plans/\`. Create new plans with:
-  bash scripts/new-plan.sh --slug my-feature
-
-Current Active Plan: ${active_plan:-\(none\)}
-EOF_POINTER
-}
-
 slug=""
 title=""
 
@@ -128,8 +115,7 @@ sed \
   -e "s/{{SLUG}}/${slug_esc}/g" \
   -e "s/{{TITLE}}/${title_esc}/g" \
   -e "s/{{TIMESTAMP}}/${timestamp_esc}/g" \
+  -e "s|{{PLAN_FILE}}|${plan_file}|g" \
   "$template_file" > "$plan_file"
-
-write_pointer "$plan_file"
 
 echo "Created plan: $plan_file"

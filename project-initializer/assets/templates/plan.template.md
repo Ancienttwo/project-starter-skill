@@ -27,6 +27,7 @@
 - Contract file: `tasks/contracts/{{SLUG}}.contract.md`
 - Template: `.claude/templates/contract.template.md`
 - Verification command: `bash scripts/verify-contract.sh --contract tasks/contracts/{{SLUG}}.contract.md --strict`
+- Active plan rule: the latest non-archived `plans/plan-*.md` file is the current plan
 
 ## Annotations
 <!-- [NOTE]: prefixed inline. Claude processes all and revises. -->

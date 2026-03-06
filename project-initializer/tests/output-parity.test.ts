@@ -209,6 +209,8 @@ describe("Output Quality Gates", () => {
     expect(agents).toContain("sync tasks/");
     expect(claude).toContain("Self-Improvement Loop");
     expect(agents).toContain("Self-Improvement Loop");
+    expect(claude).toContain("latest non-archived `plans/plan-*.md` file");
+    expect(agents).toContain("single source of truth for the current active plan");
     expect(claude.toLowerCase()).toContain("milestone");
     expect(agents.toLowerCase()).toContain("milestone");
   });

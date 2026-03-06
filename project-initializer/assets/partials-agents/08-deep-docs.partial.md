@@ -6,10 +6,9 @@
 
 ### Load On Demand
 - `tasks/research.md`: deep codebase analysis and hidden contracts
-- `plans/plan-*.md`: active timestamped plans
+- `plans/plan-*.md`: active timestamped plans, with the latest non-archived file treated as current
 - `plans/archive/`: archived plans and outcomes
 - `tasks/archive/`: archived todo snapshots
-- `docs/plan.md`: compatibility pointer to the active plan
 - `docs/reference-configs/coding-standards.md`: coding constraints
 - `docs/reference-configs/development-protocol.md`: delivery protocol
 - `docs/reference-configs/git-strategy.md`: branching and commits

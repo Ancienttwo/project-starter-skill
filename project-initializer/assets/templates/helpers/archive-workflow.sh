@@ -28,19 +28,6 @@ set_plan_status() {
   mv "$tmp_file" "$file"
 }
 
-write_pointer() {
-  local active_plan="$1"
-  mkdir -p docs
-  cat > docs/plan.md <<EOF_POINTER
-# Plan Pointer (Compatibility)
-
-Active plans live in \`plans/\`. Create new plans with:
-  bash scripts/new-plan.sh --slug my-feature
-
-Current Active Plan: ${active_plan:-\(none\)}
-EOF_POINTER
-}
-
 unique_archive_path() {
   local desired="$1"
   if [[ ! -e "$desired" ]]; then
@@ -146,26 +133,19 @@ fi
 cat > tasks/todo.md <<'TODO_EOF'
 # Task Execution Checklist (Primary)
 
-## Plan
-- [ ] Define scope and acceptance criteria
-- [ ] Break down into checkable tasks
+> **Source Plan**: (none)
+> **Status**: Idle
+> Generate the next execution checklist from an approved plan with:
+>   bash scripts/plan-to-todo.sh --plan plans/plan-YYYYMMDD-HHMM-slug.md
 
 ## Execution
-- [ ] Implement task 1
-- [ ] Implement task 2
+- [ ] No active execution checklist
 
 ## Review Section
 - Verification evidence:
 - Behavior diff notes:
 - Risks / follow-ups:
 TODO_EOF
-
-latest_active="$(find plans -maxdepth 1 -type f -name 'plan-*.md' | sort | tail -1)"
-if [[ -n "$latest_active" ]]; then
-  write_pointer "$latest_active"
-else
-  write_pointer ""
-fi
 
 echo "Archived plan to: $archive_plan_path"
 if [[ -f "docs/reference-configs/spa-day-protocol.md" ]]; then

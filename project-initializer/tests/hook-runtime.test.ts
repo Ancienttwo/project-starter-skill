@@ -378,10 +378,6 @@ describe("Hook runtime behavior", () => {
         join(cwd, "plans/plan-20260304-1200-test.md"),
         "# Plan: test\n\n> **Status**: Draft\n"
       );
-      writeFileSync(
-        join(cwd, "docs/plan.md"),
-        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1200-test.md\n"
-      );
 
       expect(run("git", ["add", "."], cwd).status).toBe(0);
       expect(run("git", ["commit", "-m", "seed workflow files"], cwd).status).toBe(0);
@@ -407,15 +403,10 @@ describe("Hook runtime behavior", () => {
       initGitRepo(cwd);
       installHooks(cwd);
       mkdirSync(join(cwd, "plans"), { recursive: true });
-      mkdirSync(join(cwd, "docs"), { recursive: true });
 
       writeFileSync(
         join(cwd, "plans/plan-20260304-1300-demo.md"),
         "# Plan: demo\n\n> **Status**: Draft\n"
-      );
-      writeFileSync(
-        join(cwd, "docs/plan.md"),
-        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1300-demo.md\n"
       );
 
       expect(run("git", ["add", "."], cwd).status).toBe(0);
@@ -432,21 +423,34 @@ describe("Hook runtime behavior", () => {
     }
   });
 
+  test("prompt-guard: blocks implement intent when no active plan exists", () => {
+    const cwd = tmpWorkspace("prompt-guard-missing-plan");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+
+      const res = runHook("prompt-guard.sh", cwd, {
+        stdin: JSON.stringify({ user_message: "开始实现" }),
+      });
+
+      expect(res.status).toBe(1);
+      expect(res.stdout).toContain("No active plan found in plans/");
+      expect(res.stdout).toContain("ensure-task-workflow.sh");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   test("prompt-guard: blocks done intent when task contract is missing", () => {
     const cwd = tmpWorkspace("prompt-guard-contract-missing");
     try {
       initGitRepo(cwd);
       installHooks(cwd);
       mkdirSync(join(cwd, "plans"), { recursive: true });
-      mkdirSync(join(cwd, "docs"), { recursive: true });
 
       writeFileSync(
         join(cwd, "plans/plan-20260304-1400-demo.md"),
         "# Plan: demo\n\n> **Status**: Approved\n"
-      );
-      writeFileSync(
-        join(cwd, "docs/plan.md"),
-        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1400-demo.md\n"
       );
 
       const res = runHook("prompt-guard.sh", cwd, {
@@ -467,7 +471,7 @@ describe("Hook runtime behavior", () => {
       initGitRepo(cwd);
       installHooks(cwd);
       mkdirSync(join(cwd, "plans"), { recursive: true });
-      mkdirSync(join(cwd, "docs"), { recursive: true });
+      mkdirSync(join(cwd, "tasks"), { recursive: true });
       mkdirSync(join(cwd, "tasks/contracts"), { recursive: true });
       mkdirSync(join(cwd, "scripts"), { recursive: true });
 
@@ -476,8 +480,8 @@ describe("Hook runtime behavior", () => {
         "# Plan: demo\n\n> **Status**: Approved\n"
       );
       writeFileSync(
-        join(cwd, "docs/plan.md"),
-        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1410-demo.md\n"
+        join(cwd, "tasks/todo.md"),
+        "# Task Execution Checklist (Primary)\n\n> **Source Plan**: plans/plan-20260304-1410-demo.md\n"
       );
       writeFileSync(join(cwd, "tasks/contracts/demo.contract.md"), "# contract\n");
       writeFileSync(
@@ -503,12 +507,14 @@ describe("Hook runtime behavior", () => {
       initGitRepo(cwd);
       installHooks(cwd);
       mkdirSync(join(cwd, "tasks"), { recursive: true });
-      mkdirSync(join(cwd, "docs"), { recursive: true });
+      mkdirSync(join(cwd, "plans"), { recursive: true });
 
       writeFileSync(
         join(cwd, "tasks/todo.md"),
         [
           "# Task Execution Checklist (Primary)",
+          "",
+          "> **Source Plan**: plans/plan-20260304-1410-demo.md",
           "",
           "- [x] finish first task",
           "- [ ] second task",
@@ -516,8 +522,8 @@ describe("Hook runtime behavior", () => {
         ].join("\n")
       );
       writeFileSync(
-        join(cwd, "docs/plan.md"),
-        "# Plan Pointer (Compatibility)\n\nCurrent Active Plan: plans/plan-20260304-1410-demo.md\n"
+        join(cwd, "plans/plan-20260304-1410-demo.md"),
+        "# Plan: demo\n\n> **Status**: Executing\n"
       );
 
       const res = runHook("task-handoff.sh", cwd, {
@@ -531,6 +537,7 @@ describe("Hook runtime behavior", () => {
       const handoff = readFileSync(join(cwd, ".claude/.task-handoff.md"), "utf-8");
       expect(handoff).toContain("finish first task");
       expect(handoff).toContain("Progress");
+      expect(handoff).toContain("plans/plan-20260304-1410-demo.md");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }

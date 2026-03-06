@@ -90,21 +90,6 @@ ensure_gitignore_entry() {
     fi
 }
 
-write_plan_pointer() {
-    local active_plan="${1:-}"
-    cat > docs/plan.md << EOF
-# Plan Pointer (Compatibility)
-
-Active plans live in \`plans/\`. Create new plans with:
-  bash scripts/new-plan.sh --slug my-feature
-
-Current Active Plan: ${active_plan:-\\(none\\)}
-
----
-*Updated: $(date '+%Y-%m-%d %H:%M')*
-EOF
-}
-
 install_workflow_templates() {
     mkdir -p .claude/templates
 
@@ -169,6 +154,7 @@ EOF
 - Contract file: `tasks/contracts/{{SLUG}}.contract.md`
 - Template: `.claude/templates/contract.template.md`
 - Verification command: `bash scripts/verify-contract.sh --contract tasks/contracts/{{SLUG}}.contract.md --strict`
+- Active plan rule: the latest non-archived `plans/plan-*.md` file is the current plan
 
 ## Annotations
 <!-- [NOTE]: prefixed inline. Claude processes all and revises. -->
@@ -185,7 +171,7 @@ EOF
 # Task Contract: {{TASK_SLUG}}
 
 > **Status**: Pending
-> **Plan**: plans/plan-YYYYMMDD-HHMM-{{TASK_SLUG}}.md
+> **Plan**: {{PLAN_FILE}}
 > **Owner**: {{OWNER}}
 > **Last Updated**: {{TIMESTAMP}}
 
@@ -227,7 +213,7 @@ install_workflow_helpers() {
 
     if [ -d "$ASSETS_TEMPLATES_DIR/helpers" ]; then
         cp "$ASSETS_TEMPLATES_DIR/helpers/"*.sh scripts/ 2>/dev/null || true
-        chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh 2>/dev/null || true
+        chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh scripts/ensure-task-workflow.sh scripts/check-task-workflow.sh 2>/dev/null || true
         return
     fi
 
@@ -266,7 +252,21 @@ echo "Missing helper template: check-task-sync.sh"
 exit 1
 EOF
 
-    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh
+    cat > scripts/ensure-task-workflow.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: ensure-task-workflow.sh"
+exit 1
+EOF
+
+    cat > scripts/check-task-workflow.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: check-task-workflow.sh"
+exit 1
+EOF
+
+    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh scripts/ensure-task-workflow.sh scripts/check-task-workflow.sh
 }
 
 ensure_task_sync_package_script() {
@@ -284,12 +284,13 @@ const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
 pkg.private ??= true;
 pkg.scripts ??= {};
 pkg.scripts["check:task-sync"] = "bash scripts/check-task-sync.sh";
+pkg.scripts["check:task-workflow"] = "bash scripts/check-task-workflow.sh --strict";
 fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
 ' "$package_file"
         return
     fi
 
-    echo -e "${YELLOW}Warning: node not found. Could not inject check:task-sync into package.json.${NC}"
+    echo -e "${YELLOW}Warning: node not found. Could not inject task workflow scripts into package.json.${NC}"
 }
 
 # Check package manager
@@ -449,16 +450,13 @@ EOF
     cat > tasks/todo.md << EOF
 # Task Execution Checklist (Primary)
 
-> Update this file for every non-chat task that changes the repo.
-> Keep verification evidence and follow-up notes here.
-
-## Plan
-- [ ] Define scope and acceptance criteria
-- [ ] Break down into checkable tasks
+> **Source Plan**: (none)
+> **Status**: Idle
+> Generate the next execution checklist from an approved plan with:
+>   bash scripts/plan-to-todo.sh --plan plans/plan-YYYYMMDD-HHMM-slug.md
 
 ## Execution
-- [ ] Implement task 1
-- [ ] Implement task 2
+- [ ] No active execution checklist
 
 ## Review Section
 - Verification evidence:
@@ -519,7 +517,6 @@ EOF
 EOF
     fi
 
-    write_plan_pointer ""
     install_workflow_helpers
     ensure_task_sync_package_script
 

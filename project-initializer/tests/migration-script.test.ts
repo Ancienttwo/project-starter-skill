@@ -50,13 +50,16 @@ describe("Migration script contract", () => {
     expect(script).toContain("archive-workflow.sh");
     expect(script).toContain("verify-contract.sh");
     expect(script).toContain("check-task-sync.sh");
+    expect(script).toContain("ensure-task-workflow.sh");
+    expect(script).toContain("check-task-workflow.sh");
     expect(script).toContain("check:task-sync");
+    expect(script).toContain("check:task-workflow");
     expect(script).toContain("tasks/contracts");
     expect(script).toContain("spa-day-protocol.md");
     expect(script).toContain("claude-runtime-temp");
   });
 
-  test("should apply migration and create workflow artifacts with latest plan pointer", () => {
+  test("should apply migration and create workflow artifacts with single-source plan workflow", () => {
     const repo = mkdtempSync(join(tmpdir(), "migration-apply-"));
     try {
       mkdirSync(join(repo, "docs"), { recursive: true });
@@ -65,6 +68,7 @@ describe("Migration script contract", () => {
       writeFileSync(join(repo, "package.json"), JSON.stringify({ name: "demo", scripts: {} }, null, 2));
 
       writeFileSync(join(repo, "docs/TODO.md"), "legacy todo\n");
+      writeFileSync(join(repo, "docs/plan.md"), "legacy pointer\n");
       writeFileSync(join(repo, ".gitignore"), "# base\n");
       writeFileSync(
         join(repo, ".claude/settings.local.json"),
@@ -91,21 +95,23 @@ describe("Migration script contract", () => {
       expect(existsSync(join(repo, "scripts/archive-workflow.sh"))).toBe(true);
       expect(existsSync(join(repo, "scripts/verify-contract.sh"))).toBe(true);
       expect(existsSync(join(repo, "scripts/check-task-sync.sh"))).toBe(true);
+      expect(existsSync(join(repo, "scripts/ensure-task-workflow.sh"))).toBe(true);
+      expect(existsSync(join(repo, "scripts/check-task-workflow.sh"))).toBe(true);
       expect(existsSync(join(repo, "tasks/research.md"))).toBe(true);
       expect(existsSync(join(repo, "tasks/todo.md"))).toBe(true);
       expect(existsSync(join(repo, "tasks/lessons.md"))).toBe(true);
       expect(existsSync(join(repo, "tasks/contracts"))).toBe(true);
       expect(existsSync(join(repo, "docs/reference-configs/spa-day-protocol.md"))).toBe(true);
 
-      const pointer = readFileSync(join(repo, "docs/plan.md"), "utf-8");
-      expect(pointer).toContain("Current Active Plan: plans/plan-20260304-1000-beta.md");
       expect(existsSync(join(repo, "docs/TODO.md"))).toBe(false);
+      expect(existsSync(join(repo, "docs/plan.md"))).toBe(false);
 
       const progress = readFileSync(join(repo, "docs/PROGRESS.md"), "utf-8");
       expect(progress).toContain("milestone checkpoints only");
 
       const pkg = JSON.parse(readFileSync(join(repo, "package.json"), "utf-8"));
       expect(pkg.scripts["check:task-sync"]).toBe("bash scripts/check-task-sync.sh");
+      expect(pkg.scripts["check:task-workflow"]).toBe("bash scripts/check-task-workflow.sh --strict");
 
       const gitignore = readFileSync(join(repo, ".gitignore"), "utf-8");
       expect(gitignore).toContain("# BEGIN: claude-runtime-temp (managed by project-initializer)");

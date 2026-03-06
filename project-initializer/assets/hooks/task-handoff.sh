@@ -63,11 +63,9 @@ diff_stat="$(git diff --shortstat HEAD 2>/dev/null | tr -d '\n')"
 diff_stat="${diff_stat:-no uncommitted diff against HEAD}"
 
 active_plan="(none)"
-if [[ -f "docs/plan.md" ]]; then
-  parsed="$(awk -F': ' '/^Current Active Plan:/ {print $2; exit}' docs/plan.md | xargs)"
-  if [[ -n "$parsed" ]]; then
-    active_plan="$parsed"
-  fi
+parsed="$(find plans -maxdepth 1 -type f -name 'plan-*.md' 2>/dev/null | sort | tail -1)"
+if [[ -n "$parsed" ]]; then
+  active_plan="$parsed"
 fi
 
 cat > "$HANDOFF_FILE" <<EOF_HANDOFF
@@ -95,4 +93,3 @@ cat > "$STATE_FILE" <<EOF_STATE
 EOF_STATE
 
 echo "[TaskHandoff] Task completion advanced (${done_tasks}/${total_tasks}). Wrote ${HANDOFF_FILE}."
-

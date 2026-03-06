@@ -20,6 +20,7 @@ RULES:
   - For non-chat tasks, sync tasks/ whenever substantive work changes the repo
   - Research first for unfamiliar areas and persist findings in tasks/research.md
   - Plan with trade-offs in plans/plan-{timestamp}-{slug}.md
+  - Treat the latest non-archived plans/plan-*.md file as the active plan
   - Process annotation notes before implementing
   - Extract approved plan tasks into tasks/todo.md
   - Define task contracts in tasks/contracts/{slug}.contract.md
@@ -29,8 +30,8 @@ RULES:
   - Use docs/PROGRESS.md for milestones only, not active execution logs
   - Archive completed/abandoned plans and todos with metadata
 
-COMPATIBILITY:
-  - docs/plan.md points to the current active plan
+ACTIVE_PLAN:
+  - plans/ is the single source of truth for the current active plan
 ```
 
 ---

@@ -50,6 +50,7 @@ When the repo already exists, inspect it before asking questions. Determine whet
 
 - Prefer repo-local contracts over agent-specific hooks.
 - Generate `tasks/todo.md`, `tasks/lessons.md`, `tasks/research.md`, and `tasks/contracts/` as the default workflow surface.
+- Treat `plans/` as the single source of truth for the active plan.
 - Treat `docs/PROGRESS.md` as milestone-only, not as the day-to-day execution log.
 - Make Claude hooks an enhancement layer, not the sole source of enforcement.
 - Keep `CLAUDE.md` and `AGENTS.md` concise; route detail into `docs/reference-configs/*`.
@@ -119,6 +120,7 @@ For audits or contract repairs:
    - final response contract missing task-file disclosure
    - task-sync enforced only through hooks
    - `AGENTS.md` mentions `tasks/*` but does not require syncing them
+   - active-plan state duplicated outside `plans/`
 4. Recommend repo-local enforcement first, then hook enhancements second.
 
 If the user wants implementation, update templates, scripts, migration paths, and tests together.

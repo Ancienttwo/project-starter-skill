@@ -79,19 +79,6 @@ GITIGNORE_EOF
   mv "$tmp_file" "$gitignore_file"
 }
 
-write_plan_pointer() {
-  local active_plan="${1:-}"
-  mkdir -p docs
-  cat > docs/plan.md <<EOF_POINTER
-# Plan Pointer (Compatibility)
-
-Active plans live in \`plans/\`. Create new plans with:
-  bash scripts/new-plan.sh --slug my-feature
-
-Current Active Plan: ${active_plan:-\(none\)}
-EOF_POINTER
-}
-
 write_templates() {
   mkdir -p .claude/templates
 
@@ -149,6 +136,7 @@ RESEARCH_TEMPLATE_EOF
 - Contract file: `tasks/contracts/{{SLUG}}.contract.md`
 - Template: `.claude/templates/contract.template.md`
 - Verification command: `bash scripts/verify-contract.sh --contract tasks/contracts/{{SLUG}}.contract.md --strict`
+- Active plan rule: the latest non-archived `plans/plan-*.md` file is the current plan
 
 ## Annotations
 <!-- [NOTE]: prefixed inline. Claude processes all and revises. -->
@@ -161,7 +149,7 @@ PLAN_TEMPLATE_EOF
 # Task Contract: {{TASK_SLUG}}
 
 > **Status**: Pending
-> **Plan**: plans/plan-YYYYMMDD-HHMM-{{TASK_SLUG}}.md
+> **Plan**: {{PLAN_FILE}}
 > **Owner**: {{OWNER}}
 > **Last Updated**: {{TIMESTAMP}}
 
@@ -202,7 +190,7 @@ install_workflow_helpers() {
 
   if [[ -d "$ASSETS_TEMPLATES_DIR/helpers" ]]; then
     cp "$ASSETS_TEMPLATES_DIR/helpers/"*.sh scripts/ 2>/dev/null || true
-    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh 2>/dev/null || true
+    chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh scripts/ensure-task-workflow.sh scripts/check-task-workflow.sh 2>/dev/null || true
     return
   fi
 
@@ -241,7 +229,21 @@ echo "Missing helper template: check-task-sync.sh"
 exit 1
 CHECK_TASK_SYNC_STUB_EOF
 
-  chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh
+  cat > scripts/ensure-task-workflow.sh <<'ENSURE_TASK_WORKFLOW_STUB_EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: ensure-task-workflow.sh"
+exit 1
+ENSURE_TASK_WORKFLOW_STUB_EOF
+
+  cat > scripts/check-task-workflow.sh <<'CHECK_TASK_WORKFLOW_STUB_EOF'
+#!/bin/bash
+set -euo pipefail
+echo "Missing helper template: check-task-workflow.sh"
+exit 1
+CHECK_TASK_WORKFLOW_STUB_EOF
+
+  chmod +x scripts/new-plan.sh scripts/plan-to-todo.sh scripts/archive-workflow.sh scripts/verify-contract.sh scripts/check-task-sync.sh scripts/ensure-task-workflow.sh scripts/check-task-workflow.sh
 }
 
 ensure_task_sync_package_script() {
@@ -256,7 +258,8 @@ ensure_task_sync_package_script() {
   "name": "$project_name",
   "private": true,
   "scripts": {
-    "check:task-sync": "bash scripts/check-task-sync.sh"
+    "check:task-sync": "bash scripts/check-task-sync.sh",
+    "check:task-workflow": "bash scripts/check-task-workflow.sh --strict"
   }
 }
 EOF_PACKAGE
@@ -271,12 +274,13 @@ const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
 pkg.private ??= true;
 pkg.scripts ??= {};
 pkg.scripts["check:task-sync"] = "bash scripts/check-task-sync.sh";
+pkg.scripts["check:task-workflow"] = "bash scripts/check-task-workflow.sh --strict";
 fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
 ' "$package_file"
     return
   fi
 
-  echo "[warn] node not found; unable to inject check:task-sync into package.json" >&2
+  echo "[warn] node not found; unable to inject task workflow scripts into package.json" >&2
 }
 
 # ===== IMMUTABLE LAYER (资产层) =====
@@ -366,16 +370,13 @@ PROGRESS_EOF
 cat > tasks/todo.md << 'TASK_TODO_EOF'
 # Task Execution Checklist (Primary)
 
-> Update this file for every non-chat task that changes the repo.
-> Keep verification evidence and follow-up notes here.
-
-## Plan
-- [ ] Define scope and acceptance criteria
-- [ ] Break down into checkable tasks
+> **Source Plan**: (none)
+> **Status**: Idle
+> Generate the next execution checklist from an approved plan with:
+>   bash scripts/plan-to-todo.sh --plan plans/plan-YYYYMMDD-HHMM-slug.md
 
 ## Execution
-- [ ] Implement task 1
-- [ ] Implement task 2
+- [ ] No active execution checklist
 
 ## Review Section
 - Verification evidence:
@@ -421,7 +422,6 @@ cat > tasks/research.md << 'TASK_RESEARCH_EOF'
 ### Open Questions
 TASK_RESEARCH_EOF
 
-write_plan_pointer ""
 write_templates
 install_workflow_helpers
 ensure_task_sync_package_script

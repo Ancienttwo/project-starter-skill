@@ -66,27 +66,6 @@ is_spa_day_intent() {
   echo "$PROMPT_TEXT" | grep -qEi "(spa day|audit rules|consolidate|cleanup rules|规则清理|规则审计|合并规则|瘦身)"
 }
 
-get_active_plan_from_pointer() {
-  local pointer_file="docs/plan.md"
-  local candidate
-
-  if [ ! -f "$pointer_file" ]; then
-    return 1
-  fi
-
-  candidate="$(awk -F': ' '/^Current Active Plan:/ {print $2; exit}' "$pointer_file" | xargs)"
-  if [ -z "$candidate" ] || [ "$candidate" = "(none)" ] || [ "$candidate" = "none" ]; then
-    return 1
-  fi
-
-  if [ -f "$candidate" ]; then
-    printf '%s' "$candidate"
-    return 0
-  fi
-
-  return 1
-}
-
 get_latest_plan() {
   local latest
   latest="$(find plans -maxdepth 1 -type f -name 'plan-*.md' 2>/dev/null | sort | tail -1)"
@@ -98,26 +77,20 @@ get_latest_plan() {
 }
 
 get_active_plan() {
-  local active
-
-  active="$(get_active_plan_from_pointer || true)"
-  if [ -n "$active" ]; then
-    printf '%s' "$active"
-    return 0
-  fi
-
-  active="$(get_latest_plan || true)"
-  if [ -n "$active" ]; then
-    printf '%s' "$active"
-    return 0
-  fi
-
-  return 1
+  get_latest_plan
 }
 
 get_plan_status() {
   local plan_file="$1"
   awk '/\*\*Status\*\*:/ {sub(/^.*\*\*Status\*\*: */, ""); gsub(/\r/, ""); print; exit}' "$plan_file" | xargs
+}
+
+get_todo_source_plan() {
+  if [ ! -f "tasks/todo.md" ]; then
+    return 1
+  fi
+
+  awk -F': ' '/^\> \*\*Source Plan\*\*:/ {print $2; exit}' tasks/todo.md | xargs
 }
 
 derive_contract_path() {
@@ -153,10 +126,6 @@ if [ "$implement_intent" -eq 0 ]; then
     echo "[LessonGuard] tasks/lessons.md has updates. Review prevention rules before coding."
   fi
 
-  if [ -f "docs/plan.md" ] && has_changes "docs/plan.md"; then
-    echo "[PlanGuard] docs/plan.md changed (compatibility pointer). Sync active plan before implementing."
-  fi
-
   if [ -f "tasks/research.md" ] && has_changes "tasks/research.md"; then
     echo "[ResearchGuard] tasks/research.md updated. Review research deeply before planning or implementation."
   fi
@@ -169,10 +138,22 @@ fi
 
 if [ "$implement_intent" -eq 1 ]; then
   active_plan="$(get_active_plan || true)"
-  if [ -n "$active_plan" ] && [ -f "$active_plan" ]; then
-    plan_status="$(get_plan_status "$active_plan")"
-    if [ "$plan_status" = "Draft" ] || [ "$plan_status" = "Annotating" ]; then
-      echo "[PlanStatusGuard] Plan status is '$plan_status' in $active_plan. Complete annotation cycle first."
+  if [ -z "$active_plan" ] || [ ! -f "$active_plan" ]; then
+    echo "[PlanStatusGuard] No active plan found in plans/. Run: bash scripts/ensure-task-workflow.sh --slug <slug> --title <title>"
+    exit 1
+  fi
+
+  plan_status="$(get_plan_status "$active_plan")"
+  if [ "$plan_status" = "Draft" ] || [ "$plan_status" = "Annotating" ]; then
+    echo "[PlanStatusGuard] Plan status is '$plan_status' in $active_plan. Complete annotation cycle first."
+    exit 1
+  fi
+
+  if [ "$plan_status" = "Approved" ] || [ "$plan_status" = "Executing" ]; then
+    todo_source="$(get_todo_source_plan || true)"
+    if [ "$todo_source" != "$active_plan" ]; then
+      echo "[TodoGuard] Active plan is '$plan_status' in $active_plan but tasks/todo.md is not synchronized."
+      echo "[TodoGuard] Run: bash scripts/plan-to-todo.sh --plan $active_plan"
       exit 1
     fi
   fi

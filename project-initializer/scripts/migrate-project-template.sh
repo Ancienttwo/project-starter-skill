@@ -122,39 +122,6 @@ ensure_gitignore_entry() {
   fi
 }
 
-write_plan_pointer() {
-  local file_path="$1"
-  local active_plan="$2"
-
-  if [[ "$MODE" != "apply" ]]; then
-    echo "[dry-run] write plan pointer: $file_path (active=${active_plan:-none})"
-    return
-  fi
-
-  mkdir -p "$(dirname "$file_path")"
-  cat > "$file_path" <<EOF_POINTER
-# Plan Pointer (Compatibility)
-
-Active plans live in \`plans/\`. Create new plans with:
-  bash scripts/new-plan.sh --slug my-feature
-
-Current Active Plan: ${active_plan:-\(none\)}
-EOF_POINTER
-}
-
-is_plan_pointer_file() {
-  local file_path="$1"
-  if [[ ! -f "$file_path" ]]; then
-    return 1
-  fi
-
-  if grep -Fq "# Plan Pointer (Compatibility)" "$file_path" && \
-     grep -Fq "Current Active Plan:" "$file_path"; then
-    return 0
-  fi
-  return 1
-}
-
 install_templates() {
   local repo="$1"
   local templates_dir="$repo/.claude/templates"
@@ -184,8 +151,10 @@ install_helpers() {
     run_or_echo "cp \"$HELPER_ASSETS_DIR/archive-workflow.sh\" \"$scripts_dir/archive-workflow.sh\""
     run_or_echo "cp \"$HELPER_ASSETS_DIR/verify-contract.sh\" \"$scripts_dir/verify-contract.sh\""
     run_or_echo "cp \"$HELPER_ASSETS_DIR/check-task-sync.sh\" \"$scripts_dir/check-task-sync.sh\""
+    run_or_echo "cp \"$HELPER_ASSETS_DIR/ensure-task-workflow.sh\" \"$scripts_dir/ensure-task-workflow.sh\""
+    run_or_echo "cp \"$HELPER_ASSETS_DIR/check-task-workflow.sh\" \"$scripts_dir/check-task-workflow.sh\""
     if [[ "$MODE" == "apply" ]]; then
-      chmod +x "$scripts_dir/new-plan.sh" "$scripts_dir/plan-to-todo.sh" "$scripts_dir/archive-workflow.sh" "$scripts_dir/verify-contract.sh" "$scripts_dir/check-task-sync.sh" || true
+      chmod +x "$scripts_dir/new-plan.sh" "$scripts_dir/plan-to-todo.sh" "$scripts_dir/archive-workflow.sh" "$scripts_dir/verify-contract.sh" "$scripts_dir/check-task-sync.sh" "$scripts_dir/ensure-task-workflow.sh" "$scripts_dir/check-task-workflow.sh" || true
     fi
   else
     log "Helper assets not found at $HELPER_ASSETS_DIR"
@@ -200,13 +169,13 @@ ensure_task_sync_package_script() {
     if [[ "$MODE" == "apply" ]]; then
       log "package.json missing; skipped check:task-sync injection"
     else
-      echo "[dry-run] package.json missing; skip check:task-sync injection"
+      echo "[dry-run] package.json missing; skip task workflow script injection"
     fi
     return
   fi
 
   if [[ "$MODE" != "apply" ]]; then
-    echo "[dry-run] inject check:task-sync into $package_file"
+    echo "[dry-run] inject task workflow scripts into $package_file"
     return
   fi
 
@@ -218,13 +187,14 @@ const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
 pkg.private ??= true;
 pkg.scripts ??= {};
 pkg.scripts["check:task-sync"] = "bash scripts/check-task-sync.sh";
+pkg.scripts["check:task-workflow"] = "bash scripts/check-task-workflow.sh --strict";
 fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
 ' "$package_file"
-    log "Injected check:task-sync into $package_file"
+    log "Injected task workflow scripts into $package_file"
     return
   fi
 
-  log "Warning: node not found. Could not inject check:task-sync into $package_file"
+  log "Warning: node not found. Could not inject task workflow scripts into $package_file"
 }
 
 create_task_files_if_missing() {
@@ -241,15 +211,13 @@ create_task_files_if_missing() {
     cat > "$repo/tasks/todo.md" <<'TODO_EOF'
 # Task Execution Checklist (Primary)
 
-> Update this file for every non-chat task that changes the repo.
-> Keep verification evidence and follow-up notes here.
-
-## Plan
-- [ ] Define scope and acceptance criteria
-- [ ] Break down into checkable tasks
+> **Source Plan**: (none)
+> **Status**: Idle
+> Generate the next execution checklist from an approved plan with:
+>   bash scripts/plan-to-todo.sh --plan plans/plan-YYYYMMDD-HHMM-slug.md
 
 ## Execution
-- [ ] Implement task 1
+- [ ] No active execution checklist
 
 ## Review Section
 - Verification evidence:
@@ -468,7 +436,6 @@ migrate_docs() {
 
 migrate_workflow() {
   local repo="$1"
-  local plan_file="$repo/docs/plan.md"
 
   run_or_echo "mkdir -p \"$repo/plans/archive\""
   run_or_echo "mkdir -p \"$repo/tasks/archive\""
@@ -481,17 +448,14 @@ migrate_workflow() {
   create_task_files_if_missing "$repo"
   ensure_task_sync_package_script "$repo"
 
-  if [[ -f "$plan_file" ]] && ! is_plan_pointer_file "$plan_file"; then
-    backup_if_exists "$plan_file"
+  if [[ -f "$repo/docs/plan.md" ]]; then
+    if [[ "$MODE" == "apply" ]]; then
+      rm -f "$repo/docs/plan.md"
+      log "Removed legacy docs/plan.md compatibility pointer"
+    else
+      echo "[dry-run] rm -f \"$repo/docs/plan.md\""
+    fi
   fi
-
-  local latest_active_plan=""
-  latest_active_plan="$(find "$repo/plans" -maxdepth 1 -type f -name 'plan-*.md' 2>/dev/null | sort | tail -1 || true)"
-  if [[ -n "$latest_active_plan" ]]; then
-    latest_active_plan="plans/$(basename "$latest_active_plan")"
-  fi
-
-  write_plan_pointer "$plan_file" "$latest_active_plan"
 
   local repo_gitignore="$repo/.gitignore"
   run_or_echo "touch \"$repo_gitignore\""

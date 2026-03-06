@@ -25,6 +25,7 @@
       ],
       "expectations": [
         "Calls out repo-local task sync as the primary enforcement mechanism.",
+        "Treats plans/ as the single source of truth for the active plan instead of relying on docs/plan.md.",
         "Updates the final response contract to mention changed tasks files.",
         "Avoids treating hooks as the only source of enforcement."
       ]
@@ -39,6 +40,7 @@
       ],
       "expectations": [
         "Replaces docs/TODO.md with tasks/todo.md as the primary task contract.",
+        "Removes docs/plan.md compatibility pointers in favor of plans/ as the active-plan source of truth.",
         "Adds repo-local task-sync enforcement such as scripts/check-task-sync.sh.",
         "Updates migration guidance and scripts rather than only editing prose."
       ]
@@ -54,6 +56,7 @@
       "expectations": [
         "Checks both Claude-specific hooks and cross-agent repo-local contracts.",
         "Flags docs/PROGRESS.md misuse if it is acting as an execution log.",
+        "Flags duplicated active-plan state outside plans/ as workflow drift.",
         "Mentions migration or template updates when current files are out of sync with the skill."
       ]
     }

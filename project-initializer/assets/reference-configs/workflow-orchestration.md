@@ -23,7 +23,8 @@ Use this file for advanced orchestration and planning patterns.
 
 - Generate timestamped plan files in `plans/`.
 - Keep plan status explicit: `Draft | Annotating | Approved | Executing | Archived | Abandoned`.
-- `docs/plan.md` is compatibility pointer to active plan.
+- The latest non-archived `plans/plan-*.md` file is the active plan.
+- If no active plan exists, run `bash scripts/ensure-task-workflow.sh --slug <slug> --title <title>`.
 
 ## Annotation Cycle
 
@@ -37,6 +38,7 @@ Use this file for advanced orchestration and planning patterns.
 - Archive existing todo to `tasks/archive/` before writing new checklist.
 - Set plan status to `Executing` after extraction.
 - Create `tasks/contracts/{slug}.contract.md` from `.claude/templates/contract.template.md`.
+- Validate workflow integrity with `bash scripts/check-task-workflow.sh --strict`.
 
 ## Implementation Protocol
 

@@ -13,7 +13,6 @@ CLAUDE.md is a routing card. Keep context minimal and load only what the current
 |---------|----------------|
 | Deep codebase investigation | `tasks/research.md` |
 | Active implementation planning | `plans/plan-*.md` |
-| Plan pointer compatibility | `docs/plan.md` |
 | Historical implementation context | `plans/archive/` and `tasks/archive/` |
 | Coding/refactor standards | `docs/reference-configs/coding-standards.md` |
 | Test and delivery protocol | `docs/reference-configs/development-protocol.md` |
