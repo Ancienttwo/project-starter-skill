@@ -4,9 +4,8 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/worktree-guard.sh" },
-          { "type": "command", "command": "bash .claude/hooks/tdd-guard-hook.sh" },
-          { "type": "command", "command": "bash .claude/hooks/pre-code-change.sh" }
+          { "type": "command", "command": "repo=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; HOOK_REPO_ROOT=\"$repo\" bash \"$repo/.claude/hooks/run-hook.sh\" worktree-guard.sh" },
+          { "type": "command", "command": "repo=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; HOOK_REPO_ROOT=\"$repo\" bash \"$repo/.claude/hooks/run-hook.sh\" pre-edit-guard.sh" }
         ]
       }
     ],
@@ -14,28 +13,13 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/anti-simplification.sh" },
-          { "type": "command", "command": "bash .claude/hooks/doc-drift-guard.sh" },
-          { "type": "command", "command": "bash .claude/hooks/task-handoff.sh" },
-          { "type": "command", "command": "bash .claude/hooks/atomic-pending.sh" }
+          { "type": "command", "command": "repo=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; HOOK_REPO_ROOT=\"$repo\" bash \"$repo/.claude/hooks/run-hook.sh\" post-edit-guard.sh" }
         ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/post-bash.sh" },
-          { "type": "command", "command": "bash .claude/hooks/atomic-commit.sh" },
-          { "type": "command", "command": "bash .claude/hooks/changelog-guard.sh" }
-        ]
-      },
-      {
-        "matcher": ".*",
-        "hooks": [{ "type": "command", "command": "bash .claude/hooks/context-pressure-hook.sh" }]
       }
     ],
     "UserPromptSubmit": [
       {
-        "hooks": [{ "type": "command", "command": "bash .claude/hooks/prompt-guard.sh" }]
+        "hooks": [{ "type": "command", "command": "repo=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; HOOK_REPO_ROOT=\"$repo\" bash \"$repo/.claude/hooks/run-hook.sh\" prompt-guard.sh" }]
       }
     ]
   }

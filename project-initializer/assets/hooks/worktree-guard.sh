@@ -7,7 +7,10 @@ set -u
 
 # Resolve repo root — hooks may run from any cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+REPO_ROOT="${HOOK_REPO_ROOT:-}"
+if [ -z "$REPO_ROOT" ]; then
+  REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+fi
 if [ -z "$REPO_ROOT" ]; then
   REPO_ROOT="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)" || true
 fi

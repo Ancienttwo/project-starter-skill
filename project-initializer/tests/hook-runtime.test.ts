@@ -266,6 +266,32 @@ describe("Hook runtime behavior", () => {
     }
   });
 
+  test("run-hook dispatcher resolves repo root from nested cwd", () => {
+    const cwd = tmpWorkspace("run-hook-dispatch");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "apps/api"), { recursive: true });
+
+      const res = spawnSync(
+        "sh",
+        [
+          "-c",
+          'repo=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; HOOK_REPO_ROOT="$repo" bash "$repo/.claude/hooks/run-hook.sh" worktree-guard.sh',
+        ],
+        {
+          cwd: join(cwd, "apps/api"),
+          encoding: "utf-8",
+        }
+      );
+
+      expect(res.status).toBe(0);
+      expect(res.stdout).toContain("[WorktreeGuard]");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   test("changelog-guard: warns when unreleased section is empty on release command", () => {
     const cwd = tmpWorkspace("changelog-guard");
     try {
@@ -496,6 +522,113 @@ describe("Hook runtime behavior", () => {
 
       expect(res.status).toBe(0);
       expect(res.stdout).toContain("[verify] ok");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("prompt-guard: blocks done intent when contract verification fails", () => {
+    const cwd = tmpWorkspace("prompt-guard-contract-fail");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "plans"), { recursive: true });
+      mkdirSync(join(cwd, "tasks"), { recursive: true });
+      mkdirSync(join(cwd, "tasks/contracts"), { recursive: true });
+      mkdirSync(join(cwd, "scripts"), { recursive: true });
+
+      writeFileSync(
+        join(cwd, "plans/plan-20260304-1420-demo.md"),
+        "# Plan: demo\n\n> **Status**: Approved\n"
+      );
+      writeFileSync(
+        join(cwd, "tasks/todo.md"),
+        "# Task Execution Checklist (Primary)\n\n> **Source Plan**: plans/plan-20260304-1420-demo.md\n"
+      );
+      writeFileSync(join(cwd, "tasks/contracts/demo.contract.md"), "# contract\n");
+      writeFileSync(
+        join(cwd, "scripts/verify-contract.sh"),
+        "#!/bin/bash\nset -euo pipefail\necho \"[verify] fail\"\nexit 1\n"
+      );
+      expect(run("chmod", ["+x", "scripts/verify-contract.sh"], cwd).status).toBe(0);
+
+      const res = runHook("prompt-guard.sh", cwd, {
+        stdin: JSON.stringify({ user_message: "done" }),
+      });
+
+      expect(res.status).toBe(1);
+      expect(res.stdout).toContain("[ContractGuard]");
+      expect(res.stdout).toContain("Contract verification failed");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("pre-edit-guard: combines asset-layer and test reminders", () => {
+    const cwd = tmpWorkspace("pre-edit-guard");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "contracts"), { recursive: true });
+      mkdirSync(join(cwd, "src"), { recursive: true });
+      writeFileSync(join(cwd, "contracts/types.ts"), "export type Contract = {};\n");
+      writeFileSync(join(cwd, "src/widget.ts"), "export function widget() { return 1; }\n");
+
+      const assetRes = runHook("pre-edit-guard.sh", cwd, {
+        stdin: JSON.stringify({ tool_input: { file_path: "contracts/types.ts" } }),
+      });
+      expect(assetRes.status).toBe(0);
+      expect(assetRes.stdout).toContain("[AssetLayer]");
+
+      const tddRes = runHook("pre-edit-guard.sh", cwd, {
+        stdin: JSON.stringify({ tool_input: { file_path: "src/widget.ts" } }),
+      });
+      expect(tddRes.status).toBe(0);
+      expect(tddRes.stdout).toContain("[TDD Guard]");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("post-edit-guard: combines doc drift and task handoff", () => {
+    const cwd = tmpWorkspace("post-edit-guard");
+    try {
+      initGitRepo(cwd);
+      installHooks(cwd);
+      mkdirSync(join(cwd, "apps/web/src"), { recursive: true });
+      mkdirSync(join(cwd, "tasks"), { recursive: true });
+      mkdirSync(join(cwd, "plans"), { recursive: true });
+
+      writeFileSync(join(cwd, "apps/web/src/index.ts"), "export const x = 1;\n");
+      const docRes = runHook("post-edit-guard.sh", cwd, {
+        stdin: JSON.stringify({ tool_input: { file_path: "apps/web/src/index.ts" } }),
+      });
+      expect(docRes.status).toBe(0);
+      expect(docRes.stdout).toContain("[DocDrift]");
+
+      writeFileSync(
+        join(cwd, "tasks/todo.md"),
+        [
+          "# Task Execution Checklist (Primary)",
+          "",
+          "> **Source Plan**: plans/plan-20260304-1410-demo.md",
+          "",
+          "- [x] finish first task",
+          "- [ ] second task",
+          "",
+        ].join("\n")
+      );
+      writeFileSync(
+        join(cwd, "plans/plan-20260304-1410-demo.md"),
+        "# Plan: demo\n\n> **Status**: Executing\n"
+      );
+
+      const handoffRes = runHook("post-edit-guard.sh", cwd, {
+        stdin: JSON.stringify({ tool_input: { file_path: "tasks/todo.md" } }),
+      });
+      expect(handoffRes.status).toBe(0);
+      expect(handoffRes.stdout).toContain("[TaskHandoff]");
+      expect(existsSync(join(cwd, ".claude/.task-handoff.md"))).toBe(true);
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }

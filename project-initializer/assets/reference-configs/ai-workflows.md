@@ -117,7 +117,7 @@ SESSION_HANDOFF:
     4. Update tasks/research.md if new hidden contracts or findings were discovered
     5. Update docs/PROGRESS.md only if a milestone was reached
     6. Document any blockers or decisions needed
-    7. Create checkpoint commit
+    7. Create an explicit commit if the work should be checkpointed
 
   NEXT_SESSION_START:
     1. AI reads tasks/todo.md for active execution checklist

@@ -14,19 +14,18 @@ Use hooks as Claude-specific accelerators, not as the only source of workflow en
 
 ## Hook Presets
 
-### A) Standard + TDD + Doc Drift + Context Pressure (recommended)
+### A) Balanced Shared Guardrails (recommended)
 - Runtime profile: Plan-only (recommended), configurable to Permissionless/Standard.
-- `PreToolUse (Edit|Write)`: worktree guard (warn by default, opt-in hard block), TDD/BDD guard, asset-layer guard.
-- `PostToolUse (Edit|Write)`: anti-simplification, doc drift, task handoff summary, atomic pending marker.
-- `PostToolUse (Bash)`: post-bash feedback, atomic checkpoint commit, changelog guard.
-- `PostToolUse (*)`: context pressure tracking.
+- `PreToolUse (Edit|Write)`: worktree guard (warn by default, opt-in hard block), pre-edit guard (TDD/BDD + asset-layer reminders).
+- `PostToolUse (Edit|Write)`: post-edit guard (doc drift + task handoff summary).
 - `UserPromptSubmit`: prompt guard (plan sync + TDD/BDD reminders).
+- Automatic checkpoint commits are disabled in the shared default.
 
-### B) Standard + TDD + Doc Drift (no context pressure)
-- Same as A, without context pressure hook.
+### B) Balanced + Release Guard
+- Same as A, plus `changelog-guard.sh` for repos that want release reminders.
 
-### C) Standard (no TDD guard)
-- Keep worktree/doc drift/prompt guard with fewer constraints.
+### C) Balanced + Advisory Extras
+- Same as A, plus optional advisory hooks like `anti-simplification.sh`, `post-bash.sh`, or `context-pressure-hook.sh` when teams explicitly want more reminders.
 
 ### D) Minimal
 - `UserPromptSubmit` only.
@@ -42,19 +41,24 @@ Use hooks as Claude-specific accelerators, not as the only source of workflow en
 | Asset File | Target Path |
 |---|---|
 | `assets/hooks/hook-input.sh` | `.claude/hooks/hook-input.sh` |
+| `assets/hooks/run-hook.sh` | `.claude/hooks/run-hook.sh` |
 | `assets/hooks/worktree-guard.sh` | `.claude/hooks/worktree-guard.sh` |
-| `assets/hooks/tdd-guard-hook.sh` | `.claude/hooks/tdd-guard-hook.sh` |
-| `assets/hooks/pre-code-change.sh` | `.claude/hooks/pre-code-change.sh` |
-| `assets/hooks/anti-simplification.sh` | `.claude/hooks/anti-simplification.sh` |
-| `assets/hooks/doc-drift-guard.sh` | `.claude/hooks/doc-drift-guard.sh` |
-| `assets/hooks/task-handoff.sh` | `.claude/hooks/task-handoff.sh` |
-| `assets/hooks/atomic-pending.sh` | `.claude/hooks/atomic-pending.sh` |
-| `assets/hooks/post-bash.sh` | `.claude/hooks/post-bash.sh` |
-| `assets/hooks/atomic-commit.sh` | `.claude/hooks/atomic-commit.sh` |
-| `assets/hooks/changelog-guard.sh` | `.claude/hooks/changelog-guard.sh` |
-| `assets/hooks/context-pressure-hook.sh` | `.claude/hooks/context-pressure-hook.sh` |
+| `assets/hooks/pre-edit-guard.sh` | `.claude/hooks/pre-edit-guard.sh` |
+| `assets/hooks/post-edit-guard.sh` | `.claude/hooks/post-edit-guard.sh` |
 | `assets/hooks/prompt-guard.sh` | `.claude/hooks/prompt-guard.sh` |
 | `assets/hooks/settings.template.json` | `.claude/settings.json` |
+
+Optional hook assets:
+- `assets/hooks/tdd-guard-hook.sh`
+- `assets/hooks/pre-code-change.sh`
+- `assets/hooks/doc-drift-guard.sh`
+- `assets/hooks/task-handoff.sh`
+- `assets/hooks/anti-simplification.sh`
+- `assets/hooks/post-bash.sh`
+- `assets/hooks/context-pressure-hook.sh`
+- `assets/hooks/changelog-guard.sh`
+- `assets/hooks/atomic-pending.sh`
+- `assets/hooks/atomic-commit.sh`
 
 ## Customization Notes
 

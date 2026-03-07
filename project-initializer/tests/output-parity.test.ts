@@ -171,7 +171,7 @@ describe("Output Quality Gates", () => {
     expect(output).toContain(
       "EXECUTION_CONTEXT: primary worktree warning by default; enforce via .claude/.require-worktree"
     );
-    expect(output).toContain("COMMIT_POLICY: atomic checkpoint after green checks");
+    expect(output).toContain("COMMIT_POLICY: explicit commits after green checks; no automatic checkpoint hook");
     expect(output).toContain("Plan-only by default for file mutations");
     expect(output).toContain("Primary worktree warns by default; enforce via `.claude/.require-worktree`");
   });

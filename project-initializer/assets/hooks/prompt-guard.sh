@@ -10,23 +10,42 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/hook-input.sh"
 
 PROMPT_TEXT="$(hook_get_prompt "${1:-}")"
+CHANGED_PATHS=""
+CHANGED_PATHS_READY=0
 
 is_git_repo() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1
 }
 
-has_changes() {
-  local file="$1"
-  local dirty staged
-
-  if ! is_git_repo; then
-    return 1
+load_changed_paths() {
+  if [[ "$CHANGED_PATHS_READY" -eq 1 ]]; then
+    return
   fi
 
-  dirty=$(git diff --name-only 2>/dev/null | grep -Fx "$file" | wc -l | tr -d ' ')
-  staged=$(git diff --name-only --cached 2>/dev/null | grep -Fx "$file" | wc -l | tr -d ' ')
+  CHANGED_PATHS_READY=1
+  if ! is_git_repo; then
+    return
+  fi
 
-  if [ "$dirty" -gt 0 ] || [ "$staged" -gt 0 ]; then
+  CHANGED_PATHS="$(
+    git status --porcelain=v1 --untracked-files=no 2>/dev/null \
+      | awk '{
+          path = substr($0, 4)
+          rename_idx = index(path, " -> ")
+          if (rename_idx > 0) {
+            path = substr(path, rename_idx + 4)
+          }
+          print path
+        }'
+  )"
+}
+
+has_changes() {
+  local file="$1"
+
+  load_changed_paths
+
+  if [[ -n "$CHANGED_PATHS" ]] && printf '%s\n' "$CHANGED_PATHS" | grep -Fxq -- "$file"; then
     return 0
   fi
   return 1
@@ -36,16 +55,9 @@ has_changes_glob() {
   local pattern="$1"
   local changed
 
-  if ! is_git_repo; then
-    return 1
-  fi
+  load_changed_paths
 
-  changed="$(
-    {
-      git diff --name-only 2>/dev/null || true
-      git diff --name-only --cached 2>/dev/null || true
-    } | grep -E "$pattern" | head -1
-  )"
+  changed="$(printf '%s\n' "$CHANGED_PATHS" | grep -E "$pattern" | head -1)"
 
   if [ -n "$changed" ]; then
     printf '%s' "$changed"

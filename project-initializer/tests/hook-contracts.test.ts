@@ -13,10 +13,23 @@ describe("Hook contracts", () => {
     expect(existsSync(join(ROOT, "assets/hooks/hook-input.sh"))).toBe(true);
   });
 
+  test("shared hook dispatcher should exist", () => {
+    const script = read("assets/hooks/run-hook.sh");
+    expect(script).toContain("HOOK_REPO_ROOT");
+    expect(script).toContain("HookRunner");
+  });
+
   test("pre-code-change should protect contracts/specs/tests paths", () => {
     const script = read("assets/hooks/pre-code-change.sh");
     expect(script).toContain("(contracts|specs|tests)");
     expect(script).toContain(".spec");
+  });
+
+  test("pre-edit guard should combine asset-layer and test reminders", () => {
+    const script = read("assets/hooks/pre-edit-guard.sh");
+    expect(script).toContain("[AssetLayer]");
+    expect(script).toContain("[BDD Guard]");
+    expect(script).toContain("[TDD Guard]");
   });
 
   test("worktree-guard should be warning-first with marker-based enforcement", () => {
@@ -24,6 +37,7 @@ describe("Hook contracts", () => {
     expect(script).toContain(".claude/.require-worktree");
     expect(script).toContain("Warning: primary working tree detected");
     expect(script).toContain("Mutation blocked");
+    expect(script).toContain("HOOK_REPO_ROOT");
   });
 
   test("context-pressure should use stable session-id file and one-time flags", () => {
@@ -61,6 +75,13 @@ describe("Hook contracts", () => {
     expect(script).toContain("wrangler.*\\.toml");
   });
 
+  test("post-edit guard should combine doc drift and task handoff", () => {
+    const script = read("assets/hooks/post-edit-guard.sh");
+    expect(script).toContain("[DocDrift]");
+    expect(script).toContain("[TaskHandoff]");
+    expect(script).toContain("tasks/todo.md");
+  });
+
   test("tdd-guard should use extension-based BDD/TDD heuristic", () => {
     const script = read("assets/hooks/tdd-guard-hook.sh");
     expect(script).toContain("\\.(tsx|jsx)$");
@@ -77,7 +98,11 @@ describe("Hook contracts", () => {
 
   test("settings template should not inject TOOL_INPUT/PROMPT argv blobs", () => {
     const settings = read("assets/hooks/settings.template.json");
-    expect(settings).toContain("task-handoff.sh");
+    expect(settings).toContain("run-hook.sh");
+    expect(settings).toContain("pre-edit-guard.sh");
+    expect(settings).toContain("post-edit-guard.sh");
+    expect(settings).not.toContain("task-handoff.sh");
+    expect(settings).not.toContain("atomic-commit.sh");
     expect(settings).not.toContain('"$TOOL_INPUT"');
     expect(settings).not.toContain('"$PROMPT"');
   });

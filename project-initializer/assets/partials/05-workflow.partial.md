@@ -17,7 +17,7 @@ PLAN_LOOP:
   ANNOTATION_GUARD: do not implement until plan Status is "Approved"
   CONTRACT_GUARD: do not mark done until contract exit criteria pass
   EXECUTION_CONTEXT: primary worktree warning by default; enforce via .claude/.require-worktree
-  COMMIT_POLICY: atomic checkpoint after green checks
+  COMMIT_POLICY: explicit commits after green checks; no automatic checkpoint hook
 ```
 
 ### Task Management Protocol

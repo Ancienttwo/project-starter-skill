@@ -82,6 +82,7 @@ describe("Bootstrap Script Contracts", () => {
     expect(content).toContain("tasks/todo.md");
     expect(content).toContain("tasks/lessons.md");
     expect(content).toContain("tasks/research.md");
+    expect(content).toContain("git status --porcelain=v1");
     expect(content).toContain("has_changes_glob");
     expect(content).toContain("PlanStatusGuard");
     expect(content).toContain("ensure-task-workflow.sh");
@@ -90,19 +91,22 @@ describe("Bootstrap Script Contracts", () => {
 
   test("hook template should reference existing local hook scripts", () => {
     const settings = read("assets/hooks/settings.template.json");
-    const hookCommands = [...settings.matchAll(/\.claude\/hooks\/([A-Za-z0-9.-]+\.sh)/g)].map(
-      (m) => m[1]
-    );
+    const hookCommands = [...settings.matchAll(/\.claude\/hooks\/([A-Za-z0-9.-]+\.sh)/g)].map((m) => m[1]);
 
     expect(hookCommands.length).toBeGreaterThan(0);
     for (const fileName of hookCommands) {
       expect(existsSync(join(ROOT, "assets/hooks", fileName))).toBe(true);
     }
 
-    expect(hookCommands).toContain("worktree-guard.sh");
-    expect(hookCommands).toContain("task-handoff.sh");
-    expect(hookCommands).toContain("atomic-pending.sh");
-    expect(hookCommands).toContain("atomic-commit.sh");
+    expect(hookCommands).toContain("run-hook.sh");
+    expect(settings).toContain("worktree-guard.sh");
+    expect(settings).toContain("pre-edit-guard.sh");
+    expect(settings).toContain("post-edit-guard.sh");
+    expect(settings).toContain("prompt-guard.sh");
+    expect(settings).not.toContain("bash -lc");
+    expect(settings).not.toContain("atomic-pending.sh");
+    expect(settings).not.toContain("atomic-commit.sh");
+    expect(settings).not.toContain("context-pressure-hook.sh");
     expect(settings).not.toContain("\"$TOOL_INPUT\"");
     expect(settings).not.toContain("\"$PROMPT\"");
   });

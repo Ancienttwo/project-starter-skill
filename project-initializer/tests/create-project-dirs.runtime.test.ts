@@ -25,7 +25,10 @@ describe("create-project-dirs runtime smoke", () => {
       expect(existsSync(join(cwd, "scripts/check-task-workflow.sh"))).toBe(true);
 
       const settings = readFileSync(join(cwd, ".claude/settings.json"), "utf-8");
-      expect(settings).toContain("task-handoff.sh");
+      expect(settings).toContain("run-hook.sh");
+      expect(settings).toContain("pre-edit-guard.sh");
+      expect(settings).toContain("post-edit-guard.sh");
+      expect(settings).not.toContain("task-handoff.sh");
 
       const progress = readFileSync(join(cwd, "docs/PROGRESS.md"), "utf-8");
       expect(progress).toContain("milestone checkpoints only");
